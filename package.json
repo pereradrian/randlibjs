@@ -27,5 +27,8 @@
   "bugs": {
     "url": "https://github.com/pereradrian/js-randlib/issues"
   },
-  "homepage": "https://github.com/pereradrian/js-randlib#readme"
+  "homepage": "https://github.com/pereradrian/js-randlib#readme",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
 }
