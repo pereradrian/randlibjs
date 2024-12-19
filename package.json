@@ -1,0 +1,31 @@
+{
+  "name": "@odd-kernel/js-randlib",
+  "version": "1.0.0",
+  "description": "Module implementing pseudo-random number generators with the ability to draw samples from a variety of probability distributions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pereradrian/js-randlib.git"
+  },
+  "keywords": [
+    "random",
+    "math",
+    "distributions",
+    "statistics",
+    "probability",
+    "numlib",
+    "stochastic"
+  ],
+  "author": "Adrián Muñoz Perera, https://pereradrian.github.io",
+  "license": "BSD-3-Clause",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/pereradrian/js-randlib/issues"
+  },
+  "homepage": "https://github.com/pereradrian/js-randlib#readme"
+}
