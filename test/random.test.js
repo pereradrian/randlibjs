@@ -1,4 +1,4 @@
-const { seed, randint, uniform } = require('../index');
+const { seed, randint, uniform, normal } = require('../index');
 
 describe('Randint module tests', () => {
   it('Generates deterministic sequences with the same seed', () => {
@@ -62,5 +62,22 @@ describe('Uniform module tests', () => {
     expect(array).toHaveLength(2);
     expect(array[0]).toHaveLength(3);
     expect(array[1]).toHaveLength(3);
+  });
+});
+describe('Normal module tests', () => {
+  it('Generates deterministic sequences with the same seed', () => {
+    seed(12345);
+    const firstSequence = [normal(0, 10), normal(0, 10), normal(0, 10)];
+    seed(12345);
+    const secondSequence = [normal(0, 10), normal(0, 10), normal(0, 10)];
+    expect(firstSequence).toEqual(secondSequence);
+  });
+
+  it('Generates different sequences with different seeds', () => {
+    seed(12345);
+    const firstSequence = [normal(0, 10), normal(0, 10), normal(0, 10)];
+    seed(67890);
+    const secondSequence = [normal(0, 10), normal(0, 10), normal(0, 10)];
+    expect(firstSequence).not.toEqual(secondSequence);
   });
 });
