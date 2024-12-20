@@ -1,8 +1,5 @@
 const { getRandomGenerator } = require('./seed');
-
-function generateRandom(low, high) {
-    return Math.floor(getRandomGenerator()() * (high - low) + low);
-}
+const { baseGenerator } = require('./base-generator')
 
 /**
  * Generates random integers or arrays of random integers within a specified range.
@@ -37,24 +34,7 @@ function randint(low, high = null, size = null) {
     if (low >= high) {
         throw new Error("low must be less than high");
     }
-
-    if (size === null) {
-        return generateRandom(low, high);
-    }
-    else if (typeof size === "number") {
-        return Array.from({ length: size }, () => generateRandom(low, high));
-    }
-    else if (Array.isArray(size)) {
-        const buildArray = (dims) => {
-            const [first, ...rest] = dims;
-            return Array.from({ length: first }, () => rest.length > 0 ? buildArray(rest) : generateRandom(low, high));
-        };
-        return buildArray(size);
-    }
-    else {
-        throw new Error("size must be a number, an array, or null");
-    }
-
+    return baseGenerator(() => Math.floor(getRandomGenerator()() * (high - low) + low), size);
 }
 
 module.exports = randint;

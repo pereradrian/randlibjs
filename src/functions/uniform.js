@@ -1,14 +1,11 @@
 const { getRandomGenerator } = require('./seed');
-
-function generateRandom(low, high) {
-    return getRandomGenerator()() * (high - low) + low;
-}
+const { baseGenerator } = require('./base-generator')
 
 /**
  * Generates random floats or arrays of random floats within a specified range.
  *
- * @param {number} low - The lower bound of the random floats. 0.0 by default.
- * @param {number} [high=null] - The upper bound. 1.0 by default.
+ * @param {number} [low=0.0] - The lower bound. 0.0 by default.
+ * @param {number} [high=1.0] - The upper bound. 1.0 by default.
  * @param {number|Array|null} [size=null] - The shape of the output:
  *   - If `null`, a single float is returned.
  *   - If a number, a 1D array of the specified size is returned.
@@ -30,29 +27,10 @@ function generateRandom(low, high) {
  * uniform(1, 7, [3, 4]); // e.g., [[4, 6, 1, 3], [5, 1, 2, 6], [3, 4, 5, 1]]
  */
 function uniform(low = 0.0, high = 1.0, size = null) {
-    if (high === null) {
-        high = low;
-        low = 0;
-    }
     if (low >= high) {
         throw new Error("low must be less than high");
     }
-    if (size === null) {
-        return generateRandom(low, high);
-    }
-    else if (typeof size === "number") {
-        return Array.from({ length: size }, () => generateRandom(low, high));
-    }
-    else if (Array.isArray(size)) {
-        const buildArray = (dims) => {
-            const [first, ...rest] = dims;
-            return Array.from({ length: first }, () => rest.length > 0 ? buildArray(rest) : generateRandom(low, high));
-        };
-        return buildArray(size);
-    }
-    else {
-        throw new Error("size must be a number, an array, or null");
-    }
+    return baseGenerator(() => getRandomGenerator()() * (high - low) + low, size);
 }
 
 module.exports = uniform;
