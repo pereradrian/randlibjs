@@ -1,4 +1,4 @@
-const { randint } = require('./randint');
+const randint = require('./randint');
 
 function swap(array, i, j) {
     const temp = array[i];

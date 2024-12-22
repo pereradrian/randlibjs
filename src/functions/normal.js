@@ -1,5 +1,5 @@
 const { getRandomGenerator } = require('./seed');
-const { baseGenerator } = require('./base-generator');
+const baseGenerator  = require('./base-generator');
 const { inverseNormalCDF } = require('./util/inverse-normal-cdf');
 
 /**

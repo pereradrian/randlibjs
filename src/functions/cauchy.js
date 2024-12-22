@@ -1,5 +1,5 @@
 const { getRandomGenerator } = require('./seed');
-const { baseGenerator } = require('./base-generator');
+const baseGenerator  = require('./base-generator');
 
 /**
  * Generates random samples from a Cauchy distribution.

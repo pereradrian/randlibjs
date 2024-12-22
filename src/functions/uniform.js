@@ -1,5 +1,5 @@
 const { getRandomGenerator } = require('./seed');
-const { baseGenerator } = require('./base-generator')
+const baseGenerator  = require('./base-generator')
 
 /**
  * Generates random floats or arrays of random floats within a specified range.

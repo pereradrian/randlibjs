@@ -49,4 +49,4 @@ function baseGenerator(generator, size) {
     }
 }
 
-module.exports = { baseGenerator };
+module.exports = baseGenerator;

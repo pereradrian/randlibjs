@@ -1,6 +1,6 @@
 {
   "name": "@odd-kernel/js-randlib",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Module implementing pseudo-random number generators with the ability to draw samples from a variety of probability distributions.",
   "main": "index.js",
   "scripts": {
@@ -30,5 +30,8 @@
   "homepage": "https://github.com/pereradrian/js-randlib#readme",
   "devDependencies": {
     "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "mathjs": "^14.0.1"
   }
 }
