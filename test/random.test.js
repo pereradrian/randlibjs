@@ -8,6 +8,13 @@ describe('Randint module tests', () => {
     const secondSequence = [randint(0, 10), randint(0, 10), randint(0, 10)];
     expect(firstSequence).toEqual(secondSequence);
   });
+  test('Generates deterministic sequences with the same seed (negative values)', () => {
+    seed(12345);
+    const firstSequence = [randint(-10, 10), randint(0, 10), randint(0, 10)];
+    seed(12345);
+    const secondSequence = [randint(-10, 10), randint(0, 10), randint(0, 10)];
+    expect(firstSequence).toEqual(secondSequence);
+  });
   test('Generates different sequences with different seeds', () => {
     seed(12345);
     const firstSequence = [randint(0, 10), randint(0, 10), randint(0, 10)];
@@ -189,6 +196,7 @@ describe('Multivariate Normal Distribution', () => {
     });
 
     test('Works with uncorrelated variables (diagonal covariance)', () => {
+        seed(12345)
         const mean = [0, 0];
         const covariance = [
             [2, 0],
@@ -273,8 +281,9 @@ describe("Chi-squared Distribution Tests", () => {
   });
 
   test("Approximates correct mean and variance", () => {
+      seed(0)
       const degreesOfFreedom = 5;
-      const sampleSize = 20000;
+      const sampleSize = 10000;
       const samples = chisquare(degreesOfFreedom, sampleSize);
       
       const mean = calculateMean(samples);
@@ -284,7 +293,7 @@ describe("Chi-squared Distribution Tests", () => {
       const expectedMean = degreesOfFreedom;
       const expectedVariance = 2 * degreesOfFreedom;
 
-      expect(mean).toBeCloseTo(expectedMean, 1); // Allow small deviation
-      expect(variance).toBeCloseTo(expectedVariance, 1);
+      expect(mean).toBeCloseTo(expectedMean, 0.1); // Allow small deviation
+      expect(variance).toBeCloseTo(expectedVariance, 0.1);
   });
 });

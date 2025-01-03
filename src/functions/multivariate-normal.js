@@ -1,5 +1,6 @@
 const math = require('mathjs');
-const choleskyDecomposition = require('./util/cholesky')
+const choleskyDecomposition = require('./util/cholesky');
+const normal = require('./normal');
 
 /**
  * Generates random samples from a multivariate normal distribution.
@@ -7,7 +8,6 @@ const choleskyDecomposition = require('./util/cholesky')
  * @param {number[]} means - Array of means (μ) for each dimension.
  * @param {number[][]} covariance - Covariance matrix (Σ).
  * @param {number} [size=1] - Number of samples to generate.
- * @param {function} [rng=Math.random] - Random number generator to sample from a standard normal distribution.
  * @returns {number[][]} An array of samples, each sample is an array of length equal to `means.length`.
  *
  * @throws Will throw an error if the covariance matrix is not square or positive semi-definite.
@@ -16,7 +16,7 @@ const choleskyDecomposition = require('./util/cholesky')
  * - [Wikipedia: Multivariate Normal Distribution](https://en.wikipedia.org/wiki/Multivariate_normal_distribution)
  * - [Cholesky Decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition)
  */
-function multivariateNormal(means, covariance, size = 1, rng = Math.random) {
+function multivariateNormal(means, covariance, size = null) {
     if (!Array.isArray(means) || !Array.isArray(covariance)) {
         throw new Error("Means and covariance must be arrays.");
     }
@@ -30,17 +30,14 @@ function multivariateNormal(means, covariance, size = 1, rng = Math.random) {
     let cholesky;
     try {
         cholesky = choleskyDecomposition(covariance);
-    } catch (error) {   
-        console.log(covariance, error)
+    } catch (error) {
         throw new Error("Covariance matrix is not positive semi-definite.");
     }
 
     const samples = [];
     for (let i = 0; i < size; i++) {
         // Generate a standard normal sample
-        const standardNormal = Array.from({ length: n }, () => {
-            return Math.sqrt(-2 * Math.log(rng())) * Math.cos(2 * Math.PI * rng());
-        });
+        const standardNormal = normal(0.0, 1.0, n)
 
         // Transform to multivariate normal: μ + L * Z
         const transformed = math.add(means, math.multiply(cholesky, standardNormal));
