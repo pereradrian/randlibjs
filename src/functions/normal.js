@@ -1,6 +1,6 @@
-const { getRandomGenerator } = require('./seed');
-const baseGenerator  = require('./base-generator');
-const { inverseNormalCDF } = require('./util/inverse-normal-cdf');
+import { getRandomGenerator } from './seed';
+import baseGenerator  from './base-generator';
+import { inverseNormalCDF } from './util/inverse-normal-cdf';
 
 /**
  * Generates random integers or arrays of random integers for a normal distirbution.

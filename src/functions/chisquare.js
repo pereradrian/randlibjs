@@ -1,6 +1,6 @@
 
-const baseGenerator = require('./base-generator')
-const normal = require('./normal')
+import baseGenerator from './base-generator'
+import normal from './normal'
 /**
  * Generates random numbers following a Chi-squared distribution.
  *

@@ -1,6 +1,6 @@
 import {add, multiply} from 'mathjs';
-const choleskyDecomposition = require('./util/cholesky');
-const normal = require('./normal');
+import choleskyDecomposition from './util/cholesky';
+import normal from './normal';
 
 /**
  * Generates random samples from a multivariate normal distribution.

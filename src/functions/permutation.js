@@ -1,4 +1,4 @@
-const shuffle = require('./shuffle')
+import shuffle from './shuffle'
 
 /**
  * Generates a random permutation of an array or a range of integers.

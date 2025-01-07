@@ -1,13 +1,13 @@
-const { seed } = require('./src/functions/seed')
-const randint = require('./src/functions/randint')
-const uniform = require('./src/functions/uniform')
-const normal = require('./src/functions/normal')
-const cauchy = require('./src/functions/cauchy')
-const exponential = require('./src/functions/exponential.js')
-const shuffle = require('./src/functions/shuffle')
-const permutation = require('./src/functions/permutation')
-const multivariateNormal = require('./src/functions/multivariate-normal')
-const chisquare = require('./src/functions/chisquare')
+import seed from './src/functions/seed'
+import randint from './src/functions/randint'
+import uniform from './src/functions/uniform'
+import normal from './src/functions/normal'
+import cauchy from './src/functions/cauchy'
+import exponential from './src/functions/exponential.js'
+import shuffle from './src/functions/shuffle'
+import permutation from './src/functions/permutation'
+import multivariateNormal from './src/functions/multivariate-normal'
+import chisquare from './src/functions/chisquare'
 
 
 module.exports = {

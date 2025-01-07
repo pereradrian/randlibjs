@@ -1,5 +1,5 @@
-const { X, Y } = require('./normal-cdf-data');
-const { binarySearch } = require('./util');
+import { X, Y } from './normal-cdf-data';
+import { binarySearch } from './util';
 
 /**
  * Computes the inverse cumulative distribution function of a normal distribution.

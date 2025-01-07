@@ -1,5 +1,5 @@
-const { getRandomGenerator } = require('./seed');
-const baseGenerator  = require('./base-generator')
+import { getRandomGenerator } from './seed';
+import baseGenerator  from './base-generator'
 
 /**
  * Generates random integers or arrays of random integers within a specified range.
