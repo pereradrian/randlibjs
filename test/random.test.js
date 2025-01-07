@@ -1,4 +1,4 @@
-const { seed, randint, uniform, normal, cauchy, exponential, permutation, multivariateNormal, chisquare } = require('../index');
+import { seed, randint, uniform, normal, cauchy, exponential, permutation, multivariateNormal, chisquare } from '../index';
 
 describe('Randint module tests', () => {
   test('Generates deterministic sequences with the same seed', () => {
