@@ -1,4 +1,4 @@
-const math = require('mathjs');
+import {add, multiply} from 'mathjs';
 const choleskyDecomposition = require('./util/cholesky');
 const normal = require('./normal');
 
@@ -40,7 +40,7 @@ function multivariateNormal(means, covariance, size = null) {
         const standardNormal = normal(0.0, 1.0, n)
 
         // Transform to multivariate normal: μ + L * Z
-        const transformed = math.add(means, math.multiply(cholesky, standardNormal));
+        const transformed = add(means, multiply(cholesky, standardNormal));
         samples.push(transformed);
     }
 
