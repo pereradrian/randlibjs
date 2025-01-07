@@ -1,7 +1,16 @@
 import { seed, randint, uniform, normal, cauchy, exponential, permutation, multivariateNormal, chisquare } from '../index';
+import { describe, test, expect } from 'vitest';
 
 describe('Randint module tests', () => {
   test('Generates deterministic sequences with the same seed', () => {
+    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    console.log(randint(0,1))
     seed(12345);
     const firstSequence = [randint(0, 10), randint(0, 10), randint(0, 10)];
     seed(12345);

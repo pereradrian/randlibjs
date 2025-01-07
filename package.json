@@ -1,10 +1,10 @@
 {
   "name": "randlibjs",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "Module implementing pseudo-random number generators with the ability to draw samples from a variety of probability distributions.",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "vitest"
   },
   "repository": {
     "type": "git",
@@ -30,8 +30,8 @@
   },
   "homepage": "https://github.com/pereradrian/randlibjs#readme",
   "devDependencies": {
-    "jest": "^29.7.0",
-    "rollup-plugin-visualizer": "^5.14.0"
+    "rollup-plugin-visualizer": "^5.14.0",
+    "vitest": "^2.1.8"
   },
   "dependencies": {
     "mathjs": "^14.0.1"

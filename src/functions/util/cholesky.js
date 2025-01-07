@@ -12,7 +12,7 @@
  * References:
  * - [Cholesky Decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition)
  */
-function choleskyDecomposition(matrix) {
+export function choleskyDecomposition(matrix) {
     const n = matrix.length;
 
     // Verify the matrix is square
@@ -48,5 +48,3 @@ function choleskyDecomposition(matrix) {
 
     return L;
 }
-
-module.exports = choleskyDecomposition;

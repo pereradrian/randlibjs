@@ -30,7 +30,7 @@
  * const randomMatrix = baseGenerator(generator, [2, 3]);
  * console.log(randomMatrix); // e.g., [[0.2, 0.7, 0.4], [0.1, 0.9, 0.5]]
  */
-function baseGenerator(generator, size) {
+export function baseGenerator(generator, size) {
     if (size === null) {
         return generator();
     }
@@ -48,5 +48,3 @@ function baseGenerator(generator, size) {
         throw new Error("size must be a number, an array, or null");
     }
 }
-
-module.exports = baseGenerator;

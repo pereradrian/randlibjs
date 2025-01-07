@@ -1,6 +1,6 @@
 import {add, multiply} from 'mathjs';
-import choleskyDecomposition from './util/cholesky';
-import normal from './normal';
+import { choleskyDecomposition } from './util/cholesky';
+import { normal } from './normal';
 
 /**
  * Generates random samples from a multivariate normal distribution.
@@ -16,7 +16,7 @@ import normal from './normal';
  * - [Wikipedia: Multivariate Normal Distribution](https://en.wikipedia.org/wiki/Multivariate_normal_distribution)
  * - [Cholesky Decomposition](https://en.wikipedia.org/wiki/Cholesky_decomposition)
  */
-function multivariateNormal(means, covariance, size = null) {
+export function multivariateNormal(means, covariance, size = null) {
     if (!Array.isArray(means) || !Array.isArray(covariance)) {
         throw new Error("Means and covariance must be arrays.");
     }
@@ -46,5 +46,3 @@ function multivariateNormal(means, covariance, size = null) {
 
     return size === 1 ? samples[0] : samples; // Return a single sample if size === 1
 }
-
-module.exports = multivariateNormal;

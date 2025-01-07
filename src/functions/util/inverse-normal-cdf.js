@@ -6,7 +6,7 @@ import { binarySearch } from './util';
  *
  * @param {number} value - The point to evaluate.
  */
-function inverseNormalCDF(value) {
+export function inverseNormalCDF(value) {
     if (value <= X[0]) {
         return Y[0]
     }
@@ -24,5 +24,3 @@ function inverseNormalCDF(value) {
         }
     }
 }
-
-module.exports = { inverseNormalCDF };

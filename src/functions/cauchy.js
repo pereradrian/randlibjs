@@ -1,5 +1,5 @@
-import getRandomGenerator from './seed'
-import baseGenerator from './base-generator'
+import { getRandomGenerator } from './seed'
+import { baseGenerator } from './base-generator'
 
 /**
  * Generates random samples from a Cauchy distribution.
@@ -12,12 +12,10 @@ import baseGenerator from './base-generator'
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.
  * @returns {number|Array} A single value, an array, or a multidimensional array of random values from the Cauchy distribution.
  */
-function cauchy(median, gamma, size = null) {
+export function cauchy(median, gamma, size = null) {
     if (gamma <= 0) {
         throw new Error("Scale parameter gamma must be greater than 0");
     }
     // Use the base generator for handling size
     return baseGenerator(() => median + gamma * Math.tan(Math.PI * (getRandomGenerator()() - 0.5)), size);
 }
-
-module.exports = cauchy;

@@ -1,4 +1,4 @@
-import randint from './randint';
+import { randint } from './randint';
 
 function swap(array, i, j) {
     const temp = array[i];
@@ -15,7 +15,7 @@ function swap(array, i, j) {
  * @param {function} - A random number generator function returning values in [0, 1).
  * @returns {Array} A new shuffled array if a deep copy is required, otherwise in-place modification.
  */
-function shuffle(array) {
+export function shuffle(array) {
     if (!Array.isArray(array)) {
         throw new Error("Input must be an array.");
     }
@@ -25,5 +25,3 @@ function shuffle(array) {
     }
     return array;
 }
-
-module.exports = shuffle;

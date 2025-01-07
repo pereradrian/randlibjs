@@ -1,5 +1,5 @@
 import { getRandomGenerator } from './seed';
-import baseGenerator  from './base-generator'
+import { baseGenerator } from './base-generator'
 
 /**
  * Generates random integers or arrays of random integers within a specified range.
@@ -26,7 +26,7 @@ import baseGenerator  from './base-generator'
  * // 2D array (3x4) of random integers between 1 and 6
  * randint(1, 7, [3, 4]); // e.g., [[4, 6, 1, 3], [5, 1, 2, 6], [3, 4, 5, 1]]
  */
-function randint(low, high = null, size = null) {
+export function randint(low, high = null, size = null) {
     if (high === null) {
         high = low;
         low = 0;
@@ -36,5 +36,3 @@ function randint(low, high = null, size = null) {
     }
     return baseGenerator(() => Math.floor(getRandomGenerator()() * (high - low) + low), size);
 }
-
-module.exports = randint;

@@ -1,6 +1,6 @@
 
-import baseGenerator from './base-generator'
-import normal from './normal'
+import { baseGenerator } from './base-generator'
+import { normal } from './normal'
 /**
  * Generates random numbers following a Chi-squared distribution.
  *
@@ -11,7 +11,7 @@ import normal from './normal'
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.
  * @returns {number|Array} A random number or an array of random numbers from the Chi-squared distribution.
  */
-function chisquare(k, size = null) {
+export function chisquare(k, size = null) {
     if (!Number.isInteger(k) || k <= 0) {
         throw new Error("Degrees of freedom (k) must be a positive integer.");
     }
@@ -27,5 +27,3 @@ function chisquare(k, size = null) {
 
     return baseGenerator(generateChi2, size);
 }
-
-module.exports = chisquare;

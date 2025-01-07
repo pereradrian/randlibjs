@@ -43,7 +43,7 @@ function pcg64(seed) {
  * @param {number} seedValue - Value to initialize the random generator.
  * @returns {void}
  */
-function seed(seedValue) {
+export function seed(seedValue) {
     const numericSeed = typeof seedValue === 'bigint' || typeof seedValue === 'number'
         ? BigInt(seedValue)
         : hashSeed(seedValue);
@@ -55,8 +55,6 @@ function seed(seedValue) {
  *
  * @returns {function} The random number generator function.
  */
-function getRandomGenerator() {
+export function getRandomGenerator() {
     return randomGenerator;
 }
-
-module.exports = { seed, getRandomGenerator };

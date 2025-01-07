@@ -1,5 +1,5 @@
 import { getRandomGenerator } from './seed';
-import baseGenerator  from './base-generator';
+import { baseGenerator } from './base-generator';
 
 /**
  * Generates random samples from an exponential distribution.
@@ -11,12 +11,10 @@ import baseGenerator  from './base-generator';
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.
  * @returns {number|Array} A single value, an array, or a multidimensional array of random values from the exponential distribution.
  */
-function exponential(lambda, size = null) {
+export function exponential(lambda, size = null) {
     if (lambda <= 0) {
         throw new Error("Rate parameter lambda must be greater than 0");
     }
     // Use the base generator for handling size
     return baseGenerator(() => -Math.log(1 - getRandomGenerator()()) / lambda, size);
 }
-
-module.exports = exponential;

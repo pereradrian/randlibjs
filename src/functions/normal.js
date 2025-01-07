@@ -1,5 +1,5 @@
 import { getRandomGenerator } from './seed';
-import baseGenerator  from './base-generator';
+import { baseGenerator }  from './base-generator';
 import { inverseNormalCDF } from './util/inverse-normal-cdf';
 
 /**
@@ -27,7 +27,7 @@ import { inverseNormalCDF } from './util/inverse-normal-cdf';
  * // 2D array (3x4) of random integers between 1 and 6
  * randint(1, 7, [3, 4]); // e.g., [[4, 6, 1, 3], [5, 1, 2, 6], [3, 4, 5, 1]]
  */
-function normal(loc=0.0, scale = 1.0, size = null) {
+export function normal(loc=0.0, scale = 1.0, size = null) {
     if (typeof loc !== "number" || typeof scale !== "number") {
         throw new Error("loc and scale must be numbers");
     }
@@ -36,5 +36,3 @@ function normal(loc=0.0, scale = 1.0, size = null) {
     }
     return baseGenerator(() => scale*inverseNormalCDF(getRandomGenerator()()) + loc, size);
 }
-
-module.exports = normal;

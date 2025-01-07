@@ -1,4 +1,4 @@
-import shuffle from './shuffle'
+import { shuffle } from './shuffle'
 
 /**
  * Generates a random permutation of an array or a range of integers.
@@ -7,7 +7,7 @@ import shuffle from './shuffle'
  *   If a number `n`, returns a random permutation of integers `[0, 1, ..., n-1]`.
  * @returns {Array} A randomly permuted array.
  */
-function permutation(x) {
+export function permutation(x) {
     if (typeof x === "number") {
         if (x <= 0 || !Number.isInteger(x)) {
             throw new Error("If x is a number, it must be a positive integer.");
@@ -22,5 +22,3 @@ function permutation(x) {
 
     return x;
 }
-
-module.exports = permutation;

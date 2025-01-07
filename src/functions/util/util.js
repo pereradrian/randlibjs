@@ -7,7 +7,7 @@
  * @param {number} value - The value to search for.
  * @returns {number} The index of the largest element smaller than the search value.
  */
-function binarySearch(array, value) {
+export function binarySearch(array, value) {
     let indexLeft = 0;
     let indexRight = array.length - 1;
     let indexResult = -1;
@@ -25,6 +25,3 @@ function binarySearch(array, value) {
 
     return indexResult;
 }
-
-
-module.exports = { binarySearch };
