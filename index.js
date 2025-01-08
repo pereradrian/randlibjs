@@ -8,6 +8,7 @@ import { shuffle } from './src/functions/shuffle'
 import { permutation } from './src/functions/permutation'
 import { multivariateNormal } from './src/functions/multivariate-normal'
 import { chisquare } from './src/functions/chisquare'
+import { logo } from './src/misc/logo'
 
 
 export {
@@ -20,5 +21,6 @@ export {
     shuffle,
     permutation,
     multivariateNormal,
-    chisquare
+    chisquare,
+    logo,
 };
