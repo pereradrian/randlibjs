@@ -1,6 +1,6 @@
 {
   "name": "randlibjs",
-  "version": "1.0.7",
+  "version": "1.0.8-alpha.2",
   "description": "Module implementing pseudo-random number generators with the ability to draw samples from a variety of probability distributions.",
   "main": "index.js",
   "scripts": {
@@ -30,6 +30,9 @@
   },
   "homepage": "https://github.com/pereradrian/randlibjs#readme",
   "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "eslint": "^9.18.0",
+    "globals": "^15.14.0",
     "rollup-plugin-visualizer": "^5.14.0",
     "vitest": "^2.1.8"
   },

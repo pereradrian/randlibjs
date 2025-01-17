@@ -8,6 +8,12 @@ import { shuffle } from './src/functions/shuffle'
 import { permutation } from './src/functions/permutation'
 import { multivariateNormal } from './src/functions/multivariate-normal'
 import { chisquare } from './src/functions/chisquare'
+import { poisson } from './src/functions/poisson'
+import { triangular } from './src/functions/triangular'
+import { pareto } from './src/functions/pareto'
+import { geometric } from './src/functions/geometric'
+import { lognormal } from './src/functions/lognormal'
+import { binomial } from './src/functions/binomial'
 import { logo } from './src/misc/logo'
 
 
@@ -22,5 +28,11 @@ export {
     permutation,
     multivariateNormal,
     chisquare,
+    poisson,
+    triangular,
+    pareto,
+    geometric,
+    lognormal,
+    binomial,
     logo,
-};
+}

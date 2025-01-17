@@ -10,15 +10,15 @@ import { shuffle } from './shuffle'
 export function permutation(x) {
     if (typeof x === "number") {
         if (x <= 0 || !Number.isInteger(x)) {
-            throw new Error("If x is a number, it must be a positive integer.");
+            throw new Error("If x is a number, it must be a positive integer.")
         }
         // Create an array [0, 1, ..., x-1]
-        x = Array.from({ length: x }, (_, i) => i);
+        x = Array.from({ length: x }, (_, i) => i)
     } else if (!Array.isArray(x)) {
-        throw new Error("Input must be an array or a positive integer.");
+        throw new Error("Input must be an array or a positive integer.")
     }
     // Shuffle the array in-place
     shuffle(x)
 
-    return x;
+    return x
 }

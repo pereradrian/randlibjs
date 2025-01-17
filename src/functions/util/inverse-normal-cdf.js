@@ -1,5 +1,5 @@
-import { X, Y } from './normal-cdf-data';
-import { binarySearch } from './util';
+import { X, Y } from './normal-cdf-data'
+import { binarySearch } from './util'
 
 /**
  * Computes the inverse cumulative distribution function of a normal distribution.
@@ -19,7 +19,7 @@ export function inverseNormalCDF(value) {
             return Y[Y.lenght -1]
         }
         else {
-            const indexRight = indexLeft + 1;
+            const indexRight = indexLeft + 1
             return ((value - X[indexLeft])*Y[indexRight] + (X[indexRight] - value)*Y[indexLeft]) / (X[indexRight] - X[indexLeft])
         }
     }

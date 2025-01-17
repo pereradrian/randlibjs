@@ -1,4 +1,4 @@
-let randomGenerator = Math.random; // Default generator
+let randomGenerator = Math.random
 
 /**
  * PCG64 Random Number Generator
@@ -21,20 +21,20 @@ let randomGenerator = Math.random; // Default generator
  * @returns {function} - A function that generates random numbers in [0, 1).
  */
 function pcg64(seed) {
-    let state = BigInt(seed); // Use BigInt for 64-bit arithmetic
-    const multiplier = 6364136223846793005n; // PCG multiplier
-    const increment = 1442695040888963407n; // PCG increment
+    let state = BigInt(seed) // Use BigInt for 64-bit arithmetic
+    const multiplier = 6364136223846793005n // PCG multiplier
+    const increment = 1442695040888963407n // PCG increment
 
     return function () {
         // Update the internal state
-        state = state * multiplier + increment & 0xFFFFFFFFFFFFFFFFn;
+        state = state * multiplier + increment & 0xFFFFFFFFFFFFFFFFn
 
         // Extract high-order bits for randomness
-        const result = Number(state >> 32n) / 0xFFFFFFFF;
+        const result = Number(state >> 32n) / 0xFFFFFFFF
 
         // Normalize to [0, 1)
-        return result >= 0 ? result : result + 1;
-    };
+        return result >= 0 ? result : result + 1
+    }
 }
 
 /**
@@ -42,12 +42,15 @@ function pcg64(seed) {
  *
  * @param {number} seedValue - Value to initialize the random generator.
  * @returns {void}
+ * @throws {Error} Throws an error if the `seedValue` parameter is not a number.
  */
 export function seed(seedValue) {
-    const numericSeed = typeof seedValue === 'bigint' || typeof seedValue === 'number'
-        ? BigInt(seedValue)
-        : hashSeed(seedValue);
-    randomGenerator = pcg64(numericSeed);
+    if (typeof seedValue === 'bigint' || typeof seedValue === 'number') {
+        randomGenerator = pcg64(BigInt(seedValue) )
+    }
+    else {
+        throw new Error("SeedValue must be a number.")
+    }
 }
 
 /**
@@ -56,5 +59,5 @@ export function seed(seedValue) {
  * @returns {function} The random number generator function.
  */
 export function getRandomGenerator() {
-    return randomGenerator;
+    return randomGenerator
 }
