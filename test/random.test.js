@@ -321,3 +321,39 @@ describe('Poisson module tests', () => {
     expect(array[1]).toHaveLength(3)
   })
 })
+describe('Poisson module tests', () => {
+  test('Generates deterministic sequences with the same seed', () => {
+    console.log(poisson(1, 100))
+    seed(12345)
+    const firstSequence = [poisson(1), poisson(1), poisson(1)]
+    seed(12345)
+    const secondSequence = [poisson(1), poisson(1), poisson(1)]
+    expect(firstSequence).toEqual(secondSequence)
+  })
+  test('Generates different sequences with different seeds', () => {
+    seed(12345)
+    const firstSequence = [poisson(1), poisson(1), poisson(1)]
+    seed(67890)
+    const secondSequence = [poisson(1), poisson(1), poisson(1)]
+    expect(firstSequence).not.toEqual(secondSequence)
+  })
+  test('Generates deterministic sequences with the same seed', () => {
+    seed(12345)
+    const firstSequence = [poisson(31), poisson(31), poisson(31)]
+    seed(12345)
+    const secondSequence = [poisson(31), poisson(31), poisson(31)]
+    expect(firstSequence).toEqual(secondSequence)
+  })
+  test('Generates different sequences with different seeds', () => {
+    seed(12345)
+    const firstSequence = [poisson(31), poisson(31), poisson(31)]
+    seed(67890)
+    const secondSequence = [poisson(31), poisson(31), poisson(31)]
+    expect(firstSequence).not.toEqual(secondSequence)
+  })
+  test('Poisson generator produces values in correct range', () => {
+    const samples = poisson(1, 1000) // 1000 random values
+    expect(samples).toBeInstanceOf(Array)
+    expect(samples.length).toBe(1000)
+  })
+})

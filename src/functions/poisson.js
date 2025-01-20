@@ -1,6 +1,24 @@
 import { getRandomGenerator } from './seed'
 import { baseGenerator } from './base-generator'
 import { normal } from './normal'
+import { POISSON_LAMBDA_NORMAL_APPROXIMATION_THRESHOLD } from './util/constants'
+
+
+function generatePoisson(lambda) {
+    const L = Math.exp(-lambda)
+    let k = 0
+    let p = 1.0
+    do {
+        k++
+        p *= getRandomGenerator()()
+    } while (p > L)
+    return k - 1
+}
+
+function estimatePoissonForLargeLambda(lambda) {
+    return Math.round(normal(lambda, Math.sqrt(lambda)))
+}
+
 /**
  * Generates random numbers following a Poisson distribution with a given mean (lambda).
  * The Poisson distribution models the number of events occurring in a fixed interval of time
@@ -23,25 +41,15 @@ export function poisson(lambda, size = null) {
         throw new Error("Lambda must be a positive number.")
     }
 
-    if ( 30.0 < lambda ){
-        // For big lambda, use normal approximation
-        return Math.floor(normal(lambda, Math.sqrt(lambda), size))
+    let generator = null
+    if ( POISSON_LAMBDA_NORMAL_APPROXIMATION_THRESHOLD < lambda ){
+        generator = () => estimatePoissonForLargeLambda(lambda)
     }
     else {
-        // Helper function: Generate a single Poisson random value using Knuth's algorithm.
-        const generatePoisson = (lambda) => {
-            const L = Math.exp(-lambda)
-            let k = 0
-            let p = 1.0
-            do {
-                k++
-                p *= getRandomGenerator()()
-            } while (p > L)
-            return k - 1
-        }
-
-        // Use baseGenerator to handle the shape of the output.
-        return baseGenerator(() => generatePoisson(lambda), size)
+        generator = () => generatePoisson(lambda)
     }
+
+    // Use baseGenerator to handle the shape of the output.
+    return baseGenerator(generator, size)
 }
 
