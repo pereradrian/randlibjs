@@ -323,7 +323,6 @@ describe('Poisson module tests', () => {
 })
 describe('Poisson module tests', () => {
   test('Generates deterministic sequences with the same seed', () => {
-    console.log(poisson(1, 100))
     seed(12345)
     const firstSequence = [poisson(1), poisson(1), poisson(1)]
     seed(12345)

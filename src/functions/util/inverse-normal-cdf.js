@@ -7,20 +7,27 @@ import { binarySearch } from './util'
  * @param {number} value - The point to evaluate.
  */
 export function inverseNormalCDF(value) {
-    if (value <= X[0]) {
-        return Y[0]
+    const lastIndex = X.length - 1
+    const effectiveValue = (value <= X[lastIndex]) ? value : 1.0 - value
+    let result = null
+
+    if (effectiveValue <= X[0]) {
+        result = Y[0]
     }
-    else if (X[X.lenght - 1] <= value) {
-        return Y[Y.lenght - 1]
+    else if (X[lastIndex] <= effectiveValue) {
+        result = Y[lastIndex]
     }
     else {
-        const indexLeft = binarySearch(X, value)
-        if (indexLeft == X.lenght - 1) {
-            return Y[Y.lenght -1]
+        const indexLeft = binarySearch(X, effectiveValue)
+        if (indexLeft == lastIndex) {
+            result = Y[lastIndex]
         }
         else {
             const indexRight = indexLeft + 1
-            return ((value - X[indexLeft])*Y[indexRight] + (X[indexRight] - value)*Y[indexLeft]) / (X[indexRight] - X[indexLeft])
+            result = ((effectiveValue - X[indexLeft])*Y[indexRight] + (X[indexRight] - effectiveValue)*Y[indexLeft]) / (X[indexRight] - X[indexLeft])
         }
     }
+
+    // Apply symmetry
+    return (value <= X[lastIndex]) ? result : - result
 }
