@@ -14,6 +14,7 @@ import { pareto } from './src/functions/pareto'
 import { geometric } from './src/functions/geometric'
 import { lognormal } from './src/functions/lognormal'
 import { binomial } from './src/functions/binomial'
+import { mixture } from './src/functions/mixture'
 import { logo } from './src/misc/logo'
 
 
@@ -34,5 +35,6 @@ export {
     geometric,
     lognormal,
     binomial,
+    mixture,
     logo,
 }
