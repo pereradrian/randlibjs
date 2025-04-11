@@ -2,7 +2,7 @@
   "source": {
     "include": ["src", "index.js"],
     "includePattern": ".js$",
-    "excludePattern": "(node_modules/|docs|site/)"
+    "excludePattern": "(node_modules/|docs)"
   },
   "plugins": [
     "plugins/markdown"
@@ -10,7 +10,7 @@
   "opts": {
     "template": "templates/default",
     "encoding": "utf8",
-    "destination": "./site/docs/",
+    "destination": "./docs/docs/",
     "recurse": true,
     "verbose": true,
     "readme": "./README.md"
