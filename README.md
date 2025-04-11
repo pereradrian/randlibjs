@@ -2,8 +2,12 @@
 
 A lightweight JavaScript library for generating random numbers with various probability distributions.
 
-[![npm version](https://img.shields.io/npm/v/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
+[![Version](https://img.shields.io/npm/v/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
 [![License](https://img.shields.io/npm/l/randlibjs.svg)](https://github.com/pereradrian/randlibjs/blob/main/LICENSE)
+[![Build Status](https://github.com/pereradrian/randlibjs/actions/workflows/ci.yml/badge.svg)](https://github.com/pereradrian/randlibjs/actions)
+[![Codecov](https://codecov.io/gh/pereradrian/randlibjs/branch/master/graph/badge.svg)](https://codecov.io/gh/pereradrian/randlibjs)
+[![Maintenance](https://img.shields.io/maintenance/yes/2025.svg)](https://github.com/pereradrian/randlibjs/graphs/commit-activity)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpereradrian%2Frandlibjs.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpereradrian%2Frandlibjs?ref=badge_small)
 [![Downloads](https://img.shields.io/npm/dm/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
 
 ## Features
