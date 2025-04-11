@@ -1,0 +1,16 @@
+NOTICE
+
+randlib.js
+
+https://github.com/pereradrian/randlibjs
+
+This software, randlibjs, is a JavaScript library for generating random numbers, distributed under the BSD 3-Clause License.
+
+randlibjs is distributed "as is", without any warranty of any kind, either express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement.
+
+This package may include dependencies that are licensed under terms that differ from the BSD 3-Clause License. These dependencies are imported dynamically at runtime (not statically linked), and their licenses do not affect the redistributability of randlibjs under the BSD 3-Clause License.
+
+Users of this package are encouraged to review the licenses of individual dependencies to ensure compliance with any additional obligations.
+
+Copyright (c) 2025 Adrián Muñoz Perera
+All rights reserved.
