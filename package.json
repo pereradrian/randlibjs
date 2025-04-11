@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest",
+    "coverage": "vitest --coverage",
     "docs": "jsdoc -c docs/input/jsdoc.json",
     "deploy": "npm run docs && gh-pages -d docs"
   },
@@ -33,12 +34,13 @@
   "homepage": "https://github.com/pereradrian/randlibjs#readme",
   "devDependencies": {
     "@eslint/js": "^9.18.0",
+    "codecov": "^3.8.3",
     "eslint": "^9.18.0",
     "gh-pages": "^6.3.0",
     "globals": "^15.14.0",
     "jsdoc": "^4.0.4",
     "rollup-plugin-visualizer": "^5.14.0",
-    "vitest": "^2.1.8"
+    "vitest": "^3.1.1"
   },
   "dependencies": {
     "mathjs": "^14.0.1"
