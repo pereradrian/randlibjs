@@ -164,4 +164,4 @@ BSD-3-Clause License
 
 ## Author
 
-[Adrian Perera](https://pereradrian.github.io/)
+[Adrián Muñoz Perera](https://pereradrian.github.io/)

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest",
-    "docs": "jsdoc -c docs/input/jsdoc.json",
+    "docs": "jsdoc -c docs/jsdoc.json",
     "deploy": "npm run docs && gh-pages -d docs"
   },
   "repository": {
