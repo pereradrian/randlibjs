@@ -1,6 +1,6 @@
 {
   "name": "randlibjs",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Module implementing pseudo-random number generators with the ability to draw samples from a variety of probability distributions.",
   "main": "index.js",
   "scripts": {
