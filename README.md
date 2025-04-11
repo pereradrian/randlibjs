@@ -24,7 +24,7 @@ npm install randlibjs
 ### CDN
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/randlibjs@1.0.16/dist/randlib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/randlibjs@latest/dist/randlib.min.js"></script>
 ```
 
 ## Quick Start
@@ -50,7 +50,7 @@ console.log(uniformSample);
 ### Browser
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/randlibjs@1.0.16/dist/randlib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/randlibjs@latest/dist/randlib.min.js"></script>
 <script>
   // Set a seed
   randlib.seed(12345);
