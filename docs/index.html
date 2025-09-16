@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1 id="randlibjs">Randlibjs</h1>
+<p>A lightweight JavaScript library for generating random numbers with various probability distributions.</p>
+<p><a href="https://www.npmjs.com/package/randlibjs"><img src="https://img.shields.io/npm/v/randlibjs.svg" alt="Version"></a>
+<a href="https://github.com/pereradrian/randlibjs/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/randlibjs.svg" alt="License"></a>
+<a href="https://github.com/pereradrian/randlibjs/actions"><img src="https://github.com/pereradrian/randlibjs/actions/workflows/ci.yml/badge.svg" alt="Build Status"></a>
+<a href="https://codecov.io/gh/pereradrian/randlibjs"><img src="https://codecov.io/gh/pereradrian/randlibjs/branch/master/graph/badge.svg" alt="Codecov"></a>
+<a href="https://github.com/pereradrian/randlibjs/graphs/commit-activity"><img src="https://img.shields.io/maintenance/yes/2025.svg" alt="Maintenance"></a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fpereradrian%2Frandlibjs?ref=badge_shield&amp;issueType=license"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpereradrian%2Frandlibjs.svg?type=shield&amp;issueType=license" alt="FOSSA Status"></a>
+<a href="https://www.npmjs.com/package/randlibjs"><img src="https://img.shields.io/npm/dm/randlibjs.svg" alt="Downloads"></a></p>
+<h2 id="features">Features</h2>
+<ul>
+<li><strong>Multiple Distributions</strong>: Generate random numbers from various probability distributions including normal, uniform, exponential, and more</li>
+<li><strong>Reproducible Results</strong>: Set seeds to generate reproducible sequences of random numbers for testing and validation</li>
+<li><strong>Lightweight</strong>: Minimal dependencies and optimized code for fast performance in both browser and Node.js environments</li>
+<li><strong>Easy to Use</strong>: Simple and intuitive API with comprehensive documentation and examples</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<h3 id="npm">npm</h3>
+<pre class="prettyprint source lang-bash"><code>npm install randlibjs
+</code></pre>
+<h3 id="cdn">CDN</h3>
+<pre class="prettyprint source lang-html"><code>&lt;script src=&quot;https://cdn.jsdelivr.net/npm/randlibjs@latest/dist/randlib.min.js&quot;>&lt;/script>
+</code></pre>
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="es-modules">ES Modules</h3>
+<pre class="prettyprint source lang-javascript"><code>// Import specific functions
+import { normal, uniform, seed } from 'randlibjs';
+
+// Set a seed for reproducibility
+seed(12345);
+
+// Generate 10 numbers from normal distribution
+const normalSample = normal(0, 1, 10);
+console.log(normalSample);
+
+// Generate 5 uniformly distributed numbers
+const uniformSample = uniform(0, 10, 5);
+console.log(uniformSample);
+</code></pre>
+<h3 id="browser">Browser</h3>
+<pre class="prettyprint source lang-html"><code>&lt;script src=&quot;https://cdn.jsdelivr.net/npm/randlibjs@latest/dist/randlib.min.js&quot;>&lt;/script>
+&lt;script>
+  // Set a seed
+  randlib.seed(12345);
+  
+  // Generate random numbers
+  const normalSample = randlib.normal(0, 1, 10);
+  console.log(normalSample);
+&lt;/script>
+</code></pre>
+<h2 id="available-distributions">Available Distributions</h2>
+<h3 id="continuous-distributions">Continuous Distributions</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+<th>Parameters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uniform(low, high, size)</code></td>
+<td>Uniform distribution</td>
+<td><code>low</code>: Lower bound (default: 0)<br><code>high</code>: Upper bound (default: 1)<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+<tr>
+<td><code>normal(mean, std, size)</code></td>
+<td>Normal (Gaussian) distribution</td>
+<td><code>mean</code>: Mean (default: 0)<br><code>std</code>: Standard deviation (default: 1)<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+<tr>
+<td><code>exponential(lambda, size)</code></td>
+<td>Exponential distribution</td>
+<td><code>lambda</code>: Rate parameter (default: 1)<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+<tr>
+<td><code>cauchy(loc, scale, size)</code></td>
+<td>Cauchy distribution</td>
+<td><code>loc</code>: Location parameter (default: 0)<br><code>scale</code>: Scale parameter (default: 1)<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+<tr>
+<td><code>lognormal(mean, sigma, size)</code></td>
+<td>Lognormal distribution</td>
+<td><code>mean</code>: Mean of logarithm (default: 0)<br><code>sigma</code>: Standard deviation of logarithm (default: 1)<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+<tr>
+<td><code>pareto(alpha, size)</code></td>
+<td>Pareto distribution</td>
+<td><code>alpha</code>: Shape parameter (default: 1)<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+<tr>
+<td><code>triangular(low, high, mode, size)</code></td>
+<td>Triangular distribution</td>
+<td><code>low</code>: Lower bound (default: 0)<br><code>high</code>: Upper bound (default: 1)<br><code>mode</code>: Mode (default: 0.5)<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="discrete-distributions">Discrete Distributions</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+<th>Parameters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>randint(low, high, size)</code></td>
+<td>Discrete uniform distribution</td>
+<td><code>low</code>: Lower bound (included, default: 0)<br><code>high</code>: Upper bound (excluded)<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+<tr>
+<td><code>poisson(lambda, size)</code></td>
+<td>Poisson distribution</td>
+<td><code>lambda</code>: Rate parameter (default: 1)<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+<tr>
+<td><code>binomial(n, p, size)</code></td>
+<td>Binomial distribution</td>
+<td><code>n</code>: Number of trials<br><code>p</code>: Success probability<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+<tr>
+<td><code>geometric(p, size)</code></td>
+<td>Geometric distribution</td>
+<td><code>p</code>: Success probability<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+<tr>
+<td><code>chisquare(df, size)</code></td>
+<td>Chi-square distribution</td>
+<td><code>df</code>: Degrees of freedom<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="multivariate-distributions">Multivariate Distributions</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+<th>Parameters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>multivariateNormal(mean, cov, size)</code></td>
+<td>Multivariate normal distribution</td>
+<td><code>mean</code>: Mean vector<br><code>cov</code>: Covariance matrix<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="utilities">Utilities</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+<th>Parameters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>seed(value)</code></td>
+<td>Set random seed</td>
+<td><code>value</code>: Seed value</td>
+</tr>
+<tr>
+<td><code>shuffle(array)</code></td>
+<td>Randomly shuffle array</td>
+<td><code>array</code>: Array to shuffle</td>
+</tr>
+<tr>
+<td><code>permutation(n)</code></td>
+<td>Random permutation of integers</td>
+<td><code>n</code>: Number of elements</td>
+</tr>
+<tr>
+<td><code>mixture(distributions, weights, size)</code></td>
+<td>Mixture of distributions</td>
+<td><code>distributions</code>: Array of distribution functions<br><code>weights</code>: Array of weights<br><code>size</code>: Sample size (default: 1)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="examples">Examples</h2>
+<h3 id="monte-carlo-simulation">Monte Carlo Simulation</h3>
+<pre class="prettyprint source lang-javascript"><code>import { uniform } from 'randlibjs';
+
+function estimatePi(samples = 1000) {
+  let insideCircle = 0;
+  
+  for (let i = 0; i &lt; samples; i++) {
+    const x = uniform(-1, 1);
+    const y = uniform(-1, 1);
+    
+    if (x*x + y*y &lt;= 1) {
+      insideCircle++;
+    }
+  }
+  
+  return 4 * insideCircle / samples;
+}
+
+// Estimate π with 10,000 samples
+console.log(estimatePi(10000));
+</code></pre>
+<h3 id="random-walk-simulation">Random Walk Simulation</h3>
+<pre class="prettyprint source lang-javascript"><code>import { randint } from 'randlibjs';
+
+function randomWalk(steps = 100, p = 0.5) {
+  let position = 0;
+  const positions = [position];
+  
+  for (let i = 0; i &lt; steps; i++) {
+    // Movement: +1 with probability p, -1 with probability 1-p
+    const step = Math.random() &lt; p ? 1 : -1;
+    position += step;
+    positions.push(position);
+  }
+  
+  return positions;
+}
+
+// Perform a random walk of 100 steps
+const walk = randomWalk(100);
+console.log(walk);
+</code></pre>
+<h2 id="documentation">Documentation</h2>
+<p>For detailed documentation and more examples, visit:</p>
+<ul>
+<li><a href="https://pereradrian.github.io/randlibjs/">Official Website</a></li>
+<li><a href="https://pereradrian.github.io/randlibjs/docs/">API Documentation</a></li>
+<li><a href="https://github.com/pereradrian/randlibjs">GitHub Repository</a></li>
+</ul>
+<h2 id="license">License</h2>
+<p>BSD-3-Clause License</p>
+<h2 id="author">Author</h2>
+<p><a href="https://pereradrian.github.io/">Adrián Muñoz Perera</a></p></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#pcg64">pcg64</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#range">range</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Tue Sep 16 2025 14:52:17 GMT+0200 (hora de verano de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

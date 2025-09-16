@@ -1,0 +1,6 @@
+docs/
+development/
+coverage/
+.github/
+*.ipynb
+eslint.config.js
