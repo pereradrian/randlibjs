@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: lognormal.js</title>
+    <title>JSDoc: Source: choice.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: lognormal.js</h1>
+    <h1 class="page-title">Source: choice.js</h1>
 
     
 
@@ -26,26 +26,54 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { baseGenerator }  from './base-generator'
-import { normal } from './normal'
+            <pre class="prettyprint source linenums"><code>import { baseGenerator } from './base-generator'
+import { uniform } from './uniform'
+import { randint } from './randint'
+
+function chooseOneWeighted(array, weights, totalWeight) {
+    const n = array.length
+    const threshold = uniform(0.0, totalWeight)
+    let accum = 0
+    for (let i = 0; i &lt; n; i++) {
+        accum += weights[i]
+        if (threshold &lt; accum) {
+            return array[i]
+        }
+    }
+
+    // Fallback for floating precision
+    return array[array.length - 1]
+}
+
+function chooseOneUniform(array) {
+    return array[randint(array.length)]
+}
+
 
 /**
- * Generates random numbers or arrays of random numbers for a log-normal distribution.
+ * Shuffles the elements of an array along the first axis in-place.
  *
- * @param {number} [loc=0.0] - The mean of the underlying normal distribution to sample. 0.0 by default.
- * @param {number} [scale=1.0] - The standard deviation of the underlying normal distribution to sample. 1.0 by default.
- * @param {number|Array|null} [size=null] - The shape of the output:
- *   - If `null`, a single number is returned.
- *   - If a number, a 1D array of the specified size is returned.
- *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.
- * @throws {Error} Throws an error if:
- *   - The `size` parameter is not a number, an array or null.
- *   - The `scale` parameter is not positive.
- * @returns {number|Array} A single sample, an array, or a multidimensional array of log-normal distributed numbers.
+ * For N-dimensional arrays, this function only shuffles the order of the top-level sub-arrays.
+ * The content and order within each sub-array remain unchanged.
  *
+ * @param {Array} array - The array to shuffle. Must be N-dimensional.
+ * @returns {Array} A new shuffled array if a deep copy is required, otherwise in-place modification.
  */
-export function lognormal(loc=0.0, scale = 1.0, size = null) {
-    return baseGenerator(() => Math.exp(normal(loc, scale)), size)
+export function choice(array, weights = null, size = null) {
+    if (!Array.isArray(array) || array.length === 0) {
+        throw new Error("Items array can not be empty.")
+    }
+    
+    if (weights !== null) {
+        if (!Array.isArray(weights) || weights.length !== array.length) {
+            throw new Error("array.length != weights.length.")
+        }
+        const totalWeight = weights.reduce((accumulatedWeight, weight) => accumulatedWeight + weight, 0);
+        return baseGenerator(() => chooseOneWeighted(array, weights, totalWeight), size)
+    }
+    else {
+        return baseGenerator(() => chooseOneUniform(array), size)
+    }
 }
 </code></pre>
         </article>

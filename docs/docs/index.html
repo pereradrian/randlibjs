@@ -45,8 +45,12 @@
     <section>
         <article><h1 id="randlibjs">Randlibjs</h1>
 <p>A lightweight JavaScript library for generating random numbers with various probability distributions.</p>
-<p><a href="https://www.npmjs.com/package/randlibjs"><img src="https://img.shields.io/npm/v/randlibjs.svg" alt="npm version"></a>
+<p><a href="https://www.npmjs.com/package/randlibjs"><img src="https://img.shields.io/npm/v/randlibjs.svg" alt="Version"></a>
 <a href="https://github.com/pereradrian/randlibjs/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/randlibjs.svg" alt="License"></a>
+<a href="https://github.com/pereradrian/randlibjs/actions"><img src="https://github.com/pereradrian/randlibjs/actions/workflows/ci.yml/badge.svg" alt="Build Status"></a>
+<a href="https://codecov.io/gh/pereradrian/randlibjs"><img src="https://codecov.io/gh/pereradrian/randlibjs/branch/master/graph/badge.svg" alt="Codecov"></a>
+<a href="https://github.com/pereradrian/randlibjs/graphs/commit-activity"><img src="https://img.shields.io/maintenance/yes/2025.svg" alt="Maintenance"></a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fpereradrian%2Frandlibjs?ref=badge_shield&amp;issueType=license"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpereradrian%2Frandlibjs.svg?type=shield&amp;issueType=license" alt="FOSSA Status"></a>
 <a href="https://www.npmjs.com/package/randlibjs"><img src="https://img.shields.io/npm/dm/randlibjs.svg" alt="Downloads"></a></p>
 <h2 id="features">Features</h2>
 <ul>
@@ -60,7 +64,7 @@
 <pre class="prettyprint source lang-bash"><code>npm install randlibjs
 </code></pre>
 <h3 id="cdn">CDN</h3>
-<pre class="prettyprint source lang-html"><code>&lt;script src=&quot;https://cdn.jsdelivr.net/npm/randlibjs@1.0.16/dist/randlib.min.js&quot;>&lt;/script>
+<pre class="prettyprint source lang-html"><code>&lt;script src=&quot;https://cdn.jsdelivr.net/npm/randlibjs@latest/dist/randlib.min.js&quot;>&lt;/script>
 </code></pre>
 <h2 id="quick-start">Quick Start</h2>
 <h3 id="es-modules">ES Modules</h3>
@@ -79,7 +83,7 @@ const uniformSample = uniform(0, 10, 5);
 console.log(uniformSample);
 </code></pre>
 <h3 id="browser">Browser</h3>
-<pre class="prettyprint source lang-html"><code>&lt;script src=&quot;https://cdn.jsdelivr.net/npm/randlibjs@1.0.16/dist/randlib.min.js&quot;>&lt;/script>
+<pre class="prettyprint source lang-html"><code>&lt;script src=&quot;https://cdn.jsdelivr.net/npm/randlibjs@latest/dist/randlib.min.js&quot;>&lt;/script>
 &lt;script>
   // Set a seed
   randlib.seed(12345);
@@ -287,13 +291,13 @@ console.log(walk);
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#pcg64">pcg64</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#pcg64">pcg64</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#range">range</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Apr 11 2025 11:01:06 GMT+0200 (hora de verano de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Tue Sep 16 2025 14:52:17 GMT+0200 (hora de verano de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>

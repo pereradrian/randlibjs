@@ -1,4 +1,5 @@
-import { seed, randint, uniform, normal, cauchy, exponential, permutation, multivariateNormal, chisquare, poisson } from '../index'
+import { seed, randint, uniform, normal, cauchy, exponential, permutation, multivariateNormal, chisquare, poisson, choice } from '../index'
+import { range } from '../src/functions/util/range'
 import { describe, test, expect } from 'vitest'
 
 describe('Randint module tests', () => {
@@ -354,5 +355,38 @@ describe('Poisson module tests', () => {
     const samples = poisson(1, 1000) // 1000 random values
     expect(samples).toBeInstanceOf(Array)
     expect(samples.length).toBe(1000)
+  })
+})
+describe('Choice module tests', () => {
+  console.log(range(100))
+  const generate100Uniform = () => choice(range(100), null)
+  const generate100Weighted = () => choice(range(100), range(100))
+  test('Generates deterministic sequences with the same seed', () => {
+    seed(12345)
+    const firstSequence = generate100Uniform()
+    seed(12345)
+    const secondSequence = generate100Uniform()
+    expect(firstSequence).toEqual(secondSequence)
+  })
+  test('Generates different sequences with different seeds', () => {
+    seed(12345)
+    const firstSequence = generate100Uniform()
+    seed(67890)
+    const secondSequence = generate100Uniform()
+    expect(firstSequence).not.toEqual(secondSequence)
+  })
+  test('Generates deterministic sequences with the same seed (weighted)', () => {
+    seed(12345)
+    const firstSequence = generate100Weighted()
+    seed(12345)
+    const secondSequence = generate100Weighted()
+    expect(firstSequence).toEqual(secondSequence)
+  })
+  test('Generates different sequences with different seeds (weighted)', () => {
+    seed(12345)
+    const firstSequence = generate100Weighted()
+    seed(67890)
+    const secondSequence = generate100Weighted()
+    expect(firstSequence).not.toEqual(secondSequence)
   })
 })

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: lognormal.js</title>
+    <title>JSDoc: Source: util/range.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: lognormal.js</h1>
+    <h1 class="page-title">Source: util/range.js</h1>
 
     
 
@@ -26,28 +26,59 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { baseGenerator }  from './base-generator'
-import { normal } from './normal'
-
-/**
- * Generates random numbers or arrays of random numbers for a log-normal distribution.
+            <pre class="prettyprint source linenums"><code>/**
+ * Returns an array of integers from `start` (inclusive) to `stop` (exclusive),
+ * incrementing by `step`.
  *
- * @param {number} [loc=0.0] - The mean of the underlying normal distribution to sample. 0.0 by default.
- * @param {number} [scale=1.0] - The standard deviation of the underlying normal distribution to sample. 1.0 by default.
- * @param {number|Array|null} [size=null] - The shape of the output:
- *   - If `null`, a single number is returned.
- *   - If a number, a 1D array of the specified size is returned.
- *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.
- * @throws {Error} Throws an error if:
- *   - The `size` parameter is not a number, an array or null.
- *   - The `scale` parameter is not positive.
- * @returns {number|Array} A single sample, an array, or a multidimensional array of log-normal distributed numbers.
+ * If only one argument is provided, it is interpreted as `stop`, and `start` is assumed to be 0.
+ * If `step` is not provided, it defaults to 1.
  *
+ * @function
+ * @param {number} a - `stop` if it's the only argument, or `start` if there are two or more.
+ * @param {number} [b] - `stop` if two arguments are provided.
+ * @param {number} [c] - `step`, optional. Defaults to 1. Cannot be 0.
+ * @returns {number[]} Array of integers from `start` to `stop`, excluding `stop`.
+ *
+ * @example
+ * range(5);        // [0, 1, 2, 3, 4]
+ * range(3, 7);     // [3, 4, 5, 6]
+ * range(10, 2, -2) // [10, 8, 6, 4]
  */
-export function lognormal(loc=0.0, scale = 1.0, size = null) {
-    return baseGenerator(() => Math.exp(normal(loc, scale)), size)
-}
-</code></pre>
+export function range(a, b, c = 1) {
+    let start, end, step;
+  
+    if (b === undefined) {
+      start = 0;
+      end = a;
+      step = 1;
+    } else if (c === undefined) {
+      start = a;
+      end = b;
+      step = 1;
+    } else {
+      start = a;
+      end = b;
+      step = c;
+    }
+  
+    if (step === 0) {
+      throw new Error("Step cannot be 0");
+    }
+  
+    const result = [];
+    if (step > 0) {
+      for (let i = start; i &lt; end; i += step) {
+        result.push(i);
+      }
+    } else {
+      for (let i = start; i > end; i += step) {
+        result.push(i);
+      }
+    }
+  
+    return result;
+  }
+  </code></pre>
         </article>
     </section>
 
