@@ -25,12 +25,6 @@ A lightweight JavaScript library for generating random numbers with various prob
 npm install randlibjs
 ```
 
-### CDN
-
-```html
-<script src="https://cdn.jsdelivr.net/npm/randlibjs@latest/dist/randlib.min.js"></script>
-```
-
 ## Quick Start
 
 ### ES Modules
