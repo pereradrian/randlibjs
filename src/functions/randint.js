@@ -1,5 +1,5 @@
-import { getRandomGenerator } from './seed'
-import { baseGenerator } from './base-generator'
+import { getRandomGenerator } from './seed.js'
+import { baseGenerator } from './base-generator.js'
 
 /**
  * Generates random integers or arrays of random integers within a specified range.

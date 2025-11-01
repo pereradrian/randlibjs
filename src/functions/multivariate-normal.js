@@ -1,6 +1,6 @@
 import {add, multiply} from 'mathjs'
-import { choleskyDecomposition } from './util/cholesky'
-import { normal } from './normal'
+import { choleskyDecomposition } from './util/cholesky.js'
+import { normal } from './normal.js'
 
 /**
  * Generates random samples from a multivariate normal distribution.

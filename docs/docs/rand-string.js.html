@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: seed.js</title>
+    <title>JSDoc: Source: rand-string.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: seed.js</h1>
+    <h1 class="page-title">Source: rand-string.js</h1>
 
     
 
@@ -26,68 +26,43 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>let randomGenerator = Math.random
+            <pre class="prettyprint source linenums"><code>import { baseGenerator } from './base-generator.js'
+import { randint } from './randint.js'
+
+const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&amp;*()_+-=[]{}|;:,.&lt;>?'
 
 /**
- * PCG64 Random Number Generator
- * 
- * A JavaScript implementation of the Permuted Congruential Generator (PCG).
- * This algorithm was introduced by Melissa E. O'Neill in her paper:
- * "PCG: A Family of Simple Fast Space-Efficient Statistically Good Algorithms for Random Number Generation" (2014).
- * 
- * Reference:
- * - Paper: https://www.pcg-random.org/pdf/toms-oneill-pcg-family-v1.02.pdf
- * - Website: https://www.pcg-random.org/
+ * Generates random strings or arrays of random strings.
  *
- * Constants used (multiplier and increment) are based on the PCG64 default configuration:
- * - Multiplier: 6364136223846793005 (prime relative to 2^64, ensures full period).
- * - Increment: 1442695040888963407 (odd, ensures proper state transitions).
- * 
- * This implementation generates 64-bit random numbers and maps them to the range [0, 1).
- *
- * @param {number|bigint} seed - The initial seed for the random generator.
- * @returns {function} - A function that generates random numbers in [0, 1).
+ * @param {number} length - The length of each generated string.
+ * @param {string} [chars=CHARS] - The characters to use for generating the string.
+ * @param {number|Array|null} [size=null] - The shape of the output:
+ *   - If `null`, a single string is returned.
+ *   - If a number, a 1D array of strings of that length is returned.
+ *   - If an array (e.g. [m, n]), a multidimensional array of strings is returned.
+ * @throws {Error} Throws if:
+ *   - `length` is not a positive integer.
+ *   - `chars` is not a non-empty string.
+ *   - `size` is not `null`, a number, or an array of numbers.
+ * @returns {string|Array} A single string or an array of random strings.
  */
-function pcg64(seed) {
-    let state = BigInt(seed) // Use BigInt for 64-bit arithmetic
-    const multiplier = 6364136223846793005n // PCG multiplier
-    const increment = 1442695040888963407n // PCG increment
+export function randString(length, chars = CHARS, size = null) {
+  if (!Number.isInteger(length) || length &lt;= 0) {
+    throw new Error('Parameter "length" must be a positive integer.')
+  }
+  if (typeof chars !== 'string' || chars.length === 0) {
+    throw new Error('Parameter "chars" must be a non-empty string.')
+  }
 
-    return function () {
-        // Update the internal state
-        state = state * multiplier + increment &amp; 0xFFFFFFFFFFFFFFFFn
-
-        // Extract high-order bits for randomness
-        const result = Number(state >> 32n) / 0xFFFFFFFF
-
-        // Normalize to [0, 1)
-        return result >= 0 ? result : result + 1
+  const generator = () => {
+    let result = ''
+    for (let i = 0; i &lt; length; i++) {
+      result += chars.charAt(randint(chars.length))
     }
-}
+    return result
+  }
 
-/**
- * Seeds the random number generator with a specified value.
- *
- * @param {number} seedValue - Value to initialize the random generator.
- * @returns {void}
- * @throws {Error} Throws an error if the `seedValue` parameter is not a number.
- */
-export function seed(seedValue) {
-    if (typeof seedValue === 'bigint' || typeof seedValue === 'number') {
-        randomGenerator = pcg64(BigInt(seedValue) )
-    }
-    else {
-        throw new Error("SeedValue must be a number.")
-    }
-}
-
-/**
- * Returns the current random generator function.
- *
- * @returns {function} The random number generator function.
- */
-export function getRandomGenerator() {
-    return randomGenerator
+  return baseGenerator(generator, size)
 }
 </code></pre>
         </article>

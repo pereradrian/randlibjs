@@ -1,8 +1,6 @@
-import { getRandomGenerator } from './seed'
-import { baseGenerator }  from './base-generator'
-import { inverseNormalCDF } from './util/inverse-normal-cdf'
-import { EPS } from './util/constants'
-import { uniform } from './uniform'
+import { baseGenerator }  from './base-generator.js'
+import { EPS } from './util/constants.js'
+import { uniform } from './uniform.js'
 
 /**
  * Generates random numbers or arrays of random numbers for a mixture of given distributions.

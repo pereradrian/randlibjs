@@ -1,6 +1,6 @@
-import { baseGenerator } from './base-generator'
-import { uniform } from './uniform'
-import { randint } from './randint'
+import { baseGenerator } from './base-generator.js'
+import { uniform } from './uniform.js'
+import { randint } from './randint.js'
 
 function chooseOneWeighted(array, weights, totalWeight) {
     const n = array.length

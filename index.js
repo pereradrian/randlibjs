@@ -1,22 +1,23 @@
-import { seed } from './src/functions/seed'
-import { randint } from './src/functions/randint'
-import { uniform } from './src/functions/uniform'
-import { normal } from './src/functions/normal'
-import { cauchy } from './src/functions/cauchy'
+import { seed } from './src/functions/seed.js'
+import { randint } from './src/functions/randint.js'
+import { uniform } from './src/functions/uniform.js'
+import { normal } from './src/functions/normal.js'
+import { cauchy } from './src/functions/cauchy.js'
 import { exponential } from './src/functions/exponential.js'
-import { shuffle } from './src/functions/shuffle'
-import { permutation } from './src/functions/permutation'
-import { multivariateNormal } from './src/functions/multivariate-normal'
-import { chisquare } from './src/functions/chisquare'
-import { poisson } from './src/functions/poisson'
-import { triangular } from './src/functions/triangular'
-import { pareto } from './src/functions/pareto'
-import { geometric } from './src/functions/geometric'
-import { lognormal } from './src/functions/lognormal'
-import { binomial } from './src/functions/binomial'
-import { mixture } from './src/functions/mixture'
-import { choice } from './src/functions/choice'
-import { logo } from './src/misc/logo'
+import { shuffle } from './src/functions/shuffle.js'
+import { permutation } from './src/functions/permutation.js'
+import { multivariateNormal } from './src/functions/multivariate-normal.js'
+import { chisquare } from './src/functions/chisquare.js'
+import { poisson } from './src/functions/poisson.js'
+import { triangular } from './src/functions/triangular.js'
+import { pareto } from './src/functions/pareto.js'
+import { geometric } from './src/functions/geometric.js'
+import { lognormal } from './src/functions/lognormal.js'
+import { binomial } from './src/functions/binomial.js'
+import { mixture } from './src/functions/mixture.js'
+import { choice } from './src/functions/choice.js'
+import { randString } from './src/functions/rand-string.js'
+import { logo } from './src/misc/logo.js'
 
 
 export {
@@ -38,5 +39,6 @@ export {
     binomial,
     choice,
     mixture,
+    randString,
     logo,
 }

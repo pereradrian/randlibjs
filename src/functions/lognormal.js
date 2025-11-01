@@ -1,5 +1,5 @@
-import { baseGenerator }  from './base-generator'
-import { normal } from './normal'
+import { baseGenerator }  from './base-generator.js'
+import { normal } from './normal.js'
 
 /**
  * Generates random numbers or arrays of random numbers for a log-normal distribution.

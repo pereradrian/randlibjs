@@ -96,6 +96,7 @@ console.log(uniformSample);
 | `seed(value)` | Set random seed | `value`: Seed value |
 | `shuffle(array)` | Randomly shuffle array | `array`: Array to shuffle |
 | `permutation(n)` | Random permutation of integers | `n`: Number of elements |
+| `randString(length)` | Random string | `length`: Length of the string |
 | `mixture(distributions, weights, size)` | Mixture of distributions | `distributions`: Array of distribution functions<br>`weights`: Array of weights<br>`size`: Sample size (default: 1) |
 
 ## Examples

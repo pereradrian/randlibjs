@@ -1,5 +1,5 @@
-import { seed, randint, uniform, normal, cauchy, exponential, permutation, multivariateNormal, chisquare, poisson, choice } from '../index'
-import { range } from '../src/functions/util/range'
+import { seed, randint, uniform, normal, cauchy, exponential, permutation, multivariateNormal, chisquare, poisson, choice, randString } from '../index.js'
+import { range } from '../src/functions/util/range.js'
 import { describe, test, expect } from 'vitest'
 
 describe('Randint module tests', () => {
@@ -388,5 +388,75 @@ describe('Choice module tests', () => {
     seed(67890)
     const secondSequence = generate100Weighted()
     expect(firstSequence).not.toEqual(secondSequence)
+  })
+})
+describe('randString module tests', () => {
+  test('Generates deterministic sequences with the same seed', () => {
+    seed(12345)
+    const firstSequence = [randString(8), randString(8), randString(8)]
+    seed(12345)
+    const secondSequence = [randString(8), randString(8), randString(8)]
+    expect(firstSequence).toEqual(secondSequence)
+  })
+
+  test('Generates different sequences with different seeds', () => {
+    seed(12345)
+    const firstSequence = [randString(8), randString(8), randString(8)]
+    seed(67890)
+    const secondSequence = [randString(8), randString(8), randString(8)]
+    expect(firstSequence).not.toEqual(secondSequence)
+  })
+
+  test('Generates strings of correct length', () => {
+    const str = randString(20)
+    expect(typeof str).toBe('string')
+    expect(str.length).toBe(20)
+  })
+
+  test('Uses custom character set when provided', () => {
+    const chars = 'ABC'
+    const str = randString(50, chars)
+    expect([...str].every(c => chars.includes(c))).toBe(true)
+  })
+
+  test('Generates array of strings when size is a number', () => {
+    const arr = randString(10, undefined, 5)
+    expect(Array.isArray(arr)).toBe(true)
+    expect(arr).toHaveLength(5)
+    arr.forEach(s => {
+      expect(typeof s).toBe('string')
+      expect(s.length).toBe(10)
+    })
+  })
+
+  test('Generates multidimensional array of strings when size is an array', () => {
+    const matrix = randString(6, undefined, [2, 3])
+    expect(Array.isArray(matrix)).toBe(true)
+    expect(matrix.length).toBe(2)
+    expect(matrix[0].length).toBe(3)
+    matrix.flat().forEach(s => {
+      expect(typeof s).toBe('string')
+      expect(s.length).toBe(6)
+    })
+  })
+
+  test('Throws for invalid length', () => {
+    expect(() => randString(0)).toThrow('Parameter "length" must be a positive integer.')
+    expect(() => randString(-5)).toThrow('Parameter "length" must be a positive integer.')
+    expect(() => randString(2.5)).toThrow('Parameter "length" must be a positive integer.')
+  })
+
+  test('Throws for invalid chars', () => {
+    expect(() => randString(10, '')).toThrow('Parameter "chars" must be a non-empty string.')
+    expect(() => randString(10, null)).toThrow('Parameter "chars" must be a non-empty string.')
+  })
+
+  test('Performance: generates 10,000 random strings efficiently', () => {
+    const start = performance.now()
+    const result = randString(20, undefined, 10000)
+    const end = performance.now()
+    expect(Array.isArray(result)).toBe(true)
+    expect(result.length).toBe(10000)
+    console.log(`Generated 10,000 strings in ${(end - start).toFixed(2)} ms`)
   })
 })

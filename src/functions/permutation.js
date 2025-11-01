@@ -1,4 +1,4 @@
-import { shuffle } from './shuffle'
+import { shuffle } from './shuffle.js'
 
 /**
  * Generates a random permutation of an array or a range of integers.
