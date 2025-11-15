@@ -87,7 +87,10 @@ console.log(uniformSample);
 
 | Function | Description | Parameters |
 |----------|-------------|------------|
-| `multivariateNormal(mean, cov, size)` | Multivariate normal distribution | `mean`: Mean vector<br>`cov`: Covariance matrix<br>`size`: Sample size (default: 1) |
+| `multivariate(mean, cov, generator, size)` | Generates samples from a general multivariate distribution | `mean`: Mean vector<br>`cov`: Covariance matrix<br>`generator`: Function to generate samples<br>`size`: Sample size (default: 1) |
+| `multivariateNormal(mean, cov, size)` | Generates samples from a multivariate normal distribution | `mean`: Mean vector<br>`cov`: Covariance matrix<br>`size`: Sample size (default: 1) |
+| `multivariateUniform(low, high, size)` | Generates samples from a multivariate uniform distribution | `low`: Minimum values vector<br>`high`: Maximum values vector<br>`size`: Sample size (default: 1) |
+| `multivariateTriangular(left, mode, right, size)` | Generates samples from a multivariate triangular distribution | `left`: Minimum values vector<br>`mode`: Mode values vector<br>`right`: Maximum values vector<br>`size`: Sample size (default: 1) |
 
 ### Utilities
 
