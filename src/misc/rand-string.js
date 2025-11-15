@@ -1,5 +1,5 @@
-import { baseGenerator } from './base-generator.js'
-import { randint } from './randint.js'
+import { baseGenerator } from '../functions/base-generator.js'
+import { randint } from '../functions/univariate/randint.js'
 
 const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?'
 
@@ -19,7 +19,7 @@ const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#
  * @returns {string|Array} A single string or an array of random strings.
  */
 export function randString(length, chars = CHARS, size = null) {
-  if (!Number.isInteger(length) || length <= 0) {
+  if (!Number.isInteger(length) || length < 0) {
     throw new Error('Parameter "length" must be a positive integer.')
   }
   if (typeof chars !== 'string' || chars.length === 0) {

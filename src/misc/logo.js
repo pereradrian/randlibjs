@@ -1,5 +1,5 @@
-import { uniform } from '../functions/uniform.js'
-import { randint } from '../functions/randint.js'
+import { uniform } from '../functions/univariate/uniform.js'
+import { randint } from '../functions/univariate/randint.js'
 
 export function logo(size) {
   

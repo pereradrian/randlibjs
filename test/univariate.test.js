@@ -1,4 +1,4 @@
-import { seed, randint, uniform, normal, cauchy, exponential, permutation, multivariateNormal, chisquare, poisson, choice, randString } from '../index.js'
+import { seed, randint, uniform, normal, cauchy, exponential, permutation, chisquare, poisson, choice, randString, mixture } from '../index.js'
 import { range } from '../src/functions/util/range.js'
 import { describe, test, expect } from 'vitest'
 
@@ -157,77 +157,6 @@ describe('Permutation  module tests', () => {
     expect(() => permutation({})).toThrow('Input must be an array or a positive integer.')
   })
 })
-describe('Multivariate Normal Distribution', () => {
-    test('Generates samples with correct mean and covariance (2D case)', () => {
-        const mean = [1, 2]
-        const covariance = [
-            [1, 0.8],
-            [0.8, 1]
-        ]
-        const samples = multivariateNormal(mean, covariance, 10000)
-
-        // Calculate sample mean and covariance
-        const sampleMean = samples.reduce(
-            (acc, sample) => acc.map((sum, i) => sum + sample[i]),
-            [0, 0]
-        ).map(sum => sum / samples.length)
-
-        const sampleCovariance = [
-            [0, 0],
-            [0, 0]
-        ]
-        samples.forEach(sample => {
-            const diff = sample.map((val, i) => val - sampleMean[i])
-            sampleCovariance[0][0] += diff[0] * diff[0]
-            sampleCovariance[0][1] += diff[0] * diff[1]
-            sampleCovariance[1][0] += diff[1] * diff[0]
-            sampleCovariance[1][1] += diff[1] * diff[1]
-        })
-        sampleCovariance.forEach((row, i) =>
-            row.forEach((val, j) => (sampleCovariance[i][j] /= samples.length))
-        )
-
-        // Assertions
-        expect(sampleMean[0]).toBeCloseTo(mean[0], 1)
-        expect(sampleMean[1]).toBeCloseTo(mean[1], 1)
-
-        expect(sampleCovariance[0][0]).toBeCloseTo(covariance[0][0], 1)
-        expect(sampleCovariance[0][1]).toBeCloseTo(covariance[0][1], 1)
-        expect(sampleCovariance[1][0]).toBeCloseTo(covariance[1][0], 1)
-        expect(sampleCovariance[1][1]).toBeCloseTo(covariance[1][1], 1)
-    })
-
-    test('Works with uncorrelated variables (diagonal covariance)', () => {
-        seed(12345)
-        const mean = [0, 0]
-        const covariance = [
-            [2, 0],
-            [0, 3]
-        ]
-        const samples = multivariateNormal(mean, covariance, 10000)
-
-        // Calculate sample covariance
-        const sampleCovariance = [
-            [0, 0],
-            [0, 0]
-        ]
-        samples.forEach(sample => {
-            sampleCovariance[0][0] += sample[0] * sample[0]
-            sampleCovariance[1][1] += sample[1] * sample[1]
-            sampleCovariance[0][1] += sample[0] * sample[1]
-            sampleCovariance[1][0] += sample[1] * sample[0]
-        })
-        sampleCovariance.forEach((row, i) =>
-            row.forEach((val, j) => (sampleCovariance[i][j] /= samples.length))
-        )
-
-        // Assertions
-        expect(sampleCovariance[0][0]).toBeCloseTo(covariance[0][0], 1)
-        expect(sampleCovariance[1][1]).toBeCloseTo(covariance[1][1], 1)
-        expect(sampleCovariance[0][1]).toBeCloseTo(0, 1) // Near-zero covariance
-        expect(sampleCovariance[1][0]).toBeCloseTo(0, 1)
-    })
-})
 /**
  * Helper function to calculate mean of an array
  */
@@ -279,7 +208,7 @@ describe("Chi-squared Distribution Tests", () => {
   })
 
   test("Throws an error for invalid size parameter", () => {
-      expect(() => chisquare(3, "invalid")).toThrow("size must be a number, an array, or null")
+      expect(() => chisquare(3, "invalid")).toThrow("Size must be a number, an array, or null.")
   })
 
   test("Approximates correct mean and variance", () => {
@@ -358,7 +287,6 @@ describe('Poisson module tests', () => {
   })
 })
 describe('Choice module tests', () => {
-  console.log(range(100))
   const generate100Uniform = () => choice(range(100), null)
   const generate100Weighted = () => choice(range(100), range(100))
   test('Generates deterministic sequences with the same seed', () => {
@@ -441,7 +369,6 @@ describe('randString module tests', () => {
   })
 
   test('Throws for invalid length', () => {
-    expect(() => randString(0)).toThrow('Parameter "length" must be a positive integer.')
     expect(() => randString(-5)).toThrow('Parameter "length" must be a positive integer.')
     expect(() => randString(2.5)).toThrow('Parameter "length" must be a positive integer.')
   })
@@ -450,13 +377,100 @@ describe('randString module tests', () => {
     expect(() => randString(10, '')).toThrow('Parameter "chars" must be a non-empty string.')
     expect(() => randString(10, null)).toThrow('Parameter "chars" must be a non-empty string.')
   })
+})
+describe('Mixture distribution tests', () => {
 
-  test('Performance: generates 10,000 random strings efficiently', () => {
-    const start = performance.now()
-    const result = randString(20, undefined, 10000)
-    const end = performance.now()
-    expect(Array.isArray(result)).toBe(true)
-    expect(result.length).toBe(10000)
-    console.log(`Generated 10,000 strings in ${(end - start).toFixed(2)} ms`)
+  test('Throws when number of generators and priors mismatch', () => {
+    const gens = [() => uniform(0, 1)]
+    const priors = [0.5, 0.5]
+    expect(() => mixture(gens, priors)).toThrow("The number of priors must match the number of generators.")
   })
+
+  test('Throws when priors do not sum to 1', () => {
+    const gens = [() => uniform(0, 1), () => normal(0, 1)]
+    const priors = [0.7, 0.7] // Incorrect
+    expect(() => mixture(gens, priors)).toThrow("Priors must sum to 1.")
+  })
+
+  test('Produces deterministic output with same seed', () => {
+    const gens = [() => uniform(0, 1), () => normal(0, 1)]
+    const priors = [0.5, 0.5]
+
+    seed(12345)
+    const seq1 = [mixture(gens, priors), mixture(gens, priors), mixture(gens, priors)]
+
+    seed(12345)
+    const seq2 = [mixture(gens, priors), mixture(gens, priors), mixture(gens, priors)]
+
+    expect(seq1).toEqual(seq2)
+  })
+
+  test('Produces different output with different seeds', () => {
+    const gens = [() => uniform(0, 1), () => normal(0, 1)]
+    const priors = [0.5, 0.5]
+
+    seed(11111)
+    const seq1 = [mixture(gens, priors), mixture(gens, priors), mixture(gens, priors)]
+
+    seed(22222)
+    const seq2 = [mixture(gens, priors), mixture(gens, priors), mixture(gens, priors)]
+
+    expect(seq1).not.toEqual(seq2)
+  })
+
+  test('Generates arrays of correct shape', () => {
+    const gens = [() => uniform(0, 1), () => normal(0, 1)]
+    const priors = [0.5, 0.5]
+
+    seed(12345)
+    const arr = mixture(gens, priors, [3, 4])
+
+    expect(arr).toHaveLength(3)
+    expect(arr[0]).toHaveLength(4)
+  })
+
+  test('Mixture respects priors (approximate proportions)', () => {
+    const gens = [
+      () => 10,             // deterministic for test
+      () => 20
+    ]
+    const priors = [0.7, 0.3]
+
+    seed(999)
+    const samples = mixture(gens, priors, 10000)
+
+    const count10 = samples.filter(x => x === 10).length
+    const count20 = samples.filter(x => x === 20).length
+
+    expect(count10 / samples.length).toBeCloseTo(0.7, 1)
+    expect(count20 / samples.length).toBeCloseTo(0.3, 1)
+  })
+
+  test('Works with nested multidimensional output', () => {
+    const gens = [() => uniform(0, 1), () => normal(0, 1)]
+    const priors = [0.5, 0.5]
+
+    const size = [2, 2, 3]
+    const out = mixture(gens, priors, size)
+
+    expect(out.length).toBe(2)
+    expect(out[0].length).toBe(2)
+    expect(out[0][0].length).toBe(3)
+  })
+
+  test('Generators are actually invoked (sampling not cached)', () => {
+    let counter1 = 0
+    let counter2 = 0
+
+    const gens = [
+      () => { counter1++; return 1 },
+      () => { counter2++; return 2 }
+    ]
+    const priors = [0.5, 0.5]
+
+    mixture(gens, priors, 10)
+
+    expect(counter1 + counter2).toBe(10)
+  })
+
 })

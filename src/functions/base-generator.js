@@ -16,7 +16,7 @@
  *
  */
 export function baseGenerator(generator, size) {
-    if (size === null) {
+    if (size == null) {
         return generator()
     }
     else if (typeof size === "number") {
@@ -30,6 +30,6 @@ export function baseGenerator(generator, size) {
         return buildArray(size)
     }
     else {
-        throw new Error("size must be a number, an array, or null")
+        throw new Error(`Size must be a number, an array, or null.`)
     }
 }

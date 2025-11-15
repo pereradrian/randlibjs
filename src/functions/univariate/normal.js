@@ -1,6 +1,6 @@
-import { getRandomGenerator } from './seed.js'
-import { baseGenerator }  from './base-generator.js'
-import { inverseNormalCDF } from './util/inverse-normal-cdf.js'
+import { getRandomGenerator } from '../seed.js'
+import { baseGenerator }  from '../base-generator.js'
+import { inverseNormalCDF } from '../util/inverse-normal-cdf.js'
 
 /**
  * Generates random numbers or arrays of random numbers for a normal distribution.

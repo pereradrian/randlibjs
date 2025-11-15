@@ -1,5 +1,5 @@
 import { X, Y } from './normal-cdf-data.js'
-import { binarySearch } from './util.js'
+import { binarySearch } from './binary-search.js'
 
 /**
  * Computes the inverse cumulative distribution function of a normal distribution.

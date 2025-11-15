@@ -1,5 +1,5 @@
-import { getRandomGenerator } from './seed.js'
-import { baseGenerator } from './base-generator.js'
+import { getRandomGenerator } from '../seed.js'
+import { baseGenerator } from '../base-generator.js'
 
 /**
  * Generates random samples from an exponential distribution.

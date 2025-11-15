@@ -1,6 +1,6 @@
 {
   "name": "randlibjs",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "Module implementing pseudo-random number generators with the ability to draw samples from a variety of probability distributions.",
   "main": "index.js",
   "exports": "./index.js",
@@ -9,7 +9,8 @@
     "test": "vitest",
     "coverage": "vitest --coverage",
     "docs": "jsdoc -c docs/input/jsdoc.json",
-    "deploy": "npm run docs && gh-pages -d docs"
+    "deploy": "npm run docs && gh-pages -d docs",
+    "publish": "npm publish"
   },
   "repository": {
     "type": "git",

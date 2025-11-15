@@ -1,7 +1,7 @@
-import { getRandomGenerator } from './seed.js'
-import { baseGenerator } from './base-generator.js'
+import { getRandomGenerator } from '../seed.js'
+import { baseGenerator } from '../base-generator.js'
 import { normal } from './normal.js'
-import { POISSON_LAMBDA_NORMAL_APPROXIMATION_THRESHOLD } from './util/constants.js'
+import { POISSON_LAMBDA_NORMAL_APPROXIMATION_THRESHOLD } from '../util/constants.js'
 
 
 function generatePoisson(lambda) {

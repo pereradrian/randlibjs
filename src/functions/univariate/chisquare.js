@@ -1,5 +1,5 @@
 
-import { baseGenerator } from './base-generator.js'
+import { baseGenerator } from '../base-generator.js'
 import { normal } from './normal.js'
 /**
  * Generates random numbers following a Chi-squared distribution.

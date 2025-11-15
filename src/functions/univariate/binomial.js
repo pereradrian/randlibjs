@@ -1,5 +1,5 @@
-import { getRandomGenerator } from './seed.js'
-import { baseGenerator } from './base-generator.js'
+import { getRandomGenerator } from '../seed.js'
+import { baseGenerator } from '../base-generator.js'
 
 /**
  * Generates random numbers or arrays of random numbers for a binomial distribution.
@@ -17,6 +17,7 @@ export function binomial(n, p, size=null) {
     // Use baseGenerator to handle the shape of the output.
     return baseGenerator(() => sampleBinomial(n,p), size)
 }
+
 function sampleBinomial(n, p) {
     let successes = 0
     for (let i = 0; i < n; i++) {

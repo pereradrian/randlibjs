@@ -1,5 +1,5 @@
-import { baseGenerator }  from './base-generator.js'
-import { EPS } from './util/constants.js'
+import { baseGenerator }  from '../base-generator.js'
+import { EPS } from '../util/constants.js'
 import { uniform } from './uniform.js'
 
 /**
@@ -21,12 +21,12 @@ export function mixture(generators, priors, size) {
     }
 
     const sumPriors = priors.reduce((acc, p) => acc + p, 0);
-    if (Math.abs(sumPriors - 1) > EPS) {
+    if (EPS < Math.abs(sumPriors - 1)) {
         throw new Error("Priors must sum to 1.");
     }
 
     function pickGenerator() {
-        const threshold = uniform();
+        const threshold = uniform()
         let cumulative = 0
         for (let indexDistribution = 0; indexDistribution < priors.length; indexDistribution++) {
             cumulative += priors[indexDistribution]

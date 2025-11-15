@@ -1,4 +1,4 @@
-import { randint } from './randint.js'
+import { randint } from '../functions/univariate/randint.js'
 
 function swap(array, i, j) {
     const temp = array[i]

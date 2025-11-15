@@ -1,4 +1,4 @@
-import { baseGenerator }  from './base-generator.js'
+import { baseGenerator }  from '../base-generator.js'
 import { normal } from './normal.js'
 
 /**
