@@ -131,7 +131,7 @@ console.log(estimatePi(10000));
 ### Random Walk Simulation
 
 ```javascript
-import { randint } from 'randlibjs';
+import { uniform } from 'randlibjs';
 
 function randomWalk(steps = 100, p = 0.5) {
   let position = 0;
@@ -139,7 +139,7 @@ function randomWalk(steps = 100, p = 0.5) {
   
   for (let i = 0; i < steps; i++) {
     // Movement: +1 with probability p, -1 with probability 1-p
-    const step = Math.random() < p ? 1 : -1;
+    const step = uniform() < p ? 1 : -1;
     position += step;
     positions.push(position);
   }
