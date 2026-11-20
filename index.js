@@ -68,7 +68,7 @@ export { dirichlet, multinomial, multivariateHypergeometric } from './src/functi
 // Sampling and permutations
 export { choice } from './src/misc/choice.js'
 export { shuffle } from './src/misc/shuffle.js'
-export { permutation } from './src/misc/permutation.js'
+export { permutation, permuted, random, bytes } from './src/misc/permutation.js'
 export { randString } from './src/misc/rand-string.js'
 export { logo } from './src/misc/logo.js'
 

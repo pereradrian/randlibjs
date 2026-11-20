@@ -1,49 +1,152 @@
-import { baseGenerator } from '../functions/base-generator.js'
-import { uniform } from '../functions/univariate/uniform.js'
-import { randint } from '../functions/univariate/randint.js'
+import { rand, randBelow } from '../core/state.js'
+import { baseGenerator, normalizeSize } from '../functions/base-generator.js'
 
-function chooseOneWeighted(array, weights, totalWeight) {
-    const n = array.length
-    const threshold = uniform(0.0, totalWeight)
-    let accum = 0
-    for (let i = 0; i < n; i++) {
-        accum += weights[i]
-        if (threshold < accum) {
-            return array[i]
+function chooseOneWeighted(population, cumulative, total) {
+    const threshold = rand() * total
+    let lo = 0
+    let hi = cumulative.length - 1
+    while (lo < hi) {
+        const mid = (lo + hi) >> 1
+        if (cumulative[mid] > threshold) {
+            hi = mid
+        } else {
+            lo = mid + 1
         }
     }
-
-    // Fallback for floating precision
-    return array[array.length - 1]
+    return population(lo)
 }
 
-function chooseOneUniform(array) {
-    return array[randint(array.length)]
+function reshape(flat, shape) {
+    let index = 0
+    const build = (dims) => {
+        const [first, ...rest] = dims
+        const out = new Array(first)
+        for (let i = 0; i < first; i++) {
+            out[i] = rest.length > 0 ? build(rest) : flat[index++]
+        }
+        return out
+    }
+    return shape.length === 0 ? flat[0] : build(shape)
 }
 
+function sampleIndicesWithoutReplacement(n, k) {
+    if (k <= n / 2) {
+        // rejection with a hash set: uniformly random order, O(k) expected
+        const seen = new Set()
+        const out = []
+        while (out.length < k) {
+            const i = randBelow(n)
+            if (!seen.has(i)) {
+                seen.add(i)
+                out.push(i)
+            }
+        }
+        return out
+    }
+    // partial Fisher-Yates
+    const idx = Array.from({ length: n }, (_, i) => i)
+    for (let i = 0; i < k; i++) {
+        const j = i + randBelow(n - i)
+        const t = idx[i]
+        idx[i] = idx[j]
+        idx[j] = t
+    }
+    return idx.slice(0, k)
+}
+
+function weightedIndicesWithoutReplacement(weights, k) {
+    // Efraimidis-Spirakis: keys log(u) / w, the k largest keys form a weighted
+    // sample without replacement in successive-sampling order.
+    const keys = []
+    for (let i = 0; i < weights.length; i++) {
+        if (weights[i] > 0) {
+            let u = rand()
+            while (u === 0) {
+                u = rand()
+            }
+            keys.push([Math.log(u) / weights[i], i])
+        }
+    }
+    if (keys.length < k) {
+        throw new Error('Fewer non-zero weights than the requested sample size.')
+    }
+    keys.sort((a, b) => b[0] - a[0])
+    return keys.slice(0, k).map(([, i]) => i)
+}
 
 /**
- * Shuffles the elements of an array along the first axis in-place.
+ * Generates a random sample from a given array or from `range(n)`, as numpy's `choice`.
  *
- * For N-dimensional arrays, this function only shuffles the order of the top-level sub-arrays.
- * The content and order within each sub-array remain unchanged.
+ * @example
+ * choice(['a', 'b', 'c'])                    // one element
+ * choice(['a', 'b'], [0.9, 0.1], 10)          // ten weighted draws
+ * choice(52, null, 5, false)                 // five distinct cards out of 52
+ * choice(['x', 'y', 'z'], [5, 1, 1], 2, false)  // weighted, without replacement
  *
- * @param {Array} array - The array to shuffle. Must be N-dimensional.
- * @returns {Array} A new shuffled array if a deep copy is required, otherwise in-place modification.
+ * @param {Array|number} array - Population, or an integer `n` meaning `[0, 1, ..., n-1]`.
+ * @param {number[]|null} [weights=null] - Non-negative weights (normalised automatically).
+ *   Uniform when `null`.
+ * @param {number|number[]|null} [size=null] - Output shape. `null` returns a single element.
+ * @param {boolean} [replace=true] - Whether the sample is with replacement.
+ * @returns {*|Array} The sampled element(s).
+ * @throws {Error} If the population is empty, the weights are invalid, or more elements
+ *   than available are requested without replacement.
  */
-export function choice(array, weights = null, size = null) {
-    if (!Array.isArray(array) || array.length === 0) {
-        throw new Error("Items array can not be empty.")
+export function choice(array, weights = null, size = null, replace = true) {
+    let n
+    let population
+    if (typeof array === 'number') {
+        if (!Number.isSafeInteger(array) || array <= 0) {
+            throw new Error("Population size must be a positive integer.")
+        }
+        n = array
+        population = (i) => i
+    } else if (Array.isArray(array)) {
+        if (array.length === 0) {
+            throw new Error("Items array can not be empty.")
+        }
+        n = array.length
+        population = (i) => array[i]
+    } else {
+        throw new Error("Items must be an array or a positive integer.")
     }
-    
-    if (weights !== null) {
-        if (!Array.isArray(weights) || weights.length !== array.length) {
+
+    let total = 0
+    if (weights !== null && weights !== undefined) {
+        if (!Array.isArray(weights) || weights.length !== n) {
             throw new Error("array.length != weights.length.")
         }
-        const totalWeight = weights.reduce((accumulatedWeight, weight) => accumulatedWeight + weight, 0);
-        return baseGenerator(() => chooseOneWeighted(array, weights, totalWeight), size)
+        for (const w of weights) {
+            if (typeof w !== 'number' || !(w >= 0) || !Number.isFinite(w)) {
+                throw new Error("Weights must be non-negative finite numbers.")
+            }
+            total += w
+        }
+        if (!(total > 0)) {
+            throw new Error("Weights must not all be zero.")
+        }
     }
-    else {
-        return baseGenerator(() => chooseOneUniform(array), size)
+    const hasWeights = total > 0
+
+    if (replace) {
+        if (!hasWeights) {
+            return baseGenerator(() => population(randBelow(n)), size)
+        }
+        const cumulative = new Array(n)
+        let acc = 0
+        for (let i = 0; i < n; i++) {
+            acc += weights[i]
+            cumulative[i] = acc
+        }
+        return baseGenerator(() => chooseOneWeighted(population, cumulative, acc), size)
     }
+
+    const shape = normalizeSize(size)
+    const k = shape === null ? 1 : shape.reduce((a, b) => a * b, 1)
+    if (k > n) {
+        throw new Error("Cannot take a larger sample than the population when replace is false.")
+    }
+    const indices = hasWeights ? weightedIndicesWithoutReplacement(weights, k) : sampleIndicesWithoutReplacement(n, k)
+    const flat = indices.map(population)
+    return shape === null ? flat[0] : reshape(flat, shape)
 }
