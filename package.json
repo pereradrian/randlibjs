@@ -7,6 +7,7 @@
   "module": "./index.js",
   "exports": {
     ".": {
+      "types": "./types/index.d.ts",
       "import": "./index.js",
       "require": "./dist/randlib.cjs",
       "default": "./index.js"
@@ -19,6 +20,7 @@
     "index.js",
     "src",
     "dist",
+    "types",
     "LICENSE",
     "NOTICE",
     "README.md",
@@ -33,9 +35,11 @@
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "eslint src index.js test scripts",
-    "build": "node scripts/build.mjs",
+    "build": "node scripts/build.mjs && node scripts/build-types.mjs",
     "docs": "jsdoc -c docs/input/jsdoc.json",
-    "prepublishOnly": "npm run lint && npm test && npm run build"
+    "prepublishOnly": "npm run lint && npm test && npm run build",
+    "build:types": "node scripts/build-types.mjs",
+    "typecheck": "npm run build:types && tsc -p tsconfig.check.json"
   },
   "repository": {
     "type": "git",
@@ -74,6 +78,8 @@
     "eslint": "^10.15.0",
     "globals": "^17.14.0",
     "jsdoc": "^4.0.5",
+    "typescript": "^5.9.3",
     "vitest": "^5.1.1"
-  }
+  },
+  "types": "./types/index.d.ts"
 }

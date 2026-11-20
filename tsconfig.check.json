@@ -1,0 +1,11 @@
+{
+  "include": ["test/types/consumer.ts"],
+  "compilerOptions": {
+    "noEmit": true,
+    "strict": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2020",
+    "skipLibCheck": false
+  }
+}

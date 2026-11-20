@@ -166,19 +166,19 @@ export class ContinuousDistribution {
         return [this._ppf(alpha), this._isf(alpha)]
     }
 
-    /** @private */
+    /** @protected */
     _sf(x) {
         return 1 - this._cdf(x)
     }
 
-    /** @private */
+    /** @protected */
     _isf(q) {
         return this._ppf(1 - q)
     }
 
     /**
      * Generic quantile by bracketing and bisection on the cdf.
-     * @private
+     * @protected
      */
     _ppf(p) {
         const [lo0, hi0] = this.support
@@ -197,7 +197,7 @@ export class ContinuousDistribution {
         return (lo + hi) / 2
     }
 
-    /** @private */
+    /** @protected */
     _sample(size) {
         return mapValues(samplers.random(size), (u) => this._ppf(u))
     }
@@ -225,12 +225,18 @@ export class DiscreteDistribution extends ContinuousDistribution {
         return mapValues(k, (v) => (Number.isInteger(v) ? this._logpmf(v) : -Infinity))
     }
 
-    /** @private */
-    pdf() {
+    /**
+     * Not available: discrete distributions have a {@link DiscreteDistribution#pmf}.
+     * @param {number|Array} _x
+     * @returns {number|Array}
+     * @throws {Error}
+     */
+    // eslint-disable-next-line no-unused-vars
+    pdf(_x) {
         throw new Error('Discrete distributions have a pmf, not a pdf.')
     }
 
-    /** @private */
+    /** @protected */
     _cdf(x) {
         const [lo, hi] = this.support
         const k = Math.floor(x)
@@ -243,7 +249,7 @@ export class DiscreteDistribution extends ContinuousDistribution {
 
     /**
      * Smallest integer k with cdf(k) >= p.
-     * @private
+     * @protected
      */
     _ppf(p) {
         const [lo, hi] = this.support
@@ -280,7 +286,7 @@ export class DiscreteDistribution extends ContinuousDistribution {
         return a
     }
 
-    /** @private */
+    /** @protected */
     _isf(q) {
         // smallest k with sf(k) <= q
         const [lo, hi] = this.support

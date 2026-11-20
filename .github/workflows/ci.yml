@@ -30,8 +30,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Build bundles
+      - name: Build bundles and type declarations
         run: npm run build
+
+      - name: Type check the declarations
+        run: npx tsc -p tsconfig.check.json
 
       - name: Run tests
         run: npm test
