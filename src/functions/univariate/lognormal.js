@@ -16,6 +16,9 @@ import { normal } from './normal.js'
  * @returns {number|Array} A single sample, an array, or a multidimensional array of log-normal distributed numbers.
  *
  */
-export function lognormal(loc=0.0, scale = 1.0, size = null) {
+export function lognormal(loc = 0.0, scale = 1.0, size = null) {
+    if (typeof scale !== "number" || !(scale >= 0)) {
+        throw new Error("scale must be a non-negative number")
+    }
     return baseGenerator(() => Math.exp(normal(loc, scale)), size)
 }

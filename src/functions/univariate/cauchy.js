@@ -16,7 +16,7 @@ import { baseGenerator } from '../base-generator.js'
  * @returns {number|Array} A single value, an array, or a multidimensional array of random values from the Cauchy distribution.
  */
 export function cauchy(median, gamma, size = null) {
-    if (gamma <= 0) {
+    if (typeof gamma !== "number" || !(gamma > 0)) {
         throw new Error("Scale parameter gamma must be greater than 0")
     }
     // Use the base generator for handling size

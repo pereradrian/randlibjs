@@ -4,7 +4,7 @@ import { baseGenerator } from '../base-generator.js'
 /**
  * Generates random samples from an exponential distribution.
  *
- * @param {number} lambda - The rate parameter (must be > 0).
+ * @param {number} [lambda=1] - The rate parameter (must be > 0). Note: numpy uses the scale 1/lambda.
  * @param {number|Array|null} [size=null] - The shape of the output:
  *   - If `null`, a single value is returned.
  *   - If a number, a 1D array of the specified size is returned.
@@ -14,8 +14,8 @@ import { baseGenerator } from '../base-generator.js'
  *   - The rate parameter lambda is not positive.
  * @returns {number|Array} A single value, an array, or a multidimensional array of random values from the exponential distribution.
  */
-export function exponential(lambda, size = null) {
-    if (lambda <= 0) {
+export function exponential(lambda = 1.0, size = null) {
+    if (typeof lambda !== "number" || !(lambda > 0)) {
         throw new Error("Rate parameter lambda must be greater than 0")
     }
     // Use the base generator for handling size
