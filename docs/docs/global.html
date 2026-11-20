@@ -965,7 +965,7 @@ ratio of gammas.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line133">line 133</a>
+        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line200">line 200</a>
     </li></ul></dd>
     
 
@@ -1143,7 +1143,7 @@ ratio of gammas.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line166">line 166</a>
+        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line233">line 233</a>
     </li></ul></dd>
     
 
@@ -1497,6 +1497,94 @@ binomial(1e9, 0.3, 5)     // five samples, O(log n) each</code></pre>
     
 
     
+    <h4 class="name" id="binomialBtpe"><span class="type-signature"></span>binomialBtpe<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>BTPE for p &lt;= 0.5. @private</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line324">line 324</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
     <h4 class="name" id="binomialSample"><span class="type-signature"></span>binomialSample<span class="signature">(n, p)</span><span class="type-signature"> &rarr; {number}</span></h4>
     
 
@@ -1505,9 +1593,9 @@ binomial(1e9, 0.3, 5)     // five samples, O(log n) each</code></pre>
 
 
 <div class="description">
-    <p>Binomial deviate by inversion for small n * min(p, 1 - p), otherwise the
-exact beta-splitting recursion (Knuth, TAOCP vol. 2, 3.4.1), which reduces the
-problem size geometrically.</p>
+    <p>Binomial deviate with numpy's algorithms: inversion when min(p, 1 - p) * n &lt;= 30 and the
+BTPE triangle-parallelogram-exponential rejection method (Kachitvichyanukul and Schmeiser,
+1988) otherwise. Exact, O(1) expected time for any n.</p>
 </div>
 
 
@@ -1623,7 +1711,7 @@ problem size geometrically.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line221">line 221</a>
+        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line288">line 288</a>
     </li></ul></dd>
     
 
@@ -5771,7 +5859,7 @@ mode and searching outwards, O(standard deviation) expected time.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line288">line 288</a>
+        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line417">line 417</a>
     </li></ul></dd>
     
 
@@ -6658,7 +6746,7 @@ Returns -Infinity for p = 0, Infinity for p = 1 and NaN outside [0, 1].</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line78">line 78</a>
+        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line131">line 131</a>
     </li></ul></dd>
     
 
@@ -6814,7 +6902,7 @@ Accurate to ~1e-15 for x &gt; 0.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line48">line 48</a>
+        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line69">line 69</a>
     </li></ul></dd>
     
 
@@ -7873,7 +7961,7 @@ This is numpy's <code>pareto(a)</code>.</p>
     
 
     
-    <h4 class="name" id="mixture"><span class="type-signature"></span>mixture<span class="signature">(generators<span class="signature-attributes">opt</span>, priors<span class="signature-attributes">opt</span>, size<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {number|Array}</span></h4>
+    <h4 class="name" id="mapShape2"><span class="type-signature"></span>mapShape2<span class="signature">()</span><span class="type-signature"></span></h4>
     
 
     
@@ -7881,7 +7969,99 @@ This is numpy's <code>pareto(a)</code>.</p>
 
 
 <div class="description">
-    <p>Generates random numbers or arrays of random numbers for a mixture of given distributions.</p>
+    <p>Picks element <code>k</code> of every [value, label] pair at depth <code>depth</code>. @private</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="functions_univariate_mixture.js.html">functions/univariate/mixture.js</a>, <a href="functions_univariate_mixture.js.html#line65">line 65</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="mixture"><span class="type-signature"></span>mixture<span class="signature">(generators, priors, size<span class="signature-attributes">opt</span>, options<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {*|Array|Object}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Draws samples from a finite mixture: each sample comes from component i with
+probability weights[i]. Components are zero-argument sampling functions or distribution
+objects such as <code>stats.normal(0, 1)</code>; they may even be multivariate.
+Component selection is O(1) (alias method).</p>
+<p>See <code>stats</code>.mixture for the density, cdf, quantiles and moments of a mixture.</p>
 </div>
 
 
@@ -7927,7 +8107,7 @@ This is numpy's <code>pareto(a)</code>.</p>
             <td class="type">
             
                 
-<span class="param-type">Array</span>
+<span class="param-type">Array.&lt;(function()|Object)></span>
 
 
             
@@ -7935,8 +8115,6 @@ This is numpy's <code>pareto(a)</code>.</p>
 
             
                 <td class="attributes">
-                
-                    &lt;optional><br>
                 
 
                 
@@ -7951,7 +8129,7 @@ This is numpy's <code>pareto(a)</code>.</p>
                 </td>
             
 
-            <td class="description last"><p>The list of generators corresponding to each distribution.</p></td>
+            <td class="description last"><p>The mixture components.</p></td>
         </tr>
 
     
@@ -7964,7 +8142,7 @@ This is numpy's <code>pareto(a)</code>.</p>
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">Array.&lt;number></span>
 
 
             
@@ -7972,8 +8150,6 @@ This is numpy's <code>pareto(a)</code>.</p>
 
             
                 <td class="attributes">
-                
-                    &lt;optional><br>
                 
 
                 
@@ -7988,7 +8164,7 @@ This is numpy's <code>pareto(a)</code>.</p>
                 </td>
             
 
-            <td class="description last"><p>The list of priors, one per distribution, must sum to 1.</p></td>
+            <td class="description last"><p>Non-negative weights of the components (normalised automatically).</p></td>
         </tr>
 
     
@@ -8004,7 +8180,7 @@ This is numpy's <code>pareto(a)</code>.</p>
 <span class="param-type">number</span>
 |
 
-<span class="param-type">Array</span>
+<span class="param-type">Array.&lt;number></span>
 |
 
 <span class="param-type">null</span>
@@ -8033,12 +8209,114 @@ This is numpy's <code>pareto(a)</code>.</p>
                 </td>
             
 
-            <td class="description last"><p>The shape of the output:</p>
-<ul>
-<li>If <code>null</code>, a single number is returned.</li>
-<li>If a number, a 1D array of the specified size is returned.</li>
-<li>If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.</li>
-</ul></td>
+            <td class="description last"><p>Output shape.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>returnLabels</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last"><p>Also return the index of the component of
+each sample, as <code>{ values, labels }</code>.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -8079,7 +8357,7 @@ This is numpy's <code>pareto(a)</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="functions_univariate_mixture.js.html">functions/univariate/mixture.js</a>, <a href="functions_univariate_mixture.js.html#line18">line 18</a>
+        <a href="functions_univariate_mixture.js.html">functions/univariate/mixture.js</a>, <a href="functions_univariate_mixture.js.html#line39">line 39</a>
     </li></ul></dd>
     
 
@@ -8109,7 +8387,7 @@ This is numpy's <code>pareto(a)</code>.</p>
 <dl>
     <dt>
         <div class="param-desc">
-        <p>If any of the generators raise an error on sampling.</p>
+        <p>If the components or weights are invalid, or a component throws when sampled.</p>
         </div>
     </dt>
     <dd></dd>
@@ -8137,7 +8415,7 @@ This is numpy's <code>pareto(a)</code>.</p>
 
         
 <div class="param-desc">
-    <p>A single sample, an array, or a multidimensional array of numbers accoirding to the mixture of the distributions provided.</p>
+    <p>The samples (and labels).</p>
 </div>
 
 
@@ -8148,10 +8426,13 @@ This is numpy's <code>pareto(a)</code>.</p>
     </dt>
     <dd>
         
-<span class="param-type">number</span>
+<span class="param-type">*</span>
 |
 
 <span class="param-type">Array</span>
+|
+
+<span class="param-type">Object</span>
 
 
     </dd>
@@ -8160,6 +8441,11 @@ This is numpy's <code>pareto(a)</code>.</p>
     
 
 
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>// bimodal: 70% N(0, 1), 30% N(5, 2²)mixture([stats.normal(0, 1), stats.normal(5, 2)], [0.7, 0.3], 1000)mixture([() => exponential(1), () => uniform(2, 3)], [1, 3], 10)   // weights are normalised// keep the component of each sample (e.g. to test clustering algorithms)const { values, labels } = mixture([stats.normal(-2, 1), stats.normal(2, 1)], [0.5, 0.5], 100, { returnLabels: true })</code></pre>
 
 
 
@@ -12377,7 +12663,7 @@ PTRS transformed rejection method of Hörmann (1993), exact for any lam.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line176">line 176</a>
+        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line243">line 243</a>
     </li></ul></dd>
     
 
@@ -13423,6 +13709,162 @@ randint(1, 7, 10)     // ten dice rolls</code></pre>
 |
 
 <span class="param-type">Array</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="randomLoggam"><span class="type-signature"></span>randomLoggam<span class="signature">(x)</span><span class="type-signature"> &rarr; {number}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>log Gamma(x) for x &gt; 0 with numpy's <code>random_loggam</code> (Stirling series), used where numpy
+uses it so that rejection decisions match numpy exactly.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>x</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line96">line 96</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
 
 
     </dd>
@@ -14648,7 +15090,8 @@ shuffle([[1, 2], [3, 4]], 1)   // swaps columns</code></pre>
 
 
 <div class="description">
-    <p>Standard exponential deviate (rate 1) by inversion.</p>
+    <p>Standard exponential deviate (rate 1): numpy's ziggurat, or inversion -log(1 - U) for the
+legacy bit generators (as <code>RandomState.standard_exponential</code>).</p>
 </div>
 
 
@@ -14692,7 +15135,7 @@ shuffle([[1, 2], [3, 4]], 1)   // swaps columns</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line38">line 38</a>
+        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line58">line 58</a>
     </li></ul></dd>
     
 
@@ -14938,8 +15381,8 @@ shuffle([[1, 2], [3, 4]], 1)   // swaps columns</code></pre>
 
 
 <div class="description">
-    <p>Standard gamma deviate with shape <code>a</code> (scale 1).
-Marsaglia &amp; Tsang (2000) squeeze method, with the a &lt; 1 boost u^(1/a).</p>
+    <p>Standard gamma deviate with shape <code>a</code> (scale 1), numpy's algorithm: Marsaglia and Tsang (2000)
+for a &gt; 1 and the Ahrens-Dieter GS rejection method for a &lt; 1.</p>
 </div>
 
 
@@ -14991,7 +15434,7 @@ Marsaglia &amp; Tsang (2000) squeeze method, with the a &lt; 1 boost u^(1/a).</p
 
             
 
-            <td class="description last"><p>Shape (&gt; 0). Returns 0 for a = 0.</p></td>
+            <td class="description last"><p>Shape (&gt;= 0).</p></td>
         </tr>
 
     
@@ -15032,7 +15475,7 @@ Marsaglia &amp; Tsang (2000) squeeze method, with the a &lt; 1 boost u^(1/a).</p
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line93">line 93</a>
+        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line146">line 146</a>
     </li></ul></dd>
     
 
@@ -15313,9 +15756,9 @@ Marsaglia &amp; Tsang (2000) squeeze method, with the a &lt; 1 boost u^(1/a).</p
 
 
 <div class="description">
-    <p>Standard normal deviate using the Marsaglia polar method. The second deviate of
-each pair is cached on the bit generator, exactly as numpy's legacy <code>gauss</code>, so an
-MT19937 generator reproduces <code>np.random.RandomState(seed).standard_normal()</code>.</p>
+    <p>Standard normal deviate. Uses numpy's 256-layer ziggurat (bit-identical to
+<code>default_rng(seed).standard_normal()</code> with PCG64), or numpy's legacy polar method for
+MT19937 (bit-identical to <code>RandomState(seed).standard_normal()</code>).</p>
 </div>
 
 
@@ -15359,7 +15802,7 @@ MT19937 generator reproduces <code>np.random.RandomState(seed).standard_normal()
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line14">line 14</a>
+        <a href="core_samplers.js.html">core/samplers.js</a>, <a href="core_samplers.js.html#line24">line 24</a>
     </li></ul></dd>
     
 
@@ -17705,13 +18148,13 @@ Multiply by a scale <code>lambda</code> to obtain the two-parameter Weibull.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li><li><a href="module-stats-DiscreteMixture.html">DiscreteMixture</a></li><li><a href="module-stats-Mixture.html">Mixture</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialBtpe">binomialBtpe</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mapShape2">mapShape2</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#randomLoggam">randomLoggam</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:28:13 GMT+0100 (hora estándar de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:46:08 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>

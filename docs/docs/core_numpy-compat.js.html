@@ -176,9 +176,40 @@ export class SeedSequence {
     }
 }
 
-const MASK64 = (1n &lt;&lt; 64n) - 1n
 const MASK128 = (1n &lt;&lt; 128n) - 1n
 const PCG64_MULT = 0x2360ed051fc65da44385df649fccf645n
+const TWO_POW_32 = 4294967296
+// multiplier limbs, least significant first
+const M0 = 0x9fccf645
+const M1 = 0x4385df64
+const M2 = 0x1fc65da4
+const M3 = 0x2360ed05
+
+let HI = 0
+let LO = 0
+
+/** 32 x 32 -> 64-bit product into (HI, LO). @private */
+function mulTo(a, b) {
+    const a0 = a &amp; 0xffff
+    const a1 = a >>> 16
+    const b0 = b &amp; 0xffff
+    const b1 = b >>> 16
+    const p00 = a0 * b0
+    const p01 = a0 * b1
+    const p10 = a1 * b0
+    const mid = (p00 >>> 16) + (p01 &amp; 0xffff) + (p10 &amp; 0xffff)
+    LO = ((mid &amp; 0xffff) &lt;&lt; 16 | p00 &amp; 0xffff) >>> 0
+    HI = a1 * b1 + (p01 >>> 16) + (p10 >>> 16) + (mid >>> 16)
+}
+
+function limbsToBigInt(l) {
+    return BigInt(l[3]) &lt;&lt; 96n | BigInt(l[2]) &lt;&lt; 64n | BigInt(l[1]) &lt;&lt; 32n | BigInt(l[0])
+}
+
+function bigIntToLimbs(v) {
+    v &amp;= MASK128
+    return [Number(v &amp; 0xffffffffn), Number(v >> 32n &amp; 0xffffffffn), Number(v >> 64n &amp; 0xffffffffn), Number(v >> 96n)]
+}
 
 /**
  * PCG64 (PCG-XSL-RR 128/64), numpy's default bit generator. Seeded through
@@ -210,12 +241,85 @@ export class PCG64 extends BitGenerator {
         this.step()
         this.hasUint32 = false
         this.uinteger = 0
+        this.outHi = 0
+        this.outLo = 0
         this.gauss = null
     }
 
-    /** @private */
+    // The 128-bit state and increment are stored as 32-bit limbs (s0 least significant);
+    // the BigInt accessors are only used for seeding, advance() and state snapshots.
+    get state() {
+        return limbsToBigInt([this.s0, this.s1, this.s2, this.s3])
+    }
+
+    set state(value) {
+        [this.s0, this.s1, this.s2, this.s3] = bigIntToLimbs(value)
+    }
+
+    get inc() {
+        return limbsToBigInt([this.c0, this.c1, this.c2, this.c3])
+    }
+
+    set inc(value) {
+        [this.c0, this.c1, this.c2, this.c3] = bigIntToLimbs(value)
+    }
+
+    /** state = state * multiplier + inc (mod 2^128), with 32-bit limbs. @private */
     step() {
-        this.state = this.state * PCG64_MULT + this.inc &amp; MASK128
+        const s0 = this.s0
+        const s1 = this.s1
+        const s2 = this.s2
+        const s3 = this.s3
+        let a0 = this.c0
+        let a1 = this.c1
+        let a2 = this.c2
+        let a3 = this.c3 + (Math.imul(s0, M3) >>> 0) + (Math.imul(s1, M2) >>> 0) + (Math.imul(s2, M1) >>> 0) + (Math.imul(s3, M0) >>> 0)
+        mulTo(s0, M0); a0 += LO; a1 += HI
+        mulTo(s0, M1); a1 += LO; a2 += HI
+        mulTo(s1, M0); a1 += LO; a2 += HI
+        mulTo(s0, M2); a2 += LO; a3 += HI
+        mulTo(s1, M1); a2 += LO; a3 += HI
+        mulTo(s2, M0); a2 += LO; a3 += HI
+        let carry = Math.floor(a0 / TWO_POW_32)
+        this.s0 = a0 - carry * TWO_POW_32
+        a1 += carry
+        carry = Math.floor(a1 / TWO_POW_32)
+        this.s1 = a1 - carry * TWO_POW_32
+        a2 += carry
+        carry = Math.floor(a2 / TWO_POW_32)
+        this.s2 = a2 - carry * TWO_POW_32
+        this.s3 = (a3 + carry) % TWO_POW_32
+    }
+
+    /** Steps and stores the next 64-bit output in (outHi, outLo). @private */
+    next() {
+        this.step()
+        const xh = (this.s3 ^ this.s1) >>> 0
+        const xl = (this.s2 ^ this.s0) >>> 0
+        const rot = this.s3 >>> 26
+        if (rot === 0) {
+            this.outHi = xh
+            this.outLo = xl
+        } else if (rot &lt; 32) {
+            this.outHi = (xh >>> rot | xl &lt;&lt; 32 - rot) >>> 0
+            this.outLo = (xl >>> rot | xh &lt;&lt; 32 - rot) >>> 0
+        } else if (rot === 32) {
+            this.outHi = xl
+            this.outLo = xh
+        } else {
+            const r = rot - 32
+            this.outHi = (xl >>> r | xh &lt;&lt; 32 - r) >>> 0
+            this.outLo = (xh >>> r | xl &lt;&lt; 32 - r) >>> 0
+        }
+    }
+
+    /**
+     * Next 64-bit output as [hi, lo] unsigned 32-bit numbers (XSL-RR output function).
+     * @returns {number[]}
+     */
+    nextUint64Parts() {
+        this.next()
+        return [this.outHi, this.outLo]
     }
 
     /**
@@ -223,11 +327,8 @@ export class PCG64 extends BitGenerator {
      * @returns {bigint}
      */
     nextUint64() {
-        this.step()
-        const s = this.state
-        const rot = s >> 122n
-        const x = (s >> 64n ^ s) &amp; MASK64
-        return (x >> rot | x &lt;&lt; (-rot &amp; 63n)) &amp; MASK64
+        this.next()
+        return BigInt(this.outHi) &lt;&lt; 32n | BigInt(this.outLo)
     }
 
     /**
@@ -239,10 +340,10 @@ export class PCG64 extends BitGenerator {
             this.hasUint32 = false
             return this.uinteger
         }
-        const v = this.nextUint64()
+        this.next()
         this.hasUint32 = true
-        this.uinteger = Number(v >> 32n)
-        return Number(v &amp; 0xffffffffn)
+        this.uinteger = this.outHi
+        return this.outLo
     }
 
     /**
@@ -250,11 +351,13 @@ export class PCG64 extends BitGenerator {
      * @returns {number}
      */
     random() {
-        return Number(this.nextUint64() >> 11n) / 9007199254740992
+        this.next()
+        return (this.outHi * 2097152 + (this.outLo >>> 11)) / 9007199254740992
     }
 
     nextUint53() {
-        return Number(this.nextUint64() >> 11n)
+        this.next()
+        return this.outHi * 2097152 + (this.outLo >>> 11)
     }
 
     /**
@@ -317,13 +420,13 @@ registerBitGenerator('pcg64', PCG64)
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li><li><a href="module-stats-DiscreteMixture.html">DiscreteMixture</a></li><li><a href="module-stats-Mixture.html">Mixture</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialBtpe">binomialBtpe</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mapShape2">mapShape2</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#randomLoggam">randomLoggam</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:28:13 GMT+0100 (hora estándar de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:46:08 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>
