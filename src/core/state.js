@@ -11,7 +11,7 @@ let current = globalSource
 
 /**
  * Returns the active bit generator.
- * @returns {import('./bit-generators.js').BitGenerator}
+ * @returns {BitGenerator}
  * @private
  */
 export function getSource() {
@@ -20,7 +20,7 @@ export function getSource() {
 
 /**
  * Replaces the global bit generator.
- * @param {import('./bit-generators.js').BitGenerator} source
+ * @param {BitGenerator} source
  * @private
  */
 export function setGlobalSource(source) {

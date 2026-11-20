@@ -1,0 +1,82 @@
+# Changelog
+
+All notable changes to this project are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
+[Semantic Versioning](https://semver.org/).
+
+## [2.0.0] - 2026-11-20
+
+A complete rewrite that turns randlibjs into a numpy.random + scipy.stats equivalent for JavaScript.
+
+### Added
+
+- **Bit generators**: xoshiro128** (new default), PCG32, MT19937 (numpy `RandomState` seeding) and
+  PCG64 with numpy's `SeedSequence`. They support state snapshots, cloning, `jump`/`advance` and
+  `spawn`. The global generator accepts numbers, bigints, strings or arrays as seeds, and a
+  bit generator name: `seed(42, 'pcg64')`.
+- **numpy compatibility**: `createGenerator(seed, 'pcg64')` reproduces `np.random.default_rng(seed)`
+  (`random`, `uniform`, `integers`), and `'mt19937'` reproduces `RandomState(seed)` (`random_sample`,
+  `standard_normal`).
+- **Generator objects** (`createGenerator` / `defaultRng`) with every sampling function as a method,
+  plus `getState`/`setState`/`clone`/`spawn`/`run`.
+- **numpy distributions**: `random`, `integers`, `standardNormal`, `standardExponential`,
+  `standardGamma`, `gamma`, `beta`, `f`, `noncentralChisquare`, `noncentralF`, `standardT`,
+  `studentT`, `standardCauchy`, `laplace`, `logistic`, `gumbel`, `weibull`, `rayleigh`, `power`,
+  `wald`, `vonmises`, `lomax`, `negativeBinomial`, `hypergeometric`, `logseries`, `zipf`,
+  `dirichlet`, `multinomial`, `multivariateHypergeometric`, `bytes`, `permuted`.
+- **Beyond numpy**: `truncatedNormal` (exact in any tail), `halfNormal`, `skewNormal`, `levy`,
+  `frechet`, `generalizedExtremeValue`, `generalizedPareto`, `inverseGamma`, `betaPrime`,
+  `kumaraswamy`, `erlang`, `chi`, `maxwell`, `nakagami`, `loguniform`, `burr12`, `logLogistic`,
+  `semicircle`, `exGaussian`, `betaBinomial`, `skellam`, `bernoulli`, `rademacher`, `categorical`,
+  `AliasTable`, `uniformSphere`, `uniformBall`, `uuid4`.
+- **`stats`**: scipy.stats-style frozen distributions (`pdf`/`pmf`, `logpdf`, `cdf`, `sf`, `ppf`,
+  `isf`, `mean`, `variance`, `std`, `median`, `interval`, `entropy`, `sample`) for 25 families, and
+  a **`special`** namespace (incomplete gamma/beta and their inverses, digamma, erf, …).
+- **`qmc`**: Sobol (scrambled or not), Halton, Latin hypercube, Poisson disk, `scale`, `discrepancy`.
+- **Random matrices**: `orthoGroup`, `specialOrthoGroup`, `randomCorrelation`, `lkjCorrelation`,
+  `wishart`, `invWishart`, `matrixNormal`.
+- **Stochastic processes**: `randomWalk`, `brownianMotion`, `brownianBridge`,
+  `geometricBrownianMotion`, `ornsteinUhlenbeck`, `poissonProcess`, `inhomogeneousPoissonProcess`,
+  `poissonCountingProcess`, `markovChain`.
+- **Resampling**: `resample`, `bootstrap` (BCa and percentile intervals) and `permutationTest`.
+- `choice` supports integer populations and sampling without replacement (weighted too).
+  `shuffle`/`permutation` take an `axis`.
+- `getState`, `setState` and `setRandomSource` for the global generator.
+- **Distribution bundles** in `dist/` (ESM, CommonJS and a minified IIFE exposing `randlib`), so the
+  jsDelivr/unpkg CDN links work, plus `require('randlibjs')` support.
+- **TypeScript declarations**.
+- Examples in `examples/`, and goodness-of-fit tests against scipy for every sampler.
+
+### Changed (breaking)
+
+- The default generator is xoshiro128**, so seeded sequences differ from 1.x.
+- `normal` uses the exact polar method instead of an interpolated lookup table, so seeded values
+  differ and the tails are correct.
+- `poisson` is exact for every lambda (PTRS) instead of a rounded normal approximation above 37.
+- `binomial` is exact and O(log n), and validates `n` and `p`.
+- `randint`/`choice`/`shuffle` use unbiased bounded integers (Lemire's method).
+- `permutation(array)` returns a shuffled copy and no longer modifies its argument (as numpy).
+- `multivariate*` functions follow numpy's `size` semantics: `size = 1` returns `[[...]]`, and
+  shapes are accepted.
+- `scale = 0` is allowed in `normal` (returns `loc`), and `chisquare` accepts non-integer degrees of
+  freedom.
+- `pareto(alpha, xm)` gets a default `xm = 1`. `exponential(rate)` gets a default `rate = 1`.
+
+### Fixed
+
+- The old "pcg64" was a plain LCG without the PCG output function, and could return exactly 1.0.
+- `geometric` could return 0.
+- `triangular` did not validate its mode.
+- `multivariateTriangular` produced three times the requested covariance.
+- Dirichlet components with tiny alphas no longer round to 0 (numpy loses this precision).
+- `choice` documentation described `shuffle`.
+- The `publish` npm script re-ran `npm publish` recursively.
+
+### Removed
+
+- The `mathjs` dependency. The library now has no runtime dependencies.
+- The 216 kB normal lookup table.
+
+## [1.0.23] and earlier
+
+See the [git history](https://github.com/pereradrian/randlibjs/commits/master).

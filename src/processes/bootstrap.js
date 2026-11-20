@@ -7,6 +7,22 @@ import { randBelow } from '../core/state.js'
 import { normalCDF, inverseNormalCDF } from '../functions/util/inverse-normal-cdf.js'
 import { assertPositiveInteger } from '../functions/util/validate.js'
 
+/**
+ * @typedef {Object} BootstrapResult
+ * @property {number} estimate - The statistic on the original data.
+ * @property {number} standardError - Standard deviation of the bootstrap distribution.
+ * @property {number} bias - Mean of the bootstrap distribution minus the estimate.
+ * @property {number[]} confidenceInterval - [lower, upper] bounds.
+ * @property {number[]} distribution - The bootstrap replicates of the statistic.
+ */
+
+/**
+ * @typedef {Object} PermutationTestResult
+ * @property {number} statistic - The observed statistic.
+ * @property {number} pvalue - The permutation p-value.
+ * @property {number[]} nullDistribution - Statistic values under random relabelling.
+ */
+
 const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length
 
 function quantile(sorted, q) {
@@ -30,7 +46,7 @@ function quantile(sorted, q) {
  * @param {number} [options.confidence=0.95] - Confidence level of the interval.
  * @param {string} [options.method='BCa'] - 'BCa' (bias-corrected and accelerated, scipy's
  *   default) or 'percentile'.
- * @returns {{estimate: number, standardError: number, bias: number, confidenceInterval: number[], distribution: number[]}}
+ * @returns {BootstrapResult}
  */
 export function bootstrap(data, statistic = mean, { nResamples = 9999, confidence = 0.95, method = 'BCa' } = {}) {
     if (!Array.isArray(data) || data.length < 2) throw new Error('data must be an array with at least 2 elements.')
@@ -96,7 +112,7 @@ export function bootstrap(data, statistic = mean, { nResamples = 9999, confidenc
  * @param {Object} [options]
  * @param {number} [options.nResamples=9999] - Number of random permutations.
  * @param {string} [options.alternative='two-sided'] - 'two-sided', 'greater' or 'less'.
- * @returns {{statistic: number, pvalue: number, nullDistribution: number[]}}
+ * @returns {PermutationTestResult}
  */
 export function permutationTest(x, y, statistic = (a, b) => mean(a) - mean(b), { nResamples = 9999, alternative = 'two-sided' } = {}) {
     if (!Array.isArray(x) || !Array.isArray(y) || x.length === 0 || y.length === 0) {
