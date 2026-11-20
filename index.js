@@ -1,7 +1,8 @@
 import { seed, setRandomSource, getState, setState } from './src/functions/seed.js'
 import { randint } from './src/functions/univariate/randint.js'
 import { uniform } from './src/functions/univariate/uniform.js'
-import { normal } from './src/functions/univariate/normal.js'
+import { normal, standardNormal } from './src/functions/univariate/normal.js'
+import { inverseNormalCDF, normalCDF } from './src/functions/util/inverse-normal-cdf.js'
 import { cauchy } from './src/functions/univariate/cauchy.js'
 import { exponential } from './src/functions/univariate/exponential.js'
 import { shuffle } from './src/misc/shuffle.js'
@@ -31,6 +32,9 @@ export {
     randint,
     uniform,
     normal,
+    standardNormal,
+    inverseNormalCDF,
+    normalCDF,
     cauchy,
     exponential,
     shuffle,
