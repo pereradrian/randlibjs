@@ -386,10 +386,15 @@ describe('Mixture distribution tests', () => {
     expect(() => mixture(gens, priors)).toThrow("The number of priors must match the number of generators.")
   })
 
-  test('Throws when priors do not sum to 1', () => {
-    const gens = [() => uniform(0, 1), () => normal(0, 1)]
-    const priors = [0.7, 0.7] // Incorrect
-    expect(() => mixture(gens, priors)).toThrow("Priors must sum to 1.")
+  test('Weights are normalised; negative or all-zero weights throw', () => {
+    const gens = [() => 0, () => 1]
+    seed(1)
+    const xs = mixture(gens, [1, 3], 20000)
+    expect(xs.reduce((a, b) => a + b, 0) / xs.length).toBeCloseTo(0.75, 1)
+    expect(() => mixture(gens, [-1, 2])).toThrow()
+    expect(() => mixture(gens, [0, 0])).toThrow()
+    expect(() => mixture([], [])).toThrow()
+    expect(() => mixture([42], [1])).toThrow()
   })
 
   test('Produces deterministic output with same seed', () => {

@@ -1,41 +1,67 @@
-import { baseGenerator }  from '../base-generator.js'
-import { EPS } from '../util/constants.js'
-import { uniform } from './uniform.js'
+import { normalizeSize, fillShape } from '../base-generator.js'
+import { AliasTable } from './extra.js'
+
+function toSampler(component, index) {
+    if (typeof component === 'function') {
+        return component
+    }
+    if (component && typeof component.sample === 'function') {
+        return () => component.sample()
+    }
+    throw new Error(`Component ${index} must be a function or a distribution object with a sample() method.`)
+}
 
 /**
- * Generates random numbers or arrays of random numbers for a mixture of given distributions.
+ * Draws samples from a finite mixture: each sample comes from component i with
+ * probability weights[i]. Components are zero-argument sampling functions or distribution
+ * objects such as `stats.normal(0, 1)`; they may even be multivariate.
+ * Component selection is O(1) (alias method).
  *
- * @param {Array} [generators] - The list of generators corresponding to each distribution.
- * @param {number} [priors] - The list of priors, one per distribution, must sum to 1.
- * @param {number|Array|null} [size=null] - The shape of the output:
- *   - If `null`, a single number is returned.
- *   - If a number, a 1D array of the specified size is returned.
- *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.
- * @throws {Error} If any of the generators raise an error on sampling. 
- * @returns {number|Array} A single sample, an array, or a multidimensional array of numbers accoirding to the mixture of the distributions provided.
+ * See {@link stats}.mixture for the density, cdf, quantiles and moments of a mixture.
  *
+ * @example
+ * // bimodal: 70% N(0, 1), 30% N(5, 2²)
+ * mixture([stats.normal(0, 1), stats.normal(5, 2)], [0.7, 0.3], 1000)
+ * mixture([() => exponential(1), () => uniform(2, 3)], [1, 3], 10)   // weights are normalised
+ *
+ * // keep the component of each sample (e.g. to test clustering algorithms)
+ * const { values, labels } = mixture([stats.normal(-2, 1), stats.normal(2, 1)], [0.5, 0.5], 100, { returnLabels: true })
+ *
+ * @param {Array<Function|Object>} generators - The mixture components.
+ * @param {number[]} priors - Non-negative weights of the components (normalised automatically).
+ * @param {number|number[]|null} [size=null] - Output shape.
+ * @param {Object} [options]
+ * @param {boolean} [options.returnLabels=false] - Also return the index of the component of
+ *   each sample, as `{ values, labels }`.
+ * @returns {*|Array|{values: *, labels: *}} The samples (and labels).
+ * @throws {Error} If the components or weights are invalid, or a component throws when sampled.
  */
-export function mixture(generators, priors, size) {
-    if (generators.length !== priors.length) {
-        throw new Error("The number of priors must match the number of generators.");
+export function mixture(generators, priors, size = null, { returnLabels = false } = {}) {
+    if (!Array.isArray(generators) || generators.length === 0) {
+        throw new Error("generators must be a non-empty array.")
     }
-
-    const sumPriors = priors.reduce((acc, p) => acc + p, 0);
-    if (EPS < Math.abs(sumPriors - 1)) {
-        throw new Error("Priors must sum to 1.");
+    if (!Array.isArray(priors) || generators.length !== priors.length) {
+        throw new Error("The number of priors must match the number of generators.")
     }
-
-    function pickGenerator() {
-        const threshold = uniform()
-        let cumulative = 0
-        for (let indexDistribution = 0; indexDistribution < priors.length; indexDistribution++) {
-            cumulative += priors[indexDistribution]
-            if (threshold < cumulative) {
-                return generators[indexDistribution]
-            }
-        }
-        return generators[generators.length - 1];
+    const samplers = generators.map(toSampler)
+    const table = new AliasTable(priors)
+    const shape = normalizeSize(size)
+    const draw = () => {
+        const i = table.sample()
+        return [samplers[i](), i]
     }
+    const pairs = shape === null ? draw() : fillShape(shape, draw)
+    if (shape === null) {
+        return returnLabels ? { values: pairs[0], labels: pairs[1] } : pairs[0]
+    }
+    const values = mapShape2(pairs, 0, shape.length)
+    if (!returnLabels) {
+        return values
+    }
+    return { values, labels: mapShape2(pairs, 1, shape.length) }
+}
 
-    return baseGenerator(() => pickGenerator()(), size)
+/** Picks element `k` of every [value, label] pair at depth `depth`. @private */
+function mapShape2(x, k, depth) {
+    return depth === 0 ? x[k] : x.map((v) => mapShape2(v, k, depth - 1))
 }

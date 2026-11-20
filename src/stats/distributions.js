@@ -1006,6 +1006,128 @@ class DiscreteUniform extends DiscreteDistribution {
     variance() { return ((this.high - this.low) ** 2 - 1) / 12 }
 }
 
+// ---------------------------------------------------------------- mixtures
+
+function mixtureWeights(components, weights, Base) {
+    if (!Array.isArray(components) || components.length === 0) {
+        throw new Error('components must be a non-empty array of distributions.')
+    }
+    if (!Array.isArray(weights) || weights.length !== components.length) {
+        throw new Error('weights must have one entry per component.')
+    }
+    components.forEach((c, i) => {
+        if (!(c instanceof Base)) {
+            throw new Error(`Component ${i} is not a ${Base === DiscreteDistribution ? 'discrete' : 'continuous'} stats distribution.`)
+        }
+    })
+    let total = 0
+    for (const w of weights) {
+        if (typeof w !== 'number' || !(w >= 0) || !Number.isFinite(w)) {
+            throw new Error('weights must be non-negative finite numbers.')
+        }
+        total += w
+    }
+    if (!(total > 0)) {
+        throw new Error('weights must not all be zero.')
+    }
+    return weights.map((w) => w / total)
+}
+
+function logSumExp(values) {
+    const m = Math.max(...values)
+    if (!Number.isFinite(m)) return m
+    let s = 0
+    for (const v of values) s += Math.exp(v - m)
+    return m + Math.log(s)
+}
+
+/** Shared behaviour of continuous and discrete mixtures. @private */
+const mixtureMethods = {
+    _cdf(x) {
+        return this.components.reduce((s, c, i) => s + this.weights[i] * c._cdf(x), 0)
+    },
+    _sf(x) {
+        return this.components.reduce((s, c, i) => s + this.weights[i] * c._sf(x), 0)
+    },
+    _sample(size) {
+        return samplers.mixture(this.components, this.weights, size)
+    },
+    mean() {
+        return this.components.reduce((s, c, i) => s + this.weights[i] * c.mean(), 0)
+    },
+    variance() {
+        const mu = this.mean()
+        const second = this.components.reduce((s, c, i) => s + this.weights[i] * (c.variance() + c.mean() ** 2), 0)
+        return second - mu * mu
+    },
+}
+
+function mixtureSupport(components) {
+    return [Math.min(...components.map((c) => c.support[0])), Math.max(...components.map((c) => c.support[1]))]
+}
+
+/**
+ * Finite mixture of continuous distributions: density sum_i w_i f_i(x).
+ */
+class Mixture extends ContinuousDistribution {
+    constructor(components, weights) {
+        super()
+        this.weights = mixtureWeights(components, weights, ContinuousDistribution)
+        this.components = components
+        if (components.some((c) => c instanceof DiscreteDistribution)) {
+            throw new Error('Mixtures cannot combine discrete and continuous components.')
+        }
+    }
+    get support() { return mixtureSupport(this.components) }
+    _logpdf(x) { return logSumExp(this.components.map((c, i) => Math.log(this.weights[i]) + c._logpdf(x))) }
+    _cdf(x) { return mixtureMethods._cdf.call(this, x) }
+    _sf(x) { return mixtureMethods._sf.call(this, x) }
+    _sample(size) { return mixtureMethods._sample.call(this, size) }
+    mean() { return mixtureMethods.mean.call(this) }
+    variance() { return mixtureMethods.variance.call(this) }
+    /** Upper-tail quantile by bisection on the survival function (keeps tail precision). */
+    _isf(q) {
+        if (q > 0.5) return this._ppf(1 - q)
+        const [lo0, hi0] = this.support
+        if (q === 0) return hi0
+        let lo = this._ppf(0.5)
+        let hi = Number.isFinite(hi0) ? hi0 : Math.max(1, Math.abs(lo)) * 2
+        while (!Number.isFinite(hi0) && this._sf(hi) > q) hi = hi * 2 + 1
+        for (let i = 0; i < 300; i++) {
+            const mid = (lo + hi) / 2
+            if (mid === lo || mid === hi) break
+            if (this._sf(mid) > q) lo = mid
+            else hi = mid
+        }
+        return Math.max(lo0, (lo + hi) / 2)
+    }
+}
+
+/**
+ * Finite mixture of discrete distributions: mass sum_i w_i p_i(k).
+ */
+class DiscreteMixture extends DiscreteDistribution {
+    constructor(components, weights) {
+        super()
+        this.weights = mixtureWeights(components, weights, DiscreteDistribution)
+        this.components = components
+    }
+    get support() { return mixtureSupport(this.components) }
+    _logpmf(k) { return logSumExp(this.components.map((c, i) => Math.log(this.weights[i]) + c._logpmf(k))) }
+    _cdf(x) { return mixtureMethods._cdf.call(this, x) }
+    _sf(x) { return mixtureMethods._sf.call(this, x) }
+    _sample(size) { return mixtureMethods._sample.call(this, size) }
+    mean() { return mixtureMethods.mean.call(this) }
+    variance() { return mixtureMethods.variance.call(this) }
+}
+
+function makeMixture(components, weights) {
+    if (Array.isArray(components) && components.length > 0 && components.every((c) => c instanceof DiscreteDistribution)) {
+        return new DiscreteMixture(components, weights)
+    }
+    return new Mixture(components, weights)
+}
+
 /**
  * Factories of frozen distributions, scipy.stats style. Parameters use the same names and
  * conventions as the corresponding sampling functions of the library.
@@ -1036,6 +1158,8 @@ class DiscreteUniform extends DiscreteDistribution {
  * @property {function(number, number, number): DiscreteDistribution} hypergeometric - hypergeometric(ngood, nbad, nsample)
  * @property {function(number): DiscreteDistribution} bernoulli - bernoulli(p)
  * @property {function(number, number): DiscreteDistribution} randint - randint(low, high), high excluded
+ * @property {function(Array, number[]): ContinuousDistribution} mixture - mixture(components, weights):
+ *   finite mixture of stats distributions (all continuous or all discrete), weights normalised.
  */
 export const stats = Object.freeze({
     normal: (loc, scale) => new Normal(loc, scale),
@@ -1066,5 +1190,6 @@ export const stats = Object.freeze({
     hypergeometric: (ngood, nbad, nsample) => new Hypergeometric(ngood, nbad, nsample),
     bernoulli: (p) => new Bernoulli(p),
     randint: (low, high) => new DiscreteUniform(low, high),
+    mixture: (components, weights) => makeMixture(components, weights),
 })
 

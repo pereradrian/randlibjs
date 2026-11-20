@@ -4,6 +4,23 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `stats.mixture(components, weights)`: finite mixtures of stats distributions (continuous or
+  discrete) with pdf/pmf, cdf, sf, ppf/isf, mean, variance, interval and sampling.
+- `mixture` accepts stats distribution objects as components, unnormalised weights and a
+  `{ returnLabels: true }` option; component selection is O(1).
+- numpy's ziggurat normal/exponential and numpy's gamma, binomial (BTPE) and Poisson algorithms:
+  with `'pcg64'` these reproduce `default_rng(seed)` streams.
+- `scripts/benchmark.mjs`.
+
+### Changed
+
+- `mixture` weights no longer need to sum to 1; they are normalised.
+- Seeded normal, exponential, gamma and binomial streams differ from 2.0.0 (new algorithms).
+
 ## [2.0.0] - 2026-11-20
 
 A complete rewrite that turns randlibjs into a numpy.random + scipy.stats equivalent for JavaScript.
