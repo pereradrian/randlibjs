@@ -1,4 +1,4 @@
-import {add, multiply} from 'mathjs'
+import { matVec } from '../util/linalg.js'
 import { choleskyDecomposition } from '../util/cholesky.js'
 
 /**
@@ -69,7 +69,7 @@ export function multivariate(means, covariance, noiseGenerator, size = null) {
     // size == null → return one sample
     if (size == null) {
         const noise = noiseGenerator(n)   // ensure noise is vector
-        const transformed = add(means, multiply(L, noise))
+        const transformed = addVectors(means, matVec(L, noise))
         return transformed
     }
 
@@ -90,7 +90,7 @@ export function multivariate(means, covariance, noiseGenerator, size = null) {
             throw new Error("Noise generator must return a vector of length n.")
         }
 
-        const transformed = add(means, multiply(L, noise))
+        const transformed = addVectors(means, matVec(L, noise))
         samples.push(transformed)
     }
 
@@ -98,3 +98,7 @@ export function multivariate(means, covariance, noiseGenerator, size = null) {
     return size === 1 ? samples[0] : samples
 }
 
+
+function addVectors(a, b) {
+    return a.map((x, i) => x + b[i])
+}
