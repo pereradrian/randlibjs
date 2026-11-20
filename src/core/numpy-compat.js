@@ -148,9 +148,40 @@ export class SeedSequence {
     }
 }
 
-const MASK64 = (1n << 64n) - 1n
 const MASK128 = (1n << 128n) - 1n
 const PCG64_MULT = 0x2360ed051fc65da44385df649fccf645n
+const TWO_POW_32 = 4294967296
+// multiplier limbs, least significant first
+const M0 = 0x9fccf645
+const M1 = 0x4385df64
+const M2 = 0x1fc65da4
+const M3 = 0x2360ed05
+
+let HI = 0
+let LO = 0
+
+/** 32 x 32 -> 64-bit product into (HI, LO). @private */
+function mulTo(a, b) {
+    const a0 = a & 0xffff
+    const a1 = a >>> 16
+    const b0 = b & 0xffff
+    const b1 = b >>> 16
+    const p00 = a0 * b0
+    const p01 = a0 * b1
+    const p10 = a1 * b0
+    const mid = (p00 >>> 16) + (p01 & 0xffff) + (p10 & 0xffff)
+    LO = ((mid & 0xffff) << 16 | p00 & 0xffff) >>> 0
+    HI = a1 * b1 + (p01 >>> 16) + (p10 >>> 16) + (mid >>> 16)
+}
+
+function limbsToBigInt(l) {
+    return BigInt(l[3]) << 96n | BigInt(l[2]) << 64n | BigInt(l[1]) << 32n | BigInt(l[0])
+}
+
+function bigIntToLimbs(v) {
+    v &= MASK128
+    return [Number(v & 0xffffffffn), Number(v >> 32n & 0xffffffffn), Number(v >> 64n & 0xffffffffn), Number(v >> 96n)]
+}
 
 /**
  * PCG64 (PCG-XSL-RR 128/64), numpy's default bit generator. Seeded through
@@ -182,12 +213,85 @@ export class PCG64 extends BitGenerator {
         this.step()
         this.hasUint32 = false
         this.uinteger = 0
+        this.outHi = 0
+        this.outLo = 0
         this.gauss = null
     }
 
-    /** @private */
+    // The 128-bit state and increment are stored as 32-bit limbs (s0 least significant);
+    // the BigInt accessors are only used for seeding, advance() and state snapshots.
+    get state() {
+        return limbsToBigInt([this.s0, this.s1, this.s2, this.s3])
+    }
+
+    set state(value) {
+        [this.s0, this.s1, this.s2, this.s3] = bigIntToLimbs(value)
+    }
+
+    get inc() {
+        return limbsToBigInt([this.c0, this.c1, this.c2, this.c3])
+    }
+
+    set inc(value) {
+        [this.c0, this.c1, this.c2, this.c3] = bigIntToLimbs(value)
+    }
+
+    /** state = state * multiplier + inc (mod 2^128), with 32-bit limbs. @private */
     step() {
-        this.state = this.state * PCG64_MULT + this.inc & MASK128
+        const s0 = this.s0
+        const s1 = this.s1
+        const s2 = this.s2
+        const s3 = this.s3
+        let a0 = this.c0
+        let a1 = this.c1
+        let a2 = this.c2
+        let a3 = this.c3 + (Math.imul(s0, M3) >>> 0) + (Math.imul(s1, M2) >>> 0) + (Math.imul(s2, M1) >>> 0) + (Math.imul(s3, M0) >>> 0)
+        mulTo(s0, M0); a0 += LO; a1 += HI
+        mulTo(s0, M1); a1 += LO; a2 += HI
+        mulTo(s1, M0); a1 += LO; a2 += HI
+        mulTo(s0, M2); a2 += LO; a3 += HI
+        mulTo(s1, M1); a2 += LO; a3 += HI
+        mulTo(s2, M0); a2 += LO; a3 += HI
+        let carry = Math.floor(a0 / TWO_POW_32)
+        this.s0 = a0 - carry * TWO_POW_32
+        a1 += carry
+        carry = Math.floor(a1 / TWO_POW_32)
+        this.s1 = a1 - carry * TWO_POW_32
+        a2 += carry
+        carry = Math.floor(a2 / TWO_POW_32)
+        this.s2 = a2 - carry * TWO_POW_32
+        this.s3 = (a3 + carry) % TWO_POW_32
+    }
+
+    /** Steps and stores the next 64-bit output in (outHi, outLo). @private */
+    next() {
+        this.step()
+        const xh = (this.s3 ^ this.s1) >>> 0
+        const xl = (this.s2 ^ this.s0) >>> 0
+        const rot = this.s3 >>> 26
+        if (rot === 0) {
+            this.outHi = xh
+            this.outLo = xl
+        } else if (rot < 32) {
+            this.outHi = (xh >>> rot | xl << 32 - rot) >>> 0
+            this.outLo = (xl >>> rot | xh << 32 - rot) >>> 0
+        } else if (rot === 32) {
+            this.outHi = xl
+            this.outLo = xh
+        } else {
+            const r = rot - 32
+            this.outHi = (xl >>> r | xh << 32 - r) >>> 0
+            this.outLo = (xh >>> r | xl << 32 - r) >>> 0
+        }
+    }
+
+    /**
+     * Next 64-bit output as [hi, lo] unsigned 32-bit numbers (XSL-RR output function).
+     * @returns {number[]}
+     */
+    nextUint64Parts() {
+        this.next()
+        return [this.outHi, this.outLo]
     }
 
     /**
@@ -195,11 +299,8 @@ export class PCG64 extends BitGenerator {
      * @returns {bigint}
      */
     nextUint64() {
-        this.step()
-        const s = this.state
-        const rot = s >> 122n
-        const x = (s >> 64n ^ s) & MASK64
-        return (x >> rot | x << (-rot & 63n)) & MASK64
+        this.next()
+        return BigInt(this.outHi) << 32n | BigInt(this.outLo)
     }
 
     /**
@@ -211,10 +312,10 @@ export class PCG64 extends BitGenerator {
             this.hasUint32 = false
             return this.uinteger
         }
-        const v = this.nextUint64()
+        this.next()
         this.hasUint32 = true
-        this.uinteger = Number(v >> 32n)
-        return Number(v & 0xffffffffn)
+        this.uinteger = this.outHi
+        return this.outLo
     }
 
     /**
@@ -222,11 +323,13 @@ export class PCG64 extends BitGenerator {
      * @returns {number}
      */
     random() {
-        return Number(this.nextUint64() >> 11n) / 9007199254740992
+        this.next()
+        return (this.outHi * 2097152 + (this.outLo >>> 11)) / 9007199254740992
     }
 
     nextUint53() {
-        return Number(this.nextUint64() >> 11n)
+        this.next()
+        return this.outHi * 2097152 + (this.outLo >>> 11)
     }
 
     /**

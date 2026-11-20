@@ -53,18 +53,26 @@ const FE = new Float64Array(256)
     }
 }
 
+let ZH = 0
+let ZL = 0
+
 /**
- * Next 64 random bits as [hi, lo] unsigned 32-bit halves.
+ * Loads the next 64 random bits into (ZH, ZL) as unsigned 32-bit halves, without allocating.
  * @private
  */
 function next64(source) {
-    if (typeof source.nextUint64 === 'function') {
-        const r = source.nextUint64()
-        return [Number(r >> 32n), Number(r & 0xffffffffn)]
+    if (typeof source.next === 'function' && source.outHi !== undefined) {
+        source.next()
+        ZH = source.outHi
+        ZL = source.outLo
+        return
     }
-    const hi = source.nextUint32()
-    const lo = source.nextUint32()
-    return [hi, lo]
+    if (typeof source.nextUint64Parts === 'function') {
+        [ZH, ZL] = source.nextUint64Parts()
+        return
+    }
+    ZH = source.nextUint32()
+    ZL = source.nextUint32()
 }
 
 /**
@@ -74,7 +82,9 @@ function next64(source) {
  */
 export function zigguratNormal(source) {
     for (;;) {
-        const [hi, lo] = next64(source)
+        next64(source)
+        const hi = ZH
+        const lo = ZL
         const idx = lo & 0xff
         const rabs = (hi & 0x1fffffff) * TWO_POW_23 + (lo >>> 9)
         let x = rabs * WI[idx]
@@ -106,7 +116,9 @@ export function zigguratNormal(source) {
  */
 export function zigguratExponential(source) {
     for (;;) {
-        const [hi, lo] = next64(source)
+        next64(source)
+        const hi = ZH
+        const lo = ZL
         const idx = lo >>> 3 & 0xff
         const r = hi * TWO_POW_21 + (lo >>> 11)
         const x = r * WE[idx]
