@@ -4,23 +4,6 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
-
-### Added
-
-- `stats.mixture(components, weights)`: finite mixtures of stats distributions (continuous or
-  discrete) with pdf/pmf, cdf, sf, ppf/isf, mean, variance, interval and sampling.
-- `mixture` accepts stats distribution objects as components, unnormalised weights and a
-  `{ returnLabels: true }` option; component selection is O(1).
-- numpy's ziggurat normal/exponential and numpy's gamma, binomial (BTPE) and Poisson algorithms:
-  with `'pcg64'` these reproduce `default_rng(seed)` streams.
-- `scripts/benchmark.mjs`.
-
-### Changed
-
-- `mixture` weights no longer need to sum to 1; they are normalised.
-- Seeded normal, exponential, gamma and binomial streams differ from 2.0.0 (new algorithms).
-
 ## [2.0.0] - 2026-11-20
 
 A complete rewrite that turns randlibjs into a numpy.random + scipy.stats equivalent for JavaScript.
@@ -31,9 +14,12 @@ A complete rewrite that turns randlibjs into a numpy.random + scipy.stats equiva
   PCG64 with numpy's `SeedSequence`. They support state snapshots, cloning, `jump`/`advance` and
   `spawn`. The global generator accepts numbers, bigints, strings or arrays as seeds, and a
   bit generator name: `seed(42, 'pcg64')`.
-- **numpy compatibility**: `createGenerator(seed, 'pcg64')` reproduces `np.random.default_rng(seed)`
-  (`random`, `uniform`, `integers`), and `'mt19937'` reproduces `RandomState(seed)` (`random_sample`,
-  `standard_normal`).
+- **numpy compatibility**: `createGenerator(seed, 'pcg64')` reproduces `np.random.default_rng(seed)`:
+  `random`, `uniform`, `integers`, `standard_normal`/`normal` (numpy's exact 256-layer ziggurat),
+  `binomial` (inversion + BTPE) and `poisson` bit for bit, and `standard_exponential`, `gamma`, `beta`,
+  `chisquare`, `dirichlet`, ... up to last-bit differences between `Math.log`/`Math.pow` and C's libm.
+  `'mt19937'` reproduces `RandomState(seed)` (`random_sample`, `standard_normal`,
+  `standard_exponential`, `standard_gamma`).
 - **Generator objects** (`createGenerator` / `defaultRng`) with every sampling function as a method,
   plus `getState`/`setState`/`clone`/`spawn`/`run`.
 - **numpy distributions**: `random`, `integers`, `standardNormal`, `standardExponential`,
@@ -56,6 +42,9 @@ A complete rewrite that turns randlibjs into a numpy.random + scipy.stats equiva
   `geometricBrownianMotion`, `ornsteinUhlenbeck`, `poissonProcess`, `inhomogeneousPoissonProcess`,
   `poissonCountingProcess`, `markovChain`.
 - **Resampling**: `resample`, `bootstrap` (BCa and percentile intervals) and `permutationTest`.
+- **Mixtures**: `mixture(components, weights, size, { returnLabels })` takes stats objects or
+  functions with unnormalised weights, and `stats.mixture(components, weights)` gives their
+  pdf/pmf, cdf, quantiles and moments.
 - `choice` supports integer populations and sampling without replacement (weighted too).
   `shuffle`/`permutation` take an `axis`.
 - `getState`, `setState` and `setRandomSource` for the global generator.
@@ -78,6 +67,7 @@ A complete rewrite that turns randlibjs into a numpy.random + scipy.stats equiva
 - `scale = 0` is allowed in `normal` (returns `loc`), and `chisquare` accepts non-integer degrees of
   freedom.
 - `pareto(alpha, xm)` gets a default `xm = 1`. `exponential(rate)` gets a default `rate = 1`.
+- `mixture` weights are normalised instead of having to sum to 1.
 
 ### Fixed
 

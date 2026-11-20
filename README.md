@@ -9,7 +9,7 @@
 [![jsDelivr](https://data.jsdelivr.com/v1/package/npm/randlibjs/badge)](https://www.jsdelivr.com/package/npm/randlibjs)
 [![Downloads](https://img.shields.io/npm/dm/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
 
-- **Same numbers as Python.** `createGenerator(seed, 'pcg64')` reproduces `np.random.default_rng(seed)` bit for bit (`random`, `uniform`, `integers`), and `'mt19937'` reproduces the legacy `np.random.RandomState(seed)` (`random_sample`, `standard_normal`). Simulations can be prototyped in Python and replayed in the browser, or the other way round.
+- **Same numbers as Python.** `createGenerator(seed, 'pcg64')` reproduces `np.random.default_rng(seed)`: `random`, `uniform`, `integers`, `normal` (numpy's exact ziggurat), `binomial` and `poisson` bit for bit, and `exponential`, `gamma`, `beta`, `chisquare`, ... up to last-bit libm rounding. `'mt19937'` reproduces the legacy `np.random.RandomState(seed)`. Simulations can be prototyped in Python and replayed in the browser, or the other way round.
 - **Exact samplers.** No approximations: Poisson (PTRS), binomial (O(log n) for any n), hypergeometric (populations of billions), truncated normal deep in the tails (Robert's algorithm), and more. All of them are validated against scipy with goodness-of-fit tests.
 - **Everything numpy.random has**, plus about 30 distributions from scipy.stats and beyond.
 - **scipy.stats-style distribution objects** with `pdf`, `cdf`, `ppf`, `sf`, `isf`, moments and intervals. Tail quantiles are computed on the accurate side. For example `stats.f(5, 10).isf(1e-12)` is exact to 16 digits, where scipy is off by 2e-5.
@@ -111,6 +111,7 @@ rng.run(() => someCodeUsingTheGlobalFunctions())  // redirect global functions t
 ```js
 createGenerator(42, 'pcg64').random()       // 0.7739560485559633 === np.random.default_rng(42).random()
 createGenerator(42, 'pcg64').integers(0, 10, 5)  // [0, 7, 6, 4, 4] === default_rng(42).integers(0, 10, 5)
+createGenerator(42, 'pcg64').standardNormal()    // 0.30471707975443135 === default_rng(42).standard_normal()
 
 seed(42, 'mt19937')
 standardNormal(3)   // [0.4967141530112327, -0.13826430117118466, 0.6476885381006925]
@@ -170,7 +171,7 @@ standardNormal(3)   // [0.4967141530112327, -0.13826430117118466, 0.647688538100
 | `orthoGroup(dim, size)`, `specialOrthoGroup(dim, size)` | `ortho_group`, `special_ortho_group` |
 | `randomCorrelation(eigs, size)`, `lkjCorrelation(dim, eta, size, cholesky)` | `random_correlation`, LKJ prior (Stan) |
 | `wishart(df, scale, size)`, `invWishart(df, scale, size)`, `matrixNormal(M, U, V, size)` | `wishart`, `invwishart`, `matrix_normal` |
-| `mixture(generators, priors, size)` | – |
+| `mixture(components, weights, size, { returnLabels })` | finite mixtures of stats objects or functions (see `stats.mixture`) |
 
 ### Sampling and permutations
 
@@ -196,6 +197,8 @@ g.sample(1000)                   // or g.rvs(1000, rng)
 
 stats.poisson(4).pmf([0, 1, 2])  // arrays (and nested arrays) are mapped element-wise
 ```
+
+Mixtures: `stats.mixture([stats.normal(0, 1), stats.normal(5, 2)], [0.7, 0.3])` has the same methods (continuous or discrete components).
 
 Continuous: `normal` (`norm`), `uniform`, `exponential`, `gamma`, `chisquare` (`chi2`), `beta`, `studentT` (`t`), `f`, `lognormal`, `cauchy`, `laplace`, `logistic`, `gumbel`, `weibull`, `pareto`, `triangular`, `rayleigh`, `truncatedNormal`.
 Discrete: `binomial`, `poisson`, `geometric`, `negativeBinomial`, `hypergeometric`, `bernoulli`, `randint`.
@@ -233,6 +236,15 @@ markovChain([[0.9, 0.1], [0.5, 0.5]], 100, 0)
 bootstrap(data, median, { nResamples: 9999 }).confidenceInterval   // BCa by default
 permutationTest(control, treatment).pvalue
 ```
+
+## Performance
+
+Rough throughput on Node 22 (`node scripts/benchmark.mjs`), in millions of samples per second:
+
+| | random | integers | normal | exponential | gamma | poisson | binomial |
+|---|---|---|---|---|---|---|---|
+| xoshiro128** (default) | ~70 | ~44 | ~25–30 | ~20 | ~15–20 | ~12 | ~15 |
+| pcg64 (numpy parity) | ~9 | ~12 | ~4.5 | ~6 | ~3 | ~3 | ~3 |
 
 ## Examples
 
