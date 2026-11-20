@@ -14,7 +14,7 @@ import { multivariateTriangular } from './src/functions/multivariate/multivariat
 import { chisquare } from './src/functions/univariate/chisquare.js'
 import { poisson } from './src/functions/univariate/poisson.js'
 import { triangular } from './src/functions/univariate/triangular.js'
-import { pareto } from './src/functions/univariate/pareto.js'
+import { pareto, lomax } from './src/functions/univariate/pareto.js'
 import { geometric } from './src/functions/univariate/geometric.js'
 import { lognormal } from './src/functions/univariate/lognormal.js'
 import { binomial } from './src/functions/univariate/binomial.js'
@@ -47,6 +47,7 @@ export {
     poisson,
     triangular,
     pareto,
+    lomax,
     geometric,
     lognormal,
     binomial,

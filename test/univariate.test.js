@@ -202,9 +202,9 @@ describe("Chi-squared Distribution Tests", () => {
   })
 
   test("Throws an error for invalid degrees of freedom", () => {
-      expect(() => chisquare(-1, null)).toThrow("Degrees of freedom (k) must be a positive integer.")
-      expect(() => chisquare(0, null)).toThrow("Degrees of freedom (k) must be a positive integer.")
-      expect(() => chisquare(2.5, null)).toThrow("Degrees of freedom (k) must be a positive integer.")
+      expect(() => chisquare(-1, null)).toThrow("Degrees of freedom (k) must be > 0.")
+      expect(() => chisquare(0, null)).toThrow("Degrees of freedom (k) must be > 0.")
+      expect(chisquare(2.5)).toBeGreaterThan(0) // non-integer df is valid, as in numpy
   })
 
   test("Throws an error for invalid size parameter", () => {

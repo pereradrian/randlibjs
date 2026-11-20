@@ -1,32 +1,20 @@
-
 import { baseGenerator } from '../base-generator.js'
-import { normal } from './normal.js'
+import { standardGamma } from '../../core/samplers.js'
+import { assertPositive } from '../util/validate.js'
+
 /**
- * Generates random numbers following a Chi-squared distribution.
+ * Generates random numbers following a Chi-squared distribution with `k` degrees of freedom.
+ * Non-integer degrees of freedom are supported (as numpy).
  *
- * @param {number} k - Degrees of freedom (must be a positive integer).
+ * @param {number} k - Degrees of freedom (> 0).
  * @param {number|Array|null} [size=null] - The shape of the output:
  *   - If `null`, a single number is returned.
  *   - If a number, a 1D array of the specified size is returned.
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.
- * @throws {Error} Throws an error if:
- *   - The `size` parameter is not a number, an array or null.
- *   - The degrees of freedom parameter k is not a positive integer.
+ * @throws {Error} If the degrees of freedom are not a positive number.
  * @returns {number|Array} A random number or an array of random numbers from the Chi-squared distribution.
  */
 export function chisquare(k, size = null) {
-    if (!Number.isInteger(k) || k <= 0) {
-        throw new Error("Degrees of freedom (k) must be a positive integer.")
-    }
-
-    const generateChi2 = () => {
-        let sum = 0
-        for (let i = 0; i < k; i++) {
-            const z = normal()
-            sum += z * z
-        }
-        return sum
-    }
-
-    return baseGenerator(generateChi2, size)
+    assertPositive('Degrees of freedom (k)', k)
+    return baseGenerator(() => 2 * standardGamma(k / 2), size)
 }

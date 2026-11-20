@@ -1,55 +1,31 @@
-import { rand } from '../../core/state.js'
 import { baseGenerator } from '../base-generator.js'
-import { normal } from './normal.js'
-import { POISSON_LAMBDA_NORMAL_APPROXIMATION_THRESHOLD } from '../util/constants.js'
-
-
-function generatePoisson(lambda) {
-    const L = Math.exp(-lambda)
-    let k = 0
-    let p = 1.0
-    do {
-        k++
-        p *= rand()
-    } while (p > L)
-    return k - 1
-}
-
-function estimatePoissonForLargeLambda(lambda) {
-    return Math.round(normal(lambda, Math.sqrt(lambda)))
-}
+import { poissonSample } from '../../core/samplers.js'
+import { assertNonNegative } from '../util/validate.js'
 
 /**
  * Generates random numbers following a Poisson distribution with a given mean (lambda).
  * The Poisson distribution models the number of events occurring in a fixed interval of time
  * or space, given the events occur independently and at a constant average rate.
  *
- * Algorithm: Knuth's method is used for generating Poisson-distributed random numbers.
- * For lambda <= 30, Knuth's algorithm is efficient and accurate. For larger lambda the normal approximation is used.
+ * Sampling is exact for every lambda: the multiplication method for lambda < 10 and
+ * Hörmann's PTRS transformed rejection method otherwise (the same algorithms as numpy).
  *
- * @param {number} lambda - The mean number of occurrences (lambda > 0).
+ * @example
+ * poisson(4)         // one sample with mean 4
+ * poisson(1e6, 10)   // ten samples, still exact
+ *
+ * @param {number} [lambda=1] - The mean number of occurrences (lambda >= 0).
  * @param {number|Array|null} [size=null] - The shape of the output:
  *   - If `null`, a single Poisson random value is returned.
  *   - If a number, a 1D array of the specified size is returned.
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.
  * @returns {number|Array} A Poisson random number, an array of random numbers, or a multidimensional array.
- *
- * @throws {Error} If lambda is not a positive number.
+ * @throws {Error} If lambda is negative, not a number or larger than 1e15.
  */
-export function poisson(lambda, size = null) {
-    if ( lambda <= 0 ) {
-        throw new Error("Lambda must be a positive number.")
+export function poisson(lambda = 1.0, size = null) {
+    assertNonNegative('lambda', lambda)
+    if (lambda > 1e15) {
+        throw new Error('lambda is too large.')
     }
-
-    let generator = null
-    if ( POISSON_LAMBDA_NORMAL_APPROXIMATION_THRESHOLD < lambda ){
-        generator = () => estimatePoissonForLargeLambda(lambda)
-    }
-    else {
-        generator = () => generatePoisson(lambda)
-    }
-
-    // Use baseGenerator to handle the shape of the output.
-    return baseGenerator(generator, size)
+    return baseGenerator(() => poissonSample(lambda), size)
 }
-
