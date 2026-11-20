@@ -9,8 +9,11 @@ on:
       - master
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x, 24.x]
 
     steps:
       - name: Checkout code
@@ -19,18 +22,26 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
         run: npm install
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Build bundles
+        run: npm run build
+
       - name: Run tests
-        run: npm run test
+        run: npm test
 
       - name: Run coverage
+        if: matrix.node-version == '22.x'
         run: npm run coverage
 
       - name: Upload coverage reports to Codecov
+        if: matrix.node-version == '22.x'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

@@ -1,0 +1,38 @@
+name: Publish to npm
+
+# Runs when a version tag (e.g. v2.0.0) is pushed. Requires the NPM_TOKEN
+# repository secret (an npm automation / granular token with publish rights).
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          registry-url: https://registry.npmjs.org
+
+      - run: npm install
+
+      - name: Check tag matches package.json version
+        run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
+
+      # prepublishOnly runs lint, tests and the build
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        run: gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}" dist/randlib.min.js dist/randlib.js dist/randlib.mjs dist/randlib.cjs
+        env:
+          GH_TOKEN: ${{ github.token }}
