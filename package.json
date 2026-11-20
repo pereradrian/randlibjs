@@ -1,16 +1,41 @@
 {
   "name": "randlibjs",
   "version": "1.0.23",
-  "description": "Module implementing pseudo-random number generators with the ability to draw samples from a variety of probability distributions.",
-  "main": "index.js",
-  "exports": "./index.js",
+  "description": "Random number generation for JavaScript: numpy.random and scipy.stats style distributions, reproducible bit generators (xoshiro128**, PCG32, MT19937), exact samplers, Generator objects. Zero dependencies, browser and Node.",
   "type": "module",
+  "main": "./dist/randlib.cjs",
+  "module": "./index.js",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./dist/randlib.cjs",
+      "default": "./index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "unpkg": "dist/randlib.min.js",
+  "jsdelivr": "dist/randlib.min.js",
+  "files": [
+    "index.js",
+    "src",
+    "dist",
+    "LICENSE",
+    "NOTICE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "test": "vitest",
-    "coverage": "vitest --coverage",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "lint": "eslint src index.js test scripts",
+    "build": "node scripts/build.mjs",
     "docs": "jsdoc -c docs/input/jsdoc.json",
-    "deploy": "npm run docs && gh-pages -d docs",
-    "publish": "npm publish"
+    "prepublishOnly": "npm run lint && npm test && npm run build"
   },
   "repository": {
     "type": "git",
@@ -18,11 +43,19 @@
   },
   "keywords": [
     "random",
-    "math",
+    "rng",
+    "prng",
+    "numpy",
+    "scipy",
     "distributions",
     "statistics",
     "probability",
-    "numlib",
+    "sampling",
+    "monte-carlo",
+    "seed",
+    "xoshiro",
+    "pcg",
+    "mersenne-twister",
     "stochastic"
   ],
   "author": "Adrián Muñoz Perera, https://pereradrian.github.io",
@@ -33,12 +66,12 @@
   "bugs": {
     "url": "https://github.com/pereradrian/randlibjs/issues"
   },
-  "homepage": "https://github.com/pereradrian/randlibjs#readme",
+  "homepage": "https://pereradrian.github.io/randlibjs/",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@vitest/coverage-v8": "^5.1.1",
+    "esbuild": "^0.28.2",
     "eslint": "^10.15.0",
-    "gh-pages": "^6.3.0",
     "globals": "^17.14.0",
     "jsdoc": "^4.0.5",
     "vitest": "^5.1.1"
