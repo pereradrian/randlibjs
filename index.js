@@ -23,3 +23,7 @@ export { logo } from './src/misc/logo.js'
 
 // Special functions
 export { inverseNormalCDF, normalCDF } from './src/functions/util/inverse-normal-cdf.js'
+
+// Statistical distribution objects (scipy.stats style) and special functions
+export { stats, ContinuousDistribution, DiscreteDistribution } from './src/stats/distributions.js'
+export * as special from './src/stats/special.js'
