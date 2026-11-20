@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: core/samplers.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: core/samplers.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Core scalar samplers shared by the public distribution functions.
+ * They draw from the active bit generator (see `state.js`) and do no validation.
+ * @private
+ */
+import { getSource, rand } from './state.js'
+
+/**
+ * Standard normal deviate using the Marsaglia polar method. The second deviate of
+ * each pair is cached on the bit generator, exactly as numpy's legacy `gauss`, so an
+ * MT19937 generator reproduces `np.random.RandomState(seed).standard_normal()`.
+ * @returns {number}
+ */
+export function standardNormal() {
+    const source = getSource()
+    if (source.gauss !== null &amp;&amp; source.gauss !== undefined) {
+        const cached = source.gauss
+        source.gauss = null
+        return cached
+    }
+    let x1
+    let x2
+    let r2
+    do {
+        x1 = 2 * source.random() - 1
+        x2 = 2 * source.random() - 1
+        r2 = x1 * x1 + x2 * x2
+    } while (r2 >= 1 || r2 === 0)
+    const f = Math.sqrt(-2 * Math.log(r2) / r2)
+    source.gauss = f * x1
+    return f * x2
+}
+
+/**
+ * Standard exponential deviate (rate 1) by inversion.
+ * @returns {number}
+ */
+export function standardExponential() {
+    return -Math.log(1 - rand())
+}
+
+/**
+ * Natural logarithm of the gamma function (Lanczos approximation, g = 7, n = 9).
+ * Accurate to ~1e-15 for x > 0.
+ * @param {number} x
+ * @returns {number}
+ */
+export function logGamma(x) {
+    if (x &lt; 0.5) {
+        return Math.log(Math.PI / Math.abs(Math.sin(Math.PI * x))) - logGamma(1 - x)
+    }
+    x -= 1
+    let a = LANCZOS[0]
+    const t = x + 7.5
+    for (let i = 1; i &lt; 9; i++) {
+        a += LANCZOS[i] / (x + i)
+    }
+    return 0.9189385332046728 + (x + 0.5) * Math.log(t) - t + Math.log(a)
+}
+
+// published Lanczos coefficients
+const LANCZOS = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+    -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7]
+
+const LOG_FACTORIAL_TABLE = (() => {
+    const table = [0]
+    for (let k = 1; k &lt; 128; k++) {
+        table.push(table[k - 1] + Math.log(k))
+    }
+    return table
+})()
+
+/**
+ * log(k!) for non-negative integers.
+ * @param {number} k
+ * @returns {number}
+ */
+export function logFactorial(k) {
+    if (k &lt; 128) {
+        return LOG_FACTORIAL_TABLE[k]
+    }
+    // Stirling series
+    const x = k + 1
+    return (x - 0.5) * Math.log(x) - x + 0.9189385332046728 + 1 / (12 * x) - 1 / (360 * x * x * x) + 1 / (1260 * x ** 5)
+}
+
+/**
+ * Standard gamma deviate with shape `a` (scale 1).
+ * Marsaglia &amp; Tsang (2000) squeeze method, with the a &lt; 1 boost u^(1/a).
+ * @param {number} a - Shape (> 0). Returns 0 for a = 0.
+ * @returns {number}
+ */
+export function standardGamma(a) {
+    if (a === 0) {
+        return 0
+    }
+    if (a &lt; 1) {
+        // Gamma(a) = Gamma(a + 1) * U^(1/a), computed in log space to avoid underflow
+        const g = standardGamma(a + 1)
+        const logU = Math.log(1 - rand()) / a
+        return g * Math.exp(logU)
+    }
+    const d = a - 1 / 3
+    const c = 1 / Math.sqrt(9 * d)
+    for (;;) {
+        let x
+        let v
+        do {
+            x = standardNormal()
+            v = 1 + c * x
+        } while (v &lt;= 0)
+        v = v * v * v
+        const u = 1 - rand()
+        const x2 = x * x
+        if (u &lt; 1 - 0.0331 * x2 * x2) {
+            return d * v
+        }
+        if (Math.log(u) &lt; 0.5 * x2 + d * (1 - v + Math.log(v))) {
+            return d * v
+        }
+    }
+}
+
+/**
+ * Beta deviate together with its complement, both computed without cancellation:
+ * returns [x, 1 - x] where 1 - x keeps full relative precision even when x is close to 1.
+ * Jöhnk's algorithm when both parameters are &lt;= 1 (robust in log space), otherwise
+ * ratio of gammas.
+ * @param {number} a
+ * @param {number} b
+ * @returns {number[]}
+ */
+export function betaPair(a, b) {
+    if (a &lt;= 1 &amp;&amp; b &lt;= 1) {
+        for (;;) {
+            const u = rand()
+            const v = rand()
+            const x = Math.pow(u, 1 / a)
+            const y = Math.pow(v, 1 / b)
+            const xy = x + y
+            if (xy &lt;= 1 &amp;&amp; u + v > 0) {
+                if (xy > 0) {
+                    return [x / xy, y / xy]
+                }
+                let logX = Math.log(u) / a
+                let logY = Math.log(v) / b
+                const logM = Math.max(logX, logY)
+                logX -= logM
+                logY -= logM
+                const logSum = Math.log(Math.exp(logX) + Math.exp(logY))
+                return [Math.exp(logX - logSum), Math.exp(logY - logSum)]
+            }
+        }
+    }
+    const x = standardGamma(a)
+    const y = standardGamma(b)
+    return [x / (x + y), y / (x + y)]
+}
+
+/**
+ * Beta deviate.
+ * @param {number} a
+ * @param {number} b
+ * @returns {number}
+ */
+export function betaSample(a, b) {
+    return betaPair(a, b)[0]
+}
+
+/**
+ * Poisson deviate. Multiplication method for lam &lt; 10, otherwise the
+ * PTRS transformed rejection method of Hörmann (1993), exact for any lam.
+ * @param {number} lam
+ * @returns {number}
+ */
+export function poissonSample(lam) {
+    if (lam === 0) {
+        return 0
+    }
+    if (lam &lt; 10) {
+        const limit = Math.exp(-lam)
+        let k = 0
+        let p = rand()
+        while (p > limit) {
+            k++
+            p *= rand()
+        }
+        return k
+    }
+    const slam = Math.sqrt(lam)
+    const loglam = Math.log(lam)
+    const b = 0.931 + 2.53 * slam
+    const a = -0.059 + 0.02483 * b
+    const invalpha = 1.1239 + 1.1328 / (b - 3.4)
+    const vr = 0.9277 - 3.6224 / (b - 2)
+    for (;;) {
+        const u = rand() - 0.5
+        const v = rand()
+        const us = 0.5 - Math.abs(u)
+        const k = Math.floor((2 * a / us + b) * u + lam + 0.43)
+        if (us >= 0.07 &amp;&amp; v &lt;= vr) {
+            return k
+        }
+        if (k &lt; 0 || us &lt; 0.013 &amp;&amp; v > us) {
+            continue
+        }
+        if (Math.log(v) + Math.log(invalpha) - Math.log(a / (us * us) + b) &lt;= -lam + k * loglam - logFactorial(k)) {
+            return k
+        }
+    }
+}
+
+/**
+ * Binomial deviate by inversion for small n * min(p, 1 - p), otherwise the
+ * exact beta-splitting recursion (Knuth, TAOCP vol. 2, 3.4.1), which reduces the
+ * problem size geometrically.
+ * @param {number} n - Number of trials (non-negative integer).
+ * @param {number} p - Success probability.
+ * @returns {number}
+ */
+export function binomialSample(n, p) {
+    if (n === 0 || p === 0) {
+        return 0
+    }
+    if (p === 1) {
+        return n
+    }
+    if (p > 0.5) {
+        return n - binomialSample(n, 1 - p)
+    }
+    let offset = 0
+    while (n * p >= 30) {
+        const i = Math.floor((n + 1) / 2)
+        const x = betaSample(i, n + 1 - i)
+        if (x >= p) {
+            n = i - 1
+            p = p / x
+        } else {
+            offset += i
+            n = n - i
+            p = (p - x) / (1 - x)
+        }
+        if (p > 0.5) {
+            return offset + n - binomialSample(n, 1 - p)
+        }
+    }
+    return offset + binomialInversion(n, p)
+}
+
+function binomialInversion(n, p) {
+    if (n === 0 || p === 0) {
+        return 0
+    }
+    const q = 1 - p
+    const qn = Math.exp(n * Math.log1p(-p))
+    const np = n * p
+    const bound = Math.min(n, np + 10 * Math.sqrt(np * q + 1))
+    let x = 0
+    let px = qn
+    let u = rand()
+    while (u > px) {
+        x++
+        if (x > bound) {
+            x = 0
+            px = qn
+            u = rand()
+        } else {
+            u -= px
+            px = (n - x + 1) * p * px / (x * q)
+        }
+    }
+    return x
+}
+
+function logChoose(n, k) {
+    return logFactorial(n) - logFactorial(k) - logFactorial(n - k)
+}
+
+/**
+ * Hypergeometric deviate: number of good items in a sample of `n` drawn without
+ * replacement from `good` good and `bad` bad items. Exact inversion starting at the
+ * mode and searching outwards, O(standard deviation) expected time.
+ * @param {number} good
+ * @param {number} bad
+ * @param {number} n
+ * @returns {number}
+ */
+export function hypergeometricSample(good, bad, n) {
+    const total = good + bad
+    if (n > total / 2) {
+        return good - hypergeometricSample(good, bad, total - n)
+    }
+    if (good > bad) {
+        return n - hypergeometricSample(bad, good, n)
+    }
+    const lo = Math.max(0, n - bad)
+    const hi = Math.min(n, good)
+    if (lo === hi) {
+        return lo
+    }
+    const mode = Math.min(hi, Math.max(lo, Math.floor((n + 1) * (good + 1) / (total + 2))))
+    const pMode = Math.exp(logChoose(good, mode) + logChoose(bad, n - mode) - logChoose(total, n))
+    // ratio p(k + 1) / p(k)
+    const ratio = (k) => (good - k) * (n - k) / ((k + 1) * (bad - n + k + 1))
+    for (;;) {
+        let u = rand() - pMode
+        if (u &lt;= 0) {
+            return mode
+        }
+        let up = mode
+        let down = mode
+        let pUp = pMode
+        let pDown = pMode
+        while (up &lt; hi || down > lo) {
+            if (up &lt; hi) {
+                pUp *= ratio(up)
+                up++
+                u -= pUp
+                if (u &lt;= 0) {
+                    return up
+                }
+            }
+            if (down > lo) {
+                down--
+                pDown /= ratio(down)
+                u -= pDown
+                if (u &lt;= 0) {
+                    return down
+                }
+            }
+        }
+        // only reachable through floating point round-off: retry
+    }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:28:13 GMT+0100 (hora estándar de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

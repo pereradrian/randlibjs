@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: processes/bootstrap.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: processes/bootstrap.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Resampling statistics: bootstrap confidence intervals and permutation tests,
+ * as `scipy.stats.bootstrap` and `scipy.stats.permutation_test`.
+ * @module bootstrap
+ */
+import { randBelow } from '../core/state.js'
+import { normalCDF, inverseNormalCDF } from '../functions/util/inverse-normal-cdf.js'
+import { assertPositiveInteger } from '../functions/util/validate.js'
+
+/**
+ * @typedef {Object} BootstrapResult
+ * @property {number} estimate - The statistic on the original data.
+ * @property {number} standardError - Standard deviation of the bootstrap distribution.
+ * @property {number} bias - Mean of the bootstrap distribution minus the estimate.
+ * @property {number[]} confidenceInterval - [lower, upper] bounds.
+ * @property {number[]} distribution - The bootstrap replicates of the statistic.
+ */
+
+/**
+ * @typedef {Object} PermutationTestResult
+ * @property {number} statistic - The observed statistic.
+ * @property {number} pvalue - The permutation p-value.
+ * @property {number[]} nullDistribution - Statistic values under random relabelling.
+ */
+
+const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length
+
+function quantile(sorted, q) {
+    const pos = (sorted.length - 1) * q
+    const lo = Math.floor(pos)
+    const hi = Math.ceil(pos)
+    return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo)
+}
+
+/**
+ * Bootstrap estimate of the sampling distribution of a statistic.
+ *
+ * @example
+ * const result = bootstrap(data, (xs) => median(xs), { nResamples: 5000 })
+ * result.confidenceInterval   // [low, high]
+ *
+ * @param {Array} data - The sample.
+ * @param {function(Array): number} [statistic=mean] - Statistic computed on a sample.
+ * @param {Object} [options]
+ * @param {number} [options.nResamples=9999] - Number of bootstrap resamples.
+ * @param {number} [options.confidence=0.95] - Confidence level of the interval.
+ * @param {string} [options.method='BCa'] - 'BCa' (bias-corrected and accelerated, scipy's
+ *   default) or 'percentile'.
+ * @returns {BootstrapResult}
+ */
+export function bootstrap(data, statistic = mean, { nResamples = 9999, confidence = 0.95, method = 'BCa' } = {}) {
+    if (!Array.isArray(data) || data.length &lt; 2) throw new Error('data must be an array with at least 2 elements.')
+    if (typeof statistic !== 'function') throw new Error('statistic must be a function.')
+    assertPositiveInteger('nResamples', nResamples)
+    if (!(confidence > 0 &amp;&amp; confidence &lt; 1)) throw new Error('confidence must be in (0, 1).')
+    const n = data.length
+    const estimate = statistic(data)
+    const distribution = new Array(nResamples)
+    const buffer = new Array(n)
+    for (let b = 0; b &lt; nResamples; b++) {
+        for (let i = 0; i &lt; n; i++) buffer[i] = data[randBelow(n)]
+        distribution[b] = statistic(buffer)
+    }
+    const sorted = distribution.slice().sort((a, b) => a - b)
+    const m = mean(distribution)
+    const standardError = Math.sqrt(distribution.reduce((s, x) => s + (x - m) ** 2, 0) / (nResamples - 1))
+    const alpha = (1 - confidence) / 2
+    let lo = alpha
+    let hi = 1 - alpha
+    if (method === 'BCa') {
+        // bias correction
+        const below = distribution.filter((x) => x &lt; estimate).length + 0.5 * distribution.filter((x) => x === estimate).length
+        const z0 = inverseNormalCDF(below / nResamples)
+        // acceleration from the jackknife
+        const jack = new Array(n)
+        for (let i = 0; i &lt; n; i++) jack[i] = statistic(data.filter((_, j) => j !== i))
+        const jm = mean(jack)
+        let num = 0
+        let den = 0
+        for (const v of jack) {
+            num += (jm - v) ** 3
+            den += (jm - v) ** 2
+        }
+        const a = den === 0 ? 0 : num / (6 * den ** 1.5)
+        const adjust = (z) => normalCDF(z0 + (z0 + z) / (1 - a * (z0 + z)))
+        if (Number.isFinite(z0)) {
+            lo = adjust(inverseNormalCDF(alpha))
+            hi = adjust(inverseNormalCDF(1 - alpha))
+        }
+    } else if (method !== 'percentile') {
+        throw new Error(`Unknown bootstrap method "${method}".`)
+    }
+    return {
+        estimate,
+        standardError,
+        bias: m - estimate,
+        confidenceInterval: [quantile(sorted, lo), quantile(sorted, hi)],
+        distribution,
+    }
+}
+
+/**
+ * Two-sample permutation test of the null hypothesis that both samples come from the same
+ * distribution.
+ *
+ * @example
+ * permutationTest(control, treatment).pvalue
+ *
+ * @param {number[]} x - First sample.
+ * @param {number[]} y - Second sample.
+ * @param {function(number[], number[]): number} [statistic] - Test statistic; difference of means by default.
+ * @param {Object} [options]
+ * @param {number} [options.nResamples=9999] - Number of random permutations.
+ * @param {string} [options.alternative='two-sided'] - 'two-sided', 'greater' or 'less'.
+ * @returns {PermutationTestResult}
+ */
+export function permutationTest(x, y, statistic = (a, b) => mean(a) - mean(b), { nResamples = 9999, alternative = 'two-sided' } = {}) {
+    if (!Array.isArray(x) || !Array.isArray(y) || x.length === 0 || y.length === 0) {
+        throw new Error('x and y must be non-empty arrays.')
+    }
+    assertPositiveInteger('nResamples', nResamples)
+    if (!['two-sided', 'greater', 'less'].includes(alternative)) {
+        throw new Error('alternative must be "two-sided", "greater" or "less".')
+    }
+    const observed = statistic(x, y)
+    const pooled = x.concat(y)
+    const nx = x.length
+    const nullDistribution = new Array(nResamples)
+    for (let r = 0; r &lt; nResamples; r++) {
+        for (let i = pooled.length - 1; i > 0; i--) {
+            const j = randBelow(i + 1)
+            const t = pooled[i]
+            pooled[i] = pooled[j]
+            pooled[j] = t
+        }
+        nullDistribution[r] = statistic(pooled.slice(0, nx), pooled.slice(nx))
+    }
+    const eps = 1e-12 * Math.max(1, Math.abs(observed))
+    let count
+    if (alternative === 'greater') {
+        count = nullDistribution.filter((v) => v >= observed - eps).length
+    } else if (alternative === 'less') {
+        count = nullDistribution.filter((v) => v &lt;= observed + eps).length
+    } else {
+        const greater = nullDistribution.filter((v) => v >= observed - eps).length
+        const less = nullDistribution.filter((v) => v &lt;= observed + eps).length
+        count = 2 * Math.min(greater, less)
+    }
+    // add-one correction so the p-value is never 0 (as scipy)
+    const pvalue = Math.min(1, (count + 1) / (nResamples + 1))
+    return { statistic: observed, pvalue, nullDistribution }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:28:13 GMT+0100 (hora estándar de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

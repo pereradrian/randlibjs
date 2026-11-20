@@ -26,29 +26,147 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { shuffle } from './shuffle.js'
+            <pre class="prettyprint source linenums"><code>import { shuffle, randomPermutationIndices } from './shuffle.js'
+import { randBelow, rand } from '../core/state.js'
+import { baseGenerator } from '../functions/base-generator.js'
+
+function deepCopy(x) {
+    return Array.isArray(x) ? x.map(deepCopy) : x
+}
 
 /**
  * Generates a random permutation of an array or a range of integers.
+ * The input array is not modified (a copy is shuffled), as numpy.
  *
- * @param {Array|number} x - If an array, it is shuffled and returned. 
- *   If a number `n`, returns a random permutation of integers `[0, 1, ..., n-1]`.
+ * @example
+ * permutation(5)            // e.g. [3, 0, 4, 1, 2]
+ * permutation(['a', 'b'])   // ['b', 'a'] or ['a', 'b']
+ *
+ * @param {Array|number} x - If an array, a shuffled copy is returned (nested arrays are
+ *   permuted along the first axis). If a number `n`, a random permutation of `[0, 1, ..., n-1]`.
+ * @param {number} [axis=0] - Axis along which to permute nested arrays.
  * @returns {Array} A randomly permuted array.
  */
-export function permutation(x) {
+export function permutation(x, axis = 0) {
     if (typeof x === "number") {
         if (x &lt;= 0 || !Number.isInteger(x)) {
             throw new Error("If x is a number, it must be a positive integer.")
         }
-        // Create an array [0, 1, ..., x-1]
-        x = Array.from({ length: x }, (_, i) => i)
-    } else if (!Array.isArray(x)) {
+        return randomPermutationIndices(x)
+    }
+    if (!Array.isArray(x)) {
         throw new Error("Input must be an array or a positive integer.")
     }
-    // Shuffle the array in-place
-    shuffle(x)
+    return shuffle(deepCopy(x), axis)
+}
 
-    return x
+function getShape(x) {
+    const shape = []
+    let node = x
+    while (Array.isArray(node)) {
+        shape.push(node.length)
+        node = node[0]
+    }
+    return shape
+}
+
+/**
+ * Randomly permutes a nested array along `axis`, shuffling every slice independently
+ * (numpy's `Generator.permuted`). With `axis = null` the array is flattened, shuffled
+ * and reshaped. Returns a new array unless `inPlace` is true.
+ *
+ * @example
+ * permuted([[1, 2, 3], [4, 5, 6]], 1)   // each row shuffled independently
+ *
+ * @param {Array} x - A (possibly nested, rectangular) array.
+ * @param {number|null} [axis=null] - Axis along which to shuffle independently, or null.
+ * @param {boolean} [inPlace=false] - Modify `x` instead of returning a copy.
+ * @returns {Array}
+ */
+export function permuted(x, axis = null, inPlace = false) {
+    if (!Array.isArray(x)) {
+        throw new Error("Input must be an array.")
+    }
+    const target = inPlace ? x : deepCopy(x)
+    const shape = getShape(target)
+    if (axis === null) {
+        const flat = target.flat(Infinity)
+        shuffle(flat)
+        let index = 0
+        const fill = (node) => {
+            for (let i = 0; i &lt; node.length; i++) {
+                if (Array.isArray(node[i])) {
+                    fill(node[i])
+                } else {
+                    node[i] = flat[index++]
+                }
+            }
+        }
+        fill(target)
+        return target
+    }
+    if (!Number.isInteger(axis) || axis &lt; 0 || axis >= shape.length) {
+        throw new Error("axis is out of bounds for the array.")
+    }
+    // shuffle every 1-D line along `axis` independently
+    const others = shape.filter((_, d) => d !== axis)
+    const getAt = (idx) => idx.reduce((node, i) => node[i], target)
+    const setAt = (idx, value) => {
+        const parent = idx.slice(0, -1).reduce((node, i) => node[i], target)
+        parent[idx[idx.length - 1]] = value
+    }
+    for (const rest of cartesian(others)) {
+        const indexOf = (i) => [...rest.slice(0, axis), i, ...rest.slice(axis)]
+        const line = []
+        for (let i = 0; i &lt; shape[axis]; i++) {
+            line.push(getAt(indexOf(i)))
+        }
+        shuffle(line)
+        line.forEach((value, i) => setAt(indexOf(i), value))
+    }
+    return target
+}
+
+function cartesian(dims) {
+    let out = [[]]
+    for (const d of dims) {
+        const next = []
+        for (const p of out) {
+            for (let i = 0; i &lt; d; i++) {
+                next.push([...p, i])
+            }
+        }
+        out = next
+    }
+    return out
+}
+
+/**
+ * Returns uniformly distributed floats in the half-open interval [0, 1)
+ * (numpy's `random` / `random_sample`).
+ *
+ * @param {number|number[]|null} [size=null] - Output shape.
+ * @returns {number|Array}
+ */
+export function random(size = null) {
+    return baseGenerator(rand, size)
+}
+
+/**
+ * Returns `length` random bytes.
+ *
+ * @param {number} length - Number of bytes (non-negative integer).
+ * @returns {Uint8Array}
+ */
+export function bytes(length) {
+    if (!Number.isSafeInteger(length) || length &lt; 0) {
+        throw new Error("length must be a non-negative integer.")
+    }
+    const out = new Uint8Array(length)
+    for (let i = 0; i &lt; length; i++) {
+        out[i] = randBelow(256)
+    }
+    return out
 }
 </code></pre>
         </article>
@@ -60,13 +178,13 @@ export function permutation(x) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#pcg64">pcg64</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#range">range</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Tue Mar 10 2026 10:29:32 GMT+0100 (hora estándar de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:28:13 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>

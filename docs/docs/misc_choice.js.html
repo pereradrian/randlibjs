@@ -26,54 +26,157 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { baseGenerator } from '../functions/base-generator.js'
-import { uniform } from '../functions/univariate/uniform.js'
-import { randint } from '../functions/univariate/randint.js'
+            <pre class="prettyprint source linenums"><code>import { rand, randBelow } from '../core/state.js'
+import { baseGenerator, normalizeSize } from '../functions/base-generator.js'
 
-function chooseOneWeighted(array, weights, totalWeight) {
-    const n = array.length
-    const threshold = uniform(0.0, totalWeight)
-    let accum = 0
-    for (let i = 0; i &lt; n; i++) {
-        accum += weights[i]
-        if (threshold &lt; accum) {
-            return array[i]
+function chooseOneWeighted(population, cumulative, total) {
+    const threshold = rand() * total
+    let lo = 0
+    let hi = cumulative.length - 1
+    while (lo &lt; hi) {
+        const mid = (lo + hi) >> 1
+        if (cumulative[mid] > threshold) {
+            hi = mid
+        } else {
+            lo = mid + 1
         }
     }
-
-    // Fallback for floating precision
-    return array[array.length - 1]
+    return population(lo)
 }
 
-function chooseOneUniform(array) {
-    return array[randint(array.length)]
+function reshape(flat, shape) {
+    let index = 0
+    const build = (dims) => {
+        const [first, ...rest] = dims
+        const out = new Array(first)
+        for (let i = 0; i &lt; first; i++) {
+            out[i] = rest.length > 0 ? build(rest) : flat[index++]
+        }
+        return out
+    }
+    return shape.length === 0 ? flat[0] : build(shape)
 }
 
+function sampleIndicesWithoutReplacement(n, k) {
+    if (k &lt;= n / 2) {
+        // rejection with a hash set: uniformly random order, O(k) expected
+        const seen = new Set()
+        const out = []
+        while (out.length &lt; k) {
+            const i = randBelow(n)
+            if (!seen.has(i)) {
+                seen.add(i)
+                out.push(i)
+            }
+        }
+        return out
+    }
+    // partial Fisher-Yates
+    const idx = Array.from({ length: n }, (_, i) => i)
+    for (let i = 0; i &lt; k; i++) {
+        const j = i + randBelow(n - i)
+        const t = idx[i]
+        idx[i] = idx[j]
+        idx[j] = t
+    }
+    return idx.slice(0, k)
+}
+
+function weightedIndicesWithoutReplacement(weights, k) {
+    // Efraimidis-Spirakis: keys log(u) / w, the k largest keys form a weighted
+    // sample without replacement in successive-sampling order.
+    const keys = []
+    for (let i = 0; i &lt; weights.length; i++) {
+        if (weights[i] > 0) {
+            let u = rand()
+            while (u === 0) {
+                u = rand()
+            }
+            keys.push([Math.log(u) / weights[i], i])
+        }
+    }
+    if (keys.length &lt; k) {
+        throw new Error('Fewer non-zero weights than the requested sample size.')
+    }
+    keys.sort((a, b) => b[0] - a[0])
+    return keys.slice(0, k).map(([, i]) => i)
+}
 
 /**
- * Shuffles the elements of an array along the first axis in-place.
+ * Generates a random sample from a given array or from `range(n)`, as numpy's `choice`.
  *
- * For N-dimensional arrays, this function only shuffles the order of the top-level sub-arrays.
- * The content and order within each sub-array remain unchanged.
+ * @example
+ * choice(['a', 'b', 'c'])                    // one element
+ * choice(['a', 'b'], [0.9, 0.1], 10)          // ten weighted draws
+ * choice(52, null, 5, false)                 // five distinct cards out of 52
+ * choice(['x', 'y', 'z'], [5, 1, 1], 2, false)  // weighted, without replacement
  *
- * @param {Array} array - The array to shuffle. Must be N-dimensional.
- * @returns {Array} A new shuffled array if a deep copy is required, otherwise in-place modification.
+ * @param {Array|number} array - Population, or an integer `n` meaning `[0, 1, ..., n-1]`.
+ * @param {number[]|null} [weights=null] - Non-negative weights (normalised automatically).
+ *   Uniform when `null`.
+ * @param {number|number[]|null} [size=null] - Output shape. `null` returns a single element.
+ * @param {boolean} [replace=true] - Whether the sample is with replacement.
+ * @returns {*|Array} The sampled element(s).
+ * @throws {Error} If the population is empty, the weights are invalid, or more elements
+ *   than available are requested without replacement.
  */
-export function choice(array, weights = null, size = null) {
-    if (!Array.isArray(array) || array.length === 0) {
-        throw new Error("Items array can not be empty.")
+export function choice(array, weights = null, size = null, replace = true) {
+    let n
+    let population
+    if (typeof array === 'number') {
+        if (!Number.isSafeInteger(array) || array &lt;= 0) {
+            throw new Error("Population size must be a positive integer.")
+        }
+        n = array
+        population = (i) => i
+    } else if (Array.isArray(array)) {
+        if (array.length === 0) {
+            throw new Error("Items array can not be empty.")
+        }
+        n = array.length
+        population = (i) => array[i]
+    } else {
+        throw new Error("Items must be an array or a positive integer.")
     }
-    
-    if (weights !== null) {
-        if (!Array.isArray(weights) || weights.length !== array.length) {
+
+    let total = 0
+    if (weights !== null &amp;&amp; weights !== undefined) {
+        if (!Array.isArray(weights) || weights.length !== n) {
             throw new Error("array.length != weights.length.")
         }
-        const totalWeight = weights.reduce((accumulatedWeight, weight) => accumulatedWeight + weight, 0);
-        return baseGenerator(() => chooseOneWeighted(array, weights, totalWeight), size)
+        for (const w of weights) {
+            if (typeof w !== 'number' || !(w >= 0) || !Number.isFinite(w)) {
+                throw new Error("Weights must be non-negative finite numbers.")
+            }
+            total += w
+        }
+        if (!(total > 0)) {
+            throw new Error("Weights must not all be zero.")
+        }
     }
-    else {
-        return baseGenerator(() => chooseOneUniform(array), size)
+    const hasWeights = total > 0
+
+    if (replace) {
+        if (!hasWeights) {
+            return baseGenerator(() => population(randBelow(n)), size)
+        }
+        const cumulative = new Array(n)
+        let acc = 0
+        for (let i = 0; i &lt; n; i++) {
+            acc += weights[i]
+            cumulative[i] = acc
+        }
+        return baseGenerator(() => chooseOneWeighted(population, cumulative, acc), size)
     }
+
+    const shape = normalizeSize(size)
+    const k = shape === null ? 1 : shape.reduce((a, b) => a * b, 1)
+    if (k > n) {
+        throw new Error("Cannot take a larger sample than the population when replace is false.")
+    }
+    const indices = hasWeights ? weightedIndicesWithoutReplacement(weights, k) : sampleIndicesWithoutReplacement(n, k)
+    const flat = indices.map(population)
+    return shape === null ? flat[0] : reshape(flat, shape)
 }
 </code></pre>
         </article>
@@ -85,13 +188,13 @@ export function choice(array, weights = null, size = null) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#pcg64">pcg64</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#range">range</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Tue Mar 10 2026 10:29:32 GMT+0100 (hora estándar de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:28:13 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>

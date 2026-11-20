@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: core/bit-generators.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: core/bit-generators.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Bit generators: the low level sources of randomness.
+ *
+ * Every bit generator exposes the same interface:
+ *  - `nextUint32()`  a uniformly distributed unsigned 32-bit integer.
+ *  - `random()`      a uniformly distributed double in [0, 1) with 53 bits of resolution.
+ *  - `getState()` / `setState(state)` to snapshot and restore the stream.
+ *  - `clone()`       an independent copy positioned at the same point of the stream.
+ *
+ * All generators are implemented with 32-bit integer arithmetic only (no BigInt),
+ * so they are fast in every JavaScript engine.
+ *
+ * @module bit-generators
+ */
+
+const TWO_POW_32 = 4294967296
+const TWO_POW_26 = 67108864
+const TWO_POW_53 = 9007199254740992
+
+/**
+ * Converts any supported seed into an array of unsigned 32-bit words.
+ *
+ * @param {number|bigint|string|number[]|Uint32Array} seed
+ * @returns {number[]}
+ * @private
+ */
+export function seedToWords(seed) {
+    if (typeof seed === 'number') {
+        if (!Number.isFinite(seed)) {
+            throw new Error('Seed must be a finite number.')
+        }
+        let value = Math.abs(Math.trunc(seed))
+        const words = [value % TWO_POW_32 >>> 0]
+        value = Math.floor(value / TWO_POW_32)
+        while (value > 0) {
+            words.push(value % TWO_POW_32 >>> 0)
+            value = Math.floor(value / TWO_POW_32)
+        }
+        if (seed &lt; 0) {
+            words.push(0x9e3779b9)
+        }
+        return words
+    }
+    if (typeof seed === 'bigint') {
+        let value = seed &lt; 0n ? -seed : seed
+        const words = [Number(value &amp; 0xffffffffn)]
+        value >>= 32n
+        while (value > 0n) {
+            words.push(Number(value &amp; 0xffffffffn))
+            value >>= 32n
+        }
+        if (seed &lt; 0n) {
+            words.push(0x9e3779b9)
+        }
+        return words
+    }
+    if (typeof seed === 'string') {
+        const words = []
+        for (let i = 0; i &lt; seed.length; i++) {
+            words.push(seed.charCodeAt(i) >>> 0)
+        }
+        return words.length > 0 ? words : [0]
+    }
+    if (Array.isArray(seed) || seed instanceof Uint32Array) {
+        if (seed.length === 0) {
+            throw new Error('Seed array must not be empty.')
+        }
+        return Array.from(seed, (word) => {
+            if (!Number.isInteger(word) || word &lt; 0 || word >= TWO_POW_32) {
+                throw new Error('Seed arrays must contain unsigned 32-bit integers.')
+            }
+            return word >>> 0
+        })
+    }
+    throw new Error('Seed must be a number, a bigint, a string or an array of unsigned 32-bit integers.')
+}
+
+/**
+ * Produces `count` well mixed 32-bit words from a seed, using a SplitMix32 style
+ * finalizer over all the seed words. Used to initialise generator states.
+ *
+ * @param {number[]} words - Seed words.
+ * @param {number} count - Number of words to produce.
+ * @returns {number[]}
+ * @private
+ */
+export function expandSeed(words, count) {
+    let h = 0x6a09e667 ^ words.length
+    for (const word of words) {
+        h = Math.imul(h ^ word, 0x85ebca6b)
+        h = (h &lt;&lt; 13 | h >>> 19) >>> 0
+        h = Math.imul(h, 0xc2b2ae35) >>> 0
+    }
+    const out = []
+    let state = h >>> 0
+    for (let i = 0; i &lt; count; i++) {
+        state = state + 0x9e3779b9 >>> 0
+        let z = state
+        z = Math.imul(z ^ z >>> 16, 0x21f0aaad)
+        z = Math.imul(z ^ z >>> 15, 0x735a2d97)
+        out.push((z ^ z >>> 15) >>> 0)
+    }
+    return out
+}
+
+/**
+ * Returns 32-bit words from a cryptographically secure source if available,
+ * otherwise from `Math.random`.
+ *
+ * @param {number} count
+ * @returns {number[]}
+ * @private
+ */
+export function entropy(count) {
+    const crypto = globalThis.crypto
+    if (crypto &amp;&amp; typeof crypto.getRandomValues === 'function') {
+        return Array.from(crypto.getRandomValues(new Uint32Array(count)))
+    }
+    return Array.from({ length: count }, () => Math.floor(Math.random() * TWO_POW_32) >>> 0)
+}
+
+/**
+ * Base class implementing the shared helpers on top of `nextUint32`.
+ * @abstract
+ */
+export class BitGenerator {
+    /**
+     * Uniform double in [0, 1) with 53 random bits.
+     * @returns {number}
+     */
+    random() {
+        const a = this.nextUint32() >>> 5
+        const b = this.nextUint32() >>> 6
+        return (a * TWO_POW_26 + b) / TWO_POW_53
+    }
+
+    /**
+     * Uniform unsigned integer in [0, 2^53).
+     * @returns {number}
+     */
+    nextUint53() {
+        const a = this.nextUint32() >>> 5
+        const b = this.nextUint32() >>> 6
+        return a * TWO_POW_26 + b
+    }
+
+    /**
+     * Independent copy positioned at the same point of the stream.
+     * @returns {BitGenerator}
+     */
+    clone() {
+        const copy = Object.create(Object.getPrototypeOf(this))
+        copy.setState(this.getState())
+        return copy
+    }
+}
+
+/**
+ * xoshiro128** 1.1 by David Blackman and Sebastiano Vigna (2018).
+ * Period 2^128 - 1, passes BigCrush. This is the default bit generator.
+ *
+ * Reference: https://prng.di.unimi.it/
+ */
+export class Xoshiro128StarStar extends BitGenerator {
+    /**
+     * @param {number|bigint|string|number[]} [seed] - Seed. Random if omitted.
+     */
+    constructor(seed) {
+        super()
+        const words = seed === undefined || seed === null ? entropy(4) : seedToWords(seed)
+        this.s = expandSeed(words, 4)
+        if ((this.s[0] | this.s[1] | this.s[2] | this.s[3]) === 0) {
+            this.s[0] = 1
+        }
+        this.gauss = null
+    }
+
+    get name() {
+        return 'xoshiro128**'
+    }
+
+    nextUint32() {
+        const s = this.s
+        const m = Math.imul(s[1], 5)
+        const r = Math.imul(m &lt;&lt; 7 | m >>> 25, 9) >>> 0
+        const t = s[1] &lt;&lt; 9
+        s[2] ^= s[0]
+        s[3] ^= s[1]
+        s[1] ^= s[2]
+        s[0] ^= s[3]
+        s[2] ^= t
+        s[3] = s[3] &lt;&lt; 11 | s[3] >>> 21
+        return r
+    }
+
+    /**
+     * Advances the stream by 2^64 steps. Calling `jump` on clones yields
+     * 2^64 non-overlapping sub-streams, useful for parallel simulations.
+     * @returns {this}
+     */
+    jump() {
+        const JUMP = [0x8764000b, 0xf542d2d3, 0x6fa035c3, 0x77f2db5b]
+        let s0 = 0
+        let s1 = 0
+        let s2 = 0
+        let s3 = 0
+        for (const word of JUMP) {
+            for (let b = 0; b &lt; 32; b++) {
+                if (word &amp; 1 &lt;&lt; b) {
+                    s0 ^= this.s[0]
+                    s1 ^= this.s[1]
+                    s2 ^= this.s[2]
+                    s3 ^= this.s[3]
+                }
+                this.nextUint32()
+            }
+        }
+        this.s = [s0 >>> 0, s1 >>> 0, s2 >>> 0, s3 >>> 0]
+        this.gauss = null
+        return this
+    }
+
+    getState() {
+        return { bitGenerator: this.name, state: this.s.map((x) => x >>> 0), gauss: this.gauss }
+    }
+
+    setState(state) {
+        if (!state || !Array.isArray(state.state) || state.state.length !== 4) {
+            throw new Error('Invalid xoshiro128** state.')
+        }
+        this.s = state.state.map((x) => x >>> 0)
+        this.gauss = state.gauss ?? null
+    }
+}
+
+/**
+ * Multiplies two unsigned 32-bit integers returning the full 64-bit product as [hi, lo].
+ * @private
+ */
+export function mul32(a, b) {
+    const a0 = a &amp; 0xffff
+    const a1 = a >>> 16
+    const b0 = b &amp; 0xffff
+    const b1 = b >>> 16
+    const p00 = a0 * b0
+    const p01 = a0 * b1
+    const p10 = a1 * b0
+    const p11 = a1 * b1
+    const mid = (p00 >>> 16) + (p01 &amp; 0xffff) + (p10 &amp; 0xffff)
+    const lo = ((mid &amp; 0xffff) &lt;&lt; 16 | p00 &amp; 0xffff) >>> 0
+    const hi = p11 + (p01 >>> 16) + (p10 >>> 16) + (mid >>> 16) >>> 0
+    return [hi, lo]
+}
+
+const PCG_MULT_HI = 0x5851f42d
+const PCG_MULT_LO = 0x4c957f2d
+
+/**
+ * PCG32 (PCG-XSH-RR 64/32) by Melissa E. O'Neill (2014).
+ * 64-bit state, 2^63 selectable streams, period 2^64.
+ * Output is bit-identical to the reference C implementation `pcg32_random_r`.
+ *
+ * Reference: https://www.pcg-random.org/
+ */
+export class PCG32 extends BitGenerator {
+    /**
+     * @param {number|bigint|string|number[]} [seed] - Seed. Random if omitted.
+     * @param {number|bigint} [stream] - Stream selector (sequence constant). Derived from the seed if omitted.
+     */
+    constructor(seed, stream) {
+        super()
+        let initState
+        let initSeq
+        if (seed === undefined || seed === null) {
+            const e = entropy(4)
+            initState = [e[0], e[1]]
+            initSeq = [e[2], e[3]]
+        } else if ((typeof seed === 'number' || typeof seed === 'bigint') &amp;&amp; stream !== undefined) {
+            initState = splitHiLo(seed)
+            initSeq = splitHiLo(stream)
+        } else {
+            const e = expandSeed(seedToWords(seed), 4)
+            initState = [e[0], e[1]]
+            initSeq = stream === undefined ? [e[2], e[3]] : splitHiLo(stream)
+        }
+        this.seed(initState, initSeq)
+    }
+
+    get name() {
+        return 'pcg32'
+    }
+
+    /** @private */
+    seed([stateHi, stateLo], [seqHi, seqLo]) {
+        this.hi = 0
+        this.lo = 0
+        // inc = (initseq &lt;&lt; 1) | 1
+        this.incHi = (seqHi &lt;&lt; 1 | seqLo >>> 31) >>> 0
+        this.incLo = (seqLo &lt;&lt; 1 | 1) >>> 0
+        this.step()
+        const lo = this.lo + stateLo >>> 0
+        const carry = lo &lt; this.lo ? 1 : 0
+        this.hi = this.hi + stateHi + carry >>> 0
+        this.lo = lo
+        this.step()
+        this.gauss = null
+    }
+
+    /** @private */
+    step() {
+        const [phi, plo] = mul32(this.lo, PCG_MULT_LO)
+        const hi = phi + Math.imul(this.hi, PCG_MULT_LO) + Math.imul(this.lo, PCG_MULT_HI) >>> 0
+        const lo = plo + this.incLo >>> 0
+        const carry = lo &lt; plo ? 1 : 0
+        this.hi = hi + this.incHi + carry >>> 0
+        this.lo = lo
+    }
+
+    nextUint32() {
+        const h = this.hi
+        const l = this.lo
+        this.step()
+        const xhi = (h >>> 18 ^ h) >>> 0
+        const xlo = ((l >>> 18 | h &lt;&lt; 14) ^ l) >>> 0
+        const xorshifted = (xlo >>> 27 | xhi &lt;&lt; 5) >>> 0
+        const rot = h >>> 27
+        return (xorshifted >>> rot | xorshifted &lt;&lt; (-rot &amp; 31)) >>> 0
+    }
+
+    getState() {
+        return { bitGenerator: this.name, state: [this.hi, this.lo], inc: [this.incHi, this.incLo], gauss: this.gauss }
+    }
+
+    setState(state) {
+        if (!state || !Array.isArray(state.state) || !Array.isArray(state.inc)) {
+            throw new Error('Invalid pcg32 state.')
+        }
+        ;[this.hi, this.lo] = state.state.map((x) => x >>> 0)
+        ;[this.incHi, this.incLo] = state.inc.map((x) => x >>> 0)
+        this.gauss = state.gauss ?? null
+    }
+}
+
+/** @private */
+function splitHiLo(value) {
+    if (typeof value === 'bigint') {
+        const v = BigInt.asUintN(64, value)
+        return [Number(v >> 32n), Number(v &amp; 0xffffffffn)]
+    }
+    if (!Number.isInteger(value) || value &lt; 0) {
+        throw new Error('PCG32 seed and stream must be non-negative integers.')
+    }
+    return [Math.floor(value / TWO_POW_32) >>> 0, value % TWO_POW_32 >>> 0]
+}
+
+const MT_N = 624
+const MT_M = 397
+
+/**
+ * Mersenne Twister MT19937 by Matsumoto and Nishimura (1998).
+ *
+ * Seeding with a single integer in [0, 2^32) uses `init_genrand`, and seeding with an
+ * array uses `init_by_array`, exactly as numpy's legacy `RandomState`. Combined with the
+ * library's `random`, `normal` and `exponential` samplers this reproduces numpy's
+ * `np.random.RandomState(seed)` `random_sample`, `standard_normal` and
+ * `standard_exponential` streams bit for bit.
+ */
+export class MT19937 extends BitGenerator {
+    /**
+     * @param {number|bigint|string|number[]} [seed] - Seed. Random if omitted.
+     */
+    constructor(seed) {
+        super()
+        this.mt = new Uint32Array(MT_N)
+        this.index = MT_N + 1
+        if (seed === undefined || seed === null) {
+            this.initByArray(entropy(MT_N))
+        } else if (typeof seed === 'number' &amp;&amp; Number.isInteger(seed) &amp;&amp; seed >= 0 &amp;&amp; seed &lt; TWO_POW_32) {
+            this.initGenrand(seed)
+        } else {
+            this.initByArray(seedToWords(seed))
+        }
+        this.gauss = null
+    }
+
+    get name() {
+        return 'mt19937'
+    }
+
+    /** @private */
+    initGenrand(s) {
+        const mt = this.mt
+        mt[0] = s >>> 0
+        for (let i = 1; i &lt; MT_N; i++) {
+            const prev = mt[i - 1] ^ mt[i - 1] >>> 30
+            mt[i] = Math.imul(1812433253, prev) + i
+        }
+        this.index = MT_N
+    }
+
+    /** @private */
+    initByArray(key) {
+        const mt = this.mt
+        this.initGenrand(19650218)
+        let i = 1
+        let j = 0
+        let k = Math.max(MT_N, key.length)
+        for (; k > 0; k--) {
+            const prev = mt[i - 1] ^ mt[i - 1] >>> 30
+            mt[i] = (mt[i] ^ Math.imul(prev, 1664525)) + key[j] + j
+            i++
+            j++
+            if (i >= MT_N) {
+                mt[0] = mt[MT_N - 1]
+                i = 1
+            }
+            if (j >= key.length) {
+                j = 0
+            }
+        }
+        for (k = MT_N - 1; k > 0; k--) {
+            const prev = mt[i - 1] ^ mt[i - 1] >>> 30
+            mt[i] = (mt[i] ^ Math.imul(prev, 1566083941)) - i
+            i++
+            if (i >= MT_N) {
+                mt[0] = mt[MT_N - 1]
+                i = 1
+            }
+        }
+        mt[0] = 0x80000000
+        this.index = MT_N
+    }
+
+    /** @private */
+    twist() {
+        const mt = this.mt
+        for (let kk = 0; kk &lt; MT_N; kk++) {
+            const y = mt[kk] &amp; 0x80000000 | mt[(kk + 1) % MT_N] &amp; 0x7fffffff
+            mt[kk] = mt[(kk + MT_M) % MT_N] ^ y >>> 1 ^ (y &amp; 1 ? 0x9908b0df : 0)
+        }
+        this.index = 0
+    }
+
+    nextUint32() {
+        if (this.index >= MT_N) {
+            this.twist()
+        }
+        let y = this.mt[this.index++]
+        y ^= y >>> 11
+        y ^= y &lt;&lt; 7 &amp; 0x9d2c5680
+        y ^= y &lt;&lt; 15 &amp; 0xefc60000
+        y ^= y >>> 18
+        return y >>> 0
+    }
+
+    getState() {
+        return { bitGenerator: this.name, state: Array.from(this.mt), index: this.index, gauss: this.gauss }
+    }
+
+    setState(state) {
+        if (!state || !Array.isArray(state.state) || state.state.length !== MT_N) {
+            throw new Error('Invalid mt19937 state.')
+        }
+        this.mt = Uint32Array.from(state.state)
+        this.index = state.index
+        this.gauss = state.gauss ?? null
+    }
+}
+
+/**
+ * Wraps any function returning doubles in [0, 1) (e.g. `Math.random`) as a bit generator.
+ * Its state cannot be saved or restored.
+ */
+export class FunctionBitGenerator extends BitGenerator {
+    /**
+     * @param {function(): number} fn - Function returning uniform doubles in [0, 1).
+     */
+    constructor(fn) {
+        super()
+        if (typeof fn !== 'function') {
+            throw new Error('FunctionBitGenerator expects a function.')
+        }
+        this.fn = fn
+        this.gauss = null
+    }
+
+    get name() {
+        return 'function'
+    }
+
+    nextUint32() {
+        return Math.floor(this.fn() * TWO_POW_32) >>> 0
+    }
+
+    random() {
+        return this.fn()
+    }
+
+    getState() {
+        return { bitGenerator: this.name, gauss: this.gauss }
+    }
+
+    setState(state) {
+        this.gauss = state?.gauss ?? null
+    }
+
+    clone() {
+        return new FunctionBitGenerator(this.fn)
+    }
+}
+
+/**
+ * Registry of the bit generators by name.
+ * @type {Object&lt;string, Function>}
+ */
+export const BIT_GENERATORS = {
+    'xoshiro128**': Xoshiro128StarStar,
+    xoshiro128: Xoshiro128StarStar,
+    pcg32: PCG32,
+    mt19937: MT19937,
+}
+
+/**
+ * Registers an additional bit generator constructor under a name.
+ * @param {string} name
+ * @param {Function} ctor - Constructor taking a seed.
+ * @private
+ */
+export function registerBitGenerator(name, ctor) {
+    BIT_GENERATORS[name] = ctor
+}
+
+/**
+ * Creates a bit generator by name.
+ *
+ * @param {string} [name='xoshiro128**'] - One of `'xoshiro128**'`, `'pcg32'`, `'mt19937'`, `'pcg64'`.
+ * @param {number|bigint|string|number[]} [seed] - Seed. Random if omitted.
+ * @returns {BitGenerator}
+ */
+export function createBitGenerator(name = 'xoshiro128**', seed) {
+    const Ctor = BIT_GENERATORS[String(name).toLowerCase()]
+    if (!Ctor) {
+        throw new Error(`Unknown bit generator "${name}". Available: ${Object.keys(BIT_GENERATORS).join(', ')}.`)
+    }
+    return new Ctor(seed)
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:28:13 GMT+0100 (hora estándar de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

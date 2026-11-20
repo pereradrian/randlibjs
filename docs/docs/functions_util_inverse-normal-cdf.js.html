@@ -26,38 +26,110 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import { X, Y } from './normal-cdf-data.js'
-import { binarySearch } from './binary-search.js'
+            <pre class="prettyprint source linenums"><code>/* eslint-disable no-loss-of-precision -- coefficients are reproduced verbatim from the published algorithms */
+/**
+ * Inverse of the standard normal cumulative distribution function (quantile function).
+ *
+ * Implements Wichura's algorithm AS 241 (PPND16), accurate to about 1 part in 10^16.
+ *
+ * Reference: M. J. Wichura (1988), "Algorithm AS 241: The Percentage Points of the
+ * Normal Distribution", Applied Statistics 37(3), 477-484.
+ *
+ * @param {number} p - Probability in [0, 1].
+ * @returns {number} The value `x` such that P(Z &lt;= x) = p for Z ~ N(0, 1).
+ *   Returns -Infinity for p = 0, Infinity for p = 1 and NaN outside [0, 1].
+ */
+export function inverseNormalCDF(p) {
+    if (Number.isNaN(p) || p &lt; 0 || p > 1) {
+        return NaN
+    }
+    if (p === 0) {
+        return -Infinity
+    }
+    if (p === 1) {
+        return Infinity
+    }
+    const q = p - 0.5
+    if (Math.abs(q) &lt;= 0.425) {
+        const r = 0.180625 - q * q
+        return q * (((((((r * 2509.0809287301226727 +
+            33430.575583588128105) * r + 67265.770927008700853) * r +
+            45921.953931549871457) * r + 13731.693765509461125) * r +
+            1971.5909503065514427) * r + 133.14166789178437745) * r +
+            3.387132872796366608) /
+            (((((((r * 5226.495278852545925 +
+            28729.085735721942674) * r + 39307.89580009271061) * r +
+            21213.794301586595867) * r + 5394.1960214247511077) * r +
+            687.1870074920579083) * r + 42.313330701600911252) * r + 1)
+    }
+    let r = q &lt; 0 ? p : 1 - p
+    r = Math.sqrt(-Math.log(r))
+    let value
+    if (r &lt;= 5) {
+        r -= 1.6
+        value = (((((((r * 7.7454501427834140764e-4 +
+            0.0227238449892691845833) * r + 0.24178072517745061177) * r +
+            1.27045825245236838258) * r + 3.64784832476320460504) * r +
+            5.7694972214606914055) * r + 4.6303378461565452959) * r +
+            1.42343711074968357734) /
+            (((((((r * 1.05075007164441684324e-9 +
+            5.475938084995344946e-4) * r + 0.0151986665636164571966) * r +
+            0.14810397642748007459) * r + 0.68976733498510000455) * r +
+            1.6763848301838038494) * r + 2.05319162663775882187) * r + 1)
+    } else {
+        r -= 5
+        value = (((((((r * 2.01033439929228813265e-7 +
+            2.71155556874348757815e-5) * r + 0.0012426609473880784386) * r +
+            0.026532189526576123093) * r + 0.29656057182850489123) * r +
+            1.7848265399172913358) * r + 5.4637849111641143699) * r +
+            6.6579046435011037772) /
+            (((((((r * 2.04426310338993978564e-15 +
+            1.4215117583164458887e-7) * r + 1.8463183175100546818e-5) * r +
+            7.868691311456132591e-4) * r + 0.0148753612908506148525) * r +
+            0.13692988092273580531) * r + 0.59983220655588793769) * r + 1)
+    }
+    return q &lt; 0 ? -value : value
+}
 
 /**
- * Computes the inverse cumulative distribution function of a normal distribution.
+ * Standard normal cumulative distribution function, computed through a
+ * high precision complementary error function (W. J. Cody's rational approximations).
  *
- * @param {number} value - The point to evaluate.
+ * @param {number} x
+ * @returns {number} P(Z &lt;= x) for Z ~ N(0, 1).
  */
-export function inverseNormalCDF(value) {
-    const lastIndex = X.length - 1
-    const effectiveValue = (value &lt;= X[lastIndex]) ? value : 1.0 - value
-    let result = null
+export function normalCDF(x) {
+    if (Number.isNaN(x)) {
+        return NaN
+    }
+    return 0.5 * erfc(-x / Math.SQRT2)
+}
 
-    if (effectiveValue &lt;= X[0]) {
-        result = Y[0]
+/**
+ * Complementary error function, relative accuracy ~1e-15 (W. J. Cody, 1969).
+ *
+ * @param {number} x
+ * @returns {number}
+ */
+export function erfc(x) {
+    const ax = Math.abs(x)
+    let result
+    if (ax &lt; 0.5) {
+        const t = x * x
+        const top = (((0.185777706184603153 * t + 3.16112374387056560) * t + 113.864154151050156) * t + 377.485237685302021) * t + 3209.37758913846947
+        const bot = (((t + 23.6012909523441209) * t + 244.024637934444173) * t + 1282.61652607737228) * t + 2844.23683343917062
+        return 1 - x * top / bot
+    } else if (ax &lt; 4) {
+        const top = (((((((2.15311535474403846e-8 * ax + 0.564188496988670089) * ax + 8.88314979438837594) * ax + 66.1191906371416295) * ax + 298.635138197400131) * ax + 881.952221241769090) * ax + 1712.04761263407058) * ax + 2051.07837782607147) * ax + 1230.33935479799725
+        const bot = (((((((ax + 15.7449261107098347) * ax + 117.693950891312499) * ax + 537.181101862009858) * ax + 1621.38957456669019) * ax + 3290.79923573345963) * ax + 4362.61909014324716) * ax + 3439.36767414372164) * ax + 1230.33935480374942
+        result = Math.exp(-ax * ax) * top / bot
+    } else {
+        const z = 1 / (ax * ax)
+        const top = ((((0.0163153871373020978 * z + 0.305326634961232344) * z + 0.360344899949804439) * z + 0.125781726111229246) * z + 0.0160837851487422766) * z + 6.58749161529837803e-4
+        const bot = ((((z + 2.56852019228982242) * z + 1.87295284992346725) * z + 0.527905102951428412) * z + 0.0605183413124413191) * z + 2.33520497626869185e-3
+        result = Math.exp(-ax * ax) / ax * (0.564189583547756287 - z * top / bot)
     }
-    else if (X[lastIndex] &lt;= effectiveValue) {
-        result = Y[lastIndex]
-    }
-    else {
-        const indexLeft = binarySearch(X, effectiveValue)
-        if (indexLeft == lastIndex) {
-            result = Y[lastIndex]
-        }
-        else {
-            const indexRight = indexLeft + 1
-            result = ((effectiveValue - X[indexLeft])*Y[indexRight] + (X[indexRight] - effectiveValue)*Y[indexLeft]) / (X[indexRight] - X[indexLeft])
-        }
-    }
-
-    // Apply symmetry
-    return (value &lt;= X[lastIndex]) ? result : - result
+    return x &lt; 0 ? 2 - result : result
 }
 </code></pre>
         </article>
@@ -69,13 +141,13 @@ export function inverseNormalCDF(value) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#pcg64">pcg64</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#range">range</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Tue Mar 10 2026 10:29:32 GMT+0100 (hora estándar de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:28:13 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>

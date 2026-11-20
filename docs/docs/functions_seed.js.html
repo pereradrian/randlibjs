@@ -26,68 +26,70 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>let randomGenerator = Math.random
+            <pre class="prettyprint source linenums"><code>import { createBitGenerator, FunctionBitGenerator } from '../core/bit-generators.js'
+import { getGlobalSource, setGlobalSource } from '../core/state.js'
 
 /**
- * PCG64 Random Number Generator
- * 
- * A JavaScript implementation of the Permuted Congruential Generator (PCG).
- * This algorithm was introduced by Melissa E. O'Neill in her paper:
- * "PCG: A Family of Simple Fast Space-Efficient Statistically Good Algorithms for Random Number Generation" (2014).
- * 
- * Reference:
- * - Paper: https://www.pcg-random.org/pdf/toms-oneill-pcg-family-v1.02.pdf
- * - Website: https://www.pcg-random.org/
+ * Seeds the global random number generator used by all the module level functions.
  *
- * Constants used (multiplier and increment) are based on the PCG64 default configuration:
- * - Multiplier: 6364136223846793005 (prime relative to 2^64, ensures full period).
- * - Increment: 1442695040888963407 (odd, ensures proper state transitions).
- * 
- * This implementation generates 64-bit random numbers and maps them to the range [0, 1).
+ * Calling `seed` with the same value always reproduces the same sequence of samples.
  *
- * @param {number|bigint} seed - The initial seed for the random generator.
- * @returns {function} - A function that generates random numbers in [0, 1).
- */
-function pcg64(seed) {
-    let state = BigInt(seed) // Use BigInt for 64-bit arithmetic
-    const multiplier = 6364136223846793005n // PCG multiplier
-    const increment = 1442695040888963407n // PCG increment
-
-    return function () {
-        // Update the internal state
-        state = state * multiplier + increment &amp; 0xFFFFFFFFFFFFFFFFn
-
-        // Extract high-order bits for randomness
-        const result = Number(state >> 32n) / 0xFFFFFFFF
-
-        // Normalize to [0, 1)
-        return result >= 0 ? result : result + 1
-    }
-}
-
-/**
- * Seeds the random number generator with a specified value.
+ * @example
+ * seed(42)
+ * uniform()                // always the same value
+ * seed(42, 'mt19937')
+ * random()                 // 0.3745401188473625, same as np.random.RandomState(42).random_sample()
  *
- * @param {number} seedValue - Value to initialize the random generator.
+ * @param {number|bigint|string|number[]} [seedValue] - Seed value. When omitted the generator is
+ *   re-seeded from a secure entropy source (crypto.getRandomValues when available).
+ * @param {string} [bitGenerator='xoshiro128**'] - Bit generator: `'xoshiro128**'` (default), `'pcg32'` or `'mt19937'`.
  * @returns {void}
- * @throws {Error} Throws an error if the `seedValue` parameter is not a number.
+ * @throws {Error} If the seed is not a number, bigint, string or array of unsigned 32-bit integers.
  */
-export function seed(seedValue) {
-    if (typeof seedValue === 'bigint' || typeof seedValue === 'number') {
-        randomGenerator = pcg64(BigInt(seedValue) )
-    }
-    else {
-        throw new Error("SeedValue must be a number.")
-    }
+export function seed(seedValue, bitGenerator = 'xoshiro128**') {
+    setGlobalSource(createBitGenerator(bitGenerator, seedValue))
 }
 
 /**
- * Returns the current random generator function.
+ * Replaces the global source of randomness by a function returning uniform doubles in [0, 1),
+ * for example `Math.random` or a custom/secure generator. The state of such a source cannot be saved.
  *
- * @returns {function} The random number generator function.
+ * @param {function(): number} fn - Uniform [0, 1) generator.
+ * @returns {void}
+ */
+export function setRandomSource(fn) {
+    setGlobalSource(new FunctionBitGenerator(fn))
+}
+
+/**
+ * Returns the state of the global generator, which can later be restored with {@link setState}.
+ *
+ * @returns {Object} A JSON serialisable snapshot of the global generator.
+ */
+export function getState() {
+    return getGlobalSource().getState()
+}
+
+/**
+ * Restores a state previously obtained with {@link getState}.
+ *
+ * @param {Object} state - Snapshot returned by `getState`.
+ * @returns {void}
+ */
+export function setState(state) {
+    const source = createBitGenerator(state.bitGenerator, 0)
+    source.setState(state)
+    setGlobalSource(source)
+}
+
+/**
+ * Returns the current global random generator as a function returning doubles in [0, 1).
+ *
+ * @returns {function(): number} The random number generator function.
  */
 export function getRandomGenerator() {
-    return randomGenerator
+    const source = getGlobalSource()
+    return () => source.random()
 }
 </code></pre>
         </article>
@@ -99,13 +101,13 @@ export function getRandomGenerator() {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#binarySearch">binarySearch</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#pcg64">pcg64</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#range">range</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Tue Mar 10 2026 10:29:32 GMT+0100 (hora estándar de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:28:13 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>
