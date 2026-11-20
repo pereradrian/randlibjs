@@ -79,3 +79,29 @@ describe('createGenerator(seed, "pcg64") reproduces np.random.default_rng(seed)'
     expect(createGenerator([1, 2, 3], 'pcg64').integers(0, 2 ** 32, 2)).toEqual([4140415376, 2879656440])
   })
 })
+
+describe('numpy Generator distribution parity (pcg64)', () => {
+  // np.random.default_rng(42) drawing, in order, the same calls as below
+  test('normal, exponential, gamma, beta, binomial, poisson, chisquare', () => {
+    const g = createGenerator(42, 'pcg64')
+    // bit-identical: ziggurat normal, binomial (inversion and BTPE), Poisson (PTRS)
+    expect(g.standardNormal(3)).toEqual([0.30471707975443135, -1.0399841062404955, 0.7504511958064572])
+    const close = (actual, expected) => actual.forEach((v, i) => expect(Math.abs(v - expected[i])).toBeLessThanOrEqual(4e-15 * Math.abs(expected[i])))
+    // equal up to last-bit differences of Math.log/pow versus C's libm
+    close(g.standardExponential(3), [0.2797942898515832, 0.08643739969837702, 1.4526605157061507])
+    close(g.standardGamma(0.5, 3), [0.7557948464629789, 0.016413102877324694, 0.1374911747747859])
+    close(g.standardGamma(3.2, 3), [2.979924431052228, 3.73330785476338, 3.537429789965427])
+    close(g.beta(2, 3, 2), [0.5643058890979785, 0.6519194715482499])
+    expect(g.binomial(1000, 0.3, 4)).toEqual([319, 287, 303, 315])
+    expect(g.binomial(20, 0.2, 4)).toEqual([2, 4, 3, 5])
+    expect(g.poisson(55, 3)).toEqual([54, 59, 63])
+    expect(g.normal(10, 2, 2)).toEqual([10.233371618281456, 10.437377193458026])
+    close(g.chisquare(4, 2), [6.127581239922296, 5.4115180288923215])
+    expect(g.binomial(1e12, 0.6, 2)).toEqual([599999835857, 599999958395])
+  })
+
+  test('100000 normals sum to the same value as numpy', () => {
+    const xs = createGenerator(5, 'pcg64').standardNormal(100000)
+    expect(xs.reduce((a, b) => a + b, 0)).toBe(91.06279549240762)
+  })
+})
