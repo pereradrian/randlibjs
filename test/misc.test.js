@@ -1,4 +1,4 @@
-import { choice, permutation, randString, shuffle, logo } from '../index.js'
+import { choice, permutation, randString, shuffle, logo, seed } from '../index.js'
 import { describe, test, expect } from 'vitest'
 
 describe('Choice module tests', () => {
@@ -13,7 +13,10 @@ describe('Choice module tests', () => {
   })
 
   test('Generates deterministic sequences with same seed', () => {
-    // Si tu choice soporta seed
+    seed(42)
+    const first = choice(['a', 'b', 'c', 'd'], null, 10)
+    seed(42)
+    expect(choice(['a', 'b', 'c', 'd'], null, 10)).toEqual(first)
   })
 })
 
@@ -65,8 +68,8 @@ describe('Logo module tests', () => {
     const svg = logo(size)
     expect(typeof svg).toBe('string')
     expect(svg.length).toBeGreaterThan(0)
-    expect(svg).toContain('<svg')       // Comprobamos que contiene la etiqueta SVG
-    expect(svg).toContain('<rect')      // Comprobamos que contiene el rectángulo base
-    expect(svg).toContain('<circle')    // Comprobamos que genera al menos un círculo
+    expect(svg).toContain('<svg')       // contains the svg tag
+    expect(svg).toContain('<rect')      // contains the base rectangle
+    expect(svg).toContain('<circle')    // contains at least one circle
   })
 })

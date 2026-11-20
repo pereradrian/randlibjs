@@ -1,5 +1,5 @@
 import { seed, randint, uniform, normal, cauchy, exponential, permutation, chisquare, poisson, choice, randString, mixture } from '../index.js'
-import { range } from '../src/functions/util/range.js'
+const range = (n) => Array.from({ length: n }, (_, i) => i)
 import { describe, test, expect } from 'vitest'
 
 describe('Randint module tests', () => {
@@ -110,16 +110,16 @@ describe('Cauchy module tests', () => {
 describe('Exponential module tests', () => {
   test('Generates deterministic sequences with the same seed', () => {
     seed(12345)
-    const firstSequence = [cauchy(0, 10), cauchy(0, 10), cauchy(0, 10)]
+    const firstSequence = [exponential(0.5), exponential(0.5), exponential(0.5)]
     seed(12345)
-    const secondSequence = [cauchy(0, 10), cauchy(0, 10), cauchy(0, 10)]
+    const secondSequence = [exponential(0.5), exponential(0.5), exponential(0.5)]
     expect(firstSequence).toEqual(secondSequence)
   })
   test('Generates different sequences with different seeds', () => {
     seed(12345)
-    const firstSequence = [cauchy(0, 10), cauchy(0, 10), cauchy(0, 10)]
+    const firstSequence = [exponential(0.5), exponential(0.5), exponential(0.5)]
     seed(67890)
-    const secondSequence = [cauchy(0, 10), cauchy(0, 10), cauchy(0, 10)]
+    const secondSequence = [exponential(0.5), exponential(0.5), exponential(0.5)]
     expect(firstSequence).not.toEqual(secondSequence)
   })
   test('Exponential generator produces values in correct range', () => {
@@ -137,14 +137,14 @@ describe('Permutation  module tests', () => {
   test('Permutes an array correctly', () => {
     seed(12345)
     const arr = [1, 2, 3, 4, 5]
-    const result = permutation([...arr]) // Hacemos una copia para evitar modificar el original
-    expect(result).not.toEqual(arr) // Generalmente no será igual al original
-    expect(result.sort((a, b) => a - b)).toEqual(arr.sort((a, b) => a - b)) // Comprobamos que contiene los mismos elementos
+    const result = permutation([...arr]) // copy so the original is untouched
+    expect(result).not.toEqual(arr) // almost surely differs from the original
+    expect(result.sort((a, b) => a - b)).toEqual(arr.sort((a, b) => a - b)) // same elements
   })
   test('Generates a permutation of a range when input is a number', () => {
     const result = permutation(5)
-    expect(result.length).toBe(5) // Debe tener longitud 5
-    expect(result.sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4]) // Comprobamos que contiene todos los valores
+    expect(result.length).toBe(5) // length 5
+    expect(result.sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4]) // contains every value
   })
   test('Throws an error for invalid number input', () => {
     expect(() => permutation(-1)).toThrow('If x is a number, it must be a positive integer.')
