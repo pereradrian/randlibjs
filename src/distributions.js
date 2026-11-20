@@ -61,3 +61,33 @@ export { choice } from './misc/choice.js'
 export { shuffle } from './misc/shuffle.js'
 export { permutation, permuted, random, bytes } from './misc/permutation.js'
 export { randString } from './misc/rand-string.js'
+
+// Beyond numpy (scipy.stats and others)
+export {
+    truncatedNormal,
+    halfNormal,
+    skewNormal,
+    levy,
+    frechet,
+    generalizedExtremeValue,
+    generalizedPareto,
+    inverseGamma,
+    betaPrime,
+    kumaraswamy,
+    erlang,
+    chi,
+    maxwell,
+    nakagami,
+    loguniform,
+    burr12,
+    logLogistic,
+    semicircle,
+    exGaussian,
+    betaBinomial,
+    skellam,
+    rademacher,
+    categorical,
+    uniformSphere,
+    uniformBall,
+    uuid4,
+} from './functions/univariate/extra.js'

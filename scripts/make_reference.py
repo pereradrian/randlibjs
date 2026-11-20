@@ -56,6 +56,34 @@ CONTINUOUS = [
     ("vonmises", [0.3, 2], stats.vonmises(2, loc=0.3)),
     ("vonmises", [-1, 50], stats.vonmises(50, loc=-1)),
     ("vonmises", [0, 0.5], stats.vonmises(0.5)),
+    # beyond numpy
+    ("truncatedNormal", [1, 2, -1, 4], stats.truncnorm(-1, 1.5, loc=1, scale=2)),
+    ("truncatedNormal", [0, 1, 5, float("inf")], stats.truncnorm(5, float("inf"))),
+    ("truncatedNormal", [0, 1, -10, -8], stats.truncnorm(-10, -8)),
+    ("truncatedNormal", [0, 1, 0.1, 0.2], stats.truncnorm(0.1, 0.2)),
+    ("truncatedNormal", [0, 1, -0.5, 0.5], stats.truncnorm(-0.5, 0.5)),
+    ("truncatedNormal", [3, 0.5, float("-inf"), 2], stats.truncnorm(float("-inf"), -2, loc=3, scale=0.5)),
+    ("halfNormal", [2, 1], stats.halfnorm(loc=1, scale=2)),
+    ("skewNormal", [1, 2, 4], stats.skewnorm(4, loc=1, scale=2)),
+    ("skewNormal", [0, 1, -3], stats.skewnorm(-3)),
+    ("levy", [1, 2], stats.levy(1, 2)),
+    ("frechet", [2.5, 1.5, 0.5], stats.invweibull(2.5, loc=0.5, scale=1.5)),
+    ("generalizedExtremeValue", [0.2, 0, 1], stats.genextreme(-0.2)),
+    ("generalizedExtremeValue", [-0.3, 1, 2], stats.genextreme(0.3, loc=1, scale=2)),
+    ("generalizedExtremeValue", [0, 0, 1], stats.genextreme(0)),
+    ("generalizedPareto", [0.3, 0, 1], stats.genpareto(0.3)),
+    ("generalizedPareto", [-0.2, 1, 2], stats.genpareto(-0.2, loc=1, scale=2)),
+    ("inverseGamma", [3, 2], stats.invgamma(3, scale=2)),
+    ("betaPrime", [2, 4], stats.betaprime(2, 4)),
+    ("erlang", [3, 2], stats.erlang(3, scale=0.5)),
+    ("chi", [3], stats.chi(3)),
+    ("maxwell", [2], stats.maxwell(scale=2)),
+    ("nakagami", [1.5, 2], stats.nakagami(1.5, scale=math.sqrt(2))),
+    ("loguniform", [0.01, 100], stats.loguniform(0.01, 100)),
+    ("burr12", [2, 3, 1], stats.burr12(2, 3)),
+    ("logLogistic", [3, 2], stats.fisk(3, scale=2)),
+    ("semicircle", [2], stats.semicircular(scale=2)),
+    ("exGaussian", [1, 0.5, 2], stats.exponnorm(1 / (0.5 * 2), loc=1, scale=0.5)),
 ]
 
 DISCRETE = [
@@ -78,21 +106,30 @@ DISCRETE = [
     ("logseries", [0.99], stats.logser(0.99)),
     ("zipf", [2.0], stats.zipf(2.0)),
     ("zipf", [1.3], stats.zipf(1.3)),
+    # beyond numpy
+    ("betaBinomial", [10, 2, 3], stats.betabinom(10, 2, 3)),
+    ("skellam", [3, 2], stats.skellam(3, 2)),
+    ("categorical", [[0.2, 0.5, 0.3]], stats.rv_discrete(values=([0, 1, 2], [0.2, 0.5, 0.3]))),
 ]
+
+
+def encode(args):
+    # JSON has no Infinity: encode infinite bounds as strings, decoded by the test
+    return [("Infinity" if a > 0 else "-Infinity") if isinstance(a, float) and math.isinf(a) else a for a in args]
 
 
 def continuous_case(name, args, dist):
     q = [float(dist.ppf(i / 20)) for i in range(1, 20)]
-    return {"fn": name, "args": args, "type": "continuous", "quantiles": q}
+    return {"fn": name, "args": encode(args), "type": "continuous", "quantiles": q}
 
 
 def discrete_case(name, args, dist):
-    lo = int(dist.ppf(1e-10))
+    lo = int(max(dist.ppf(1e-10), -10**6))
     cap = 3000
     hi = cap if dist.cdf(cap) < 1 - 1e-10 else int(dist.ppf(1 - 1e-10))
-    lo = max(lo, int(dist.support()[0]))
+    lo = max(lo, int(max(dist.support()[0], -10**6)))
     pmf = [float(dist.pmf(k)) for k in range(lo, hi + 1)]
-    return {"fn": name, "args": args, "type": "discrete", "lo": lo, "pmf": pmf}
+    return {"fn": name, "args": encode(args), "type": "discrete", "lo": lo, "pmf": pmf}
 
 
 def main():
@@ -100,7 +137,7 @@ def main():
     out = os.path.join(os.path.dirname(__file__), "..", "test", "fixtures", "reference.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w") as fh:
-        json.dump(cases, fh, indent=1)
+        json.dump(cases, fh, indent=1, allow_nan=False)
     print(f"wrote {len(cases)} cases to {os.path.normpath(out)}")
 
 

@@ -7,7 +7,9 @@ import { readFileSync } from 'node:fs'
 import * as lib from '../index.js'
 import { expectChiSquare } from './helpers/stats.js'
 
+const decode = (a) => (a === 'Infinity' ? Infinity : a === '-Infinity' ? -Infinity : a)
 const cases = JSON.parse(readFileSync(new URL('./fixtures/reference.json', import.meta.url), 'utf8'))
+  .map((c) => ({ ...c, args: c.args.map(decode) }))
 const N = 20000
 
 function expectVentiles(xs, quantiles) {
@@ -30,7 +32,7 @@ function expectVentiles(xs, quantiles) {
 
 describe('goodness of fit against scipy', () => {
   cases.forEach((c, index) => {
-    test(`${c.fn}(${c.args.join(', ')})`, () => {
+    test(`${c.fn}(${c.args.map((a) => JSON.stringify(a)).join(', ')})`, () => {
       expect(typeof lib[c.fn]).toBe('function')
       lib.seed(1000 + index)
       const xs = lib[c.fn](...c.args, N)

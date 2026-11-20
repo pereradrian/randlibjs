@@ -17,6 +17,7 @@ export * from './src/distributions.js'
 // Generator objects with independent streams
 export { Generator, createGenerator, defaultRng } from './src/core/generator.js'
 
+export { AliasTable } from './src/functions/univariate/extra.js'
 export { logo } from './src/misc/logo.js'
 
 // Special functions
