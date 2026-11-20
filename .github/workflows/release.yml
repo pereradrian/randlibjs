@@ -22,7 +22,7 @@ jobs:
           node-version: 22.x
           registry-url: https://registry.npmjs.org
 
-      - run: npm install
+      - run: npm ci
 
       - name: Check tag matches package.json version
         run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
