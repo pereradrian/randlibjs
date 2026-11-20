@@ -10,17 +10,13 @@ import { multivariate } from './multivariate.js'
  *
  * @param {number[]} means - Array of means (μ) for each dimension.
  *
- * @param {number[][]} covariance - Covariance matrix (Σ). Must be square and
- *   match the size of `means`.
+ * @param {number[][]} covariance - Covariance matrix (Σ). Must be symmetric positive
+ *   semi-definite (singular matrices are allowed) and match the size of `means`.
  *
- * @param {number|null} [size=null] - Number of samples to generate.
- *   - If `null` or `undefined`: returns a single sample vector.
- *   - If `1`: also returns a single sample vector.
- *   - If an integer > 1: returns an array of sample vectors.
+ * @param {number|number[]|null} [size=null] - Output shape: `null` returns one sample vector,
+ *   `k` an array of `k` vectors and `[m, k]` a nested m x k array of vectors (as numpy).
  *
- * @returns {number[]|number[][]} 
- *   - A single sample vector (if `size` is `null`, `undefined`, or `1`)
- *   - An array of sample vectors (if `size` > 1)
+ * @returns {number[]|number[][]|Array} Sample vector(s).
  *
  * @throws {Error} If the input shapes are invalid or the covariance matrix is
  *   not positive semi-definite.

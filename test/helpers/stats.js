@@ -21,8 +21,13 @@ export function ksStatistic(xs, cdf) {
   const n = sorted.length
   let d = 0
   for (let i = 0; i < n; i++) {
-    const f = cdf(sorted[i])
-    d = Math.max(d, (i + 1) / n - f, f - i / n)
+    const x = sorted[i]
+    const f = cdf(x)
+    // A double stands for the interval of reals rounding to it, so compare the lower
+    // side with the CDF's left limit (matters for distributions piling mass near 0 or 1).
+    const below = x > 0 ? x * (1 - 2 ** -53) : x < 0 ? x * (1 + 2 ** -52) : -Number.MIN_VALUE
+    const fMinus = cdf(below)
+    d = Math.max(d, (i + 1) / n - f, fMinus - i / n)
   }
   return d
 }

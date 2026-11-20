@@ -122,13 +122,15 @@ export function standardGamma(a) {
 }
 
 /**
- * Beta deviate. Jöhnk's algorithm when both parameters are <= 1 (robust in log space),
- * otherwise ratio of gammas.
+ * Beta deviate together with its complement, both computed without cancellation:
+ * returns [x, 1 - x] where 1 - x keeps full relative precision even when x is close to 1.
+ * Jöhnk's algorithm when both parameters are <= 1 (robust in log space), otherwise
+ * ratio of gammas.
  * @param {number} a
  * @param {number} b
- * @returns {number}
+ * @returns {number[]}
  */
-export function betaSample(a, b) {
+export function betaPair(a, b) {
     if (a <= 1 && b <= 1) {
         for (;;) {
             const u = rand()
@@ -138,20 +140,31 @@ export function betaSample(a, b) {
             const xy = x + y
             if (xy <= 1 && u + v > 0) {
                 if (xy > 0) {
-                    return x / xy
+                    return [x / xy, y / xy]
                 }
                 let logX = Math.log(u) / a
                 let logY = Math.log(v) / b
                 const logM = Math.max(logX, logY)
                 logX -= logM
                 logY -= logM
-                return Math.exp(logX - Math.log(Math.exp(logX) + Math.exp(logY)))
+                const logSum = Math.log(Math.exp(logX) + Math.exp(logY))
+                return [Math.exp(logX - logSum), Math.exp(logY - logSum)]
             }
         }
     }
     const x = standardGamma(a)
     const y = standardGamma(b)
-    return x / (x + y)
+    return [x / (x + y), y / (x + y)]
+}
+
+/**
+ * Beta deviate.
+ * @param {number} a
+ * @param {number} b
+ * @returns {number}
+ */
+export function betaSample(a, b) {
+    return betaPair(a, b)[0]
 }
 
 /**

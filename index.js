@@ -63,6 +63,7 @@ export { multivariate } from './src/functions/multivariate/multivariate.js'
 export { multivariateNormal } from './src/functions/multivariate/multivariate-normal.js'
 export { multivariateUniform } from './src/functions/multivariate/multivariate-uniform.js'
 export { multivariateTriangular } from './src/functions/multivariate/multivariate-triangular.js'
+export { dirichlet, multinomial, multivariateHypergeometric } from './src/functions/multivariate/discrete-multivariate.js'
 
 // Sampling and permutations
 export { choice } from './src/misc/choice.js'
