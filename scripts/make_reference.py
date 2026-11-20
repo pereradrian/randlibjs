@@ -65,6 +65,19 @@ DISCRETE = [
     ("binomial", [5000, 0.6], stats.binom(5000, 0.6)),
     ("geometric", [0.2], stats.geom(0.2)),
     ("randint", [-3, 7], stats.randint(-3, 7)),
+    ("integers", [-3, 7], stats.randint(-3, 7)),
+    ("bernoulli", [0.3], stats.bernoulli(0.3)),
+    ("negativeBinomial", [3, 0.4], stats.nbinom(3, 0.4)),
+    ("negativeBinomial", [0.5, 0.2], stats.nbinom(0.5, 0.2)),
+    ("negativeBinomial", [200, 0.9], stats.nbinom(200, 0.9)),
+    ("hypergeometric", [15, 25, 10], stats.hypergeom(40, 15, 10)),
+    ("hypergeometric", [500, 700, 600], stats.hypergeom(1200, 500, 600)),
+    ("hypergeometric", [3, 1000, 500], stats.hypergeom(1003, 3, 500)),
+    ("hypergeometric", [900, 100, 950], stats.hypergeom(1000, 900, 950)),
+    ("logseries", [0.6], stats.logser(0.6)),
+    ("logseries", [0.99], stats.logser(0.99)),
+    ("zipf", [2.0], stats.zipf(2.0)),
+    ("zipf", [1.3], stats.zipf(1.3)),
 ]
 
 
@@ -75,7 +88,8 @@ def continuous_case(name, args, dist):
 
 def discrete_case(name, args, dist):
     lo = int(dist.ppf(1e-10))
-    hi = int(dist.ppf(1 - 1e-10))
+    cap = 3000
+    hi = cap if dist.cdf(cap) < 1 - 1e-10 else int(dist.ppf(1 - 1e-10))
     lo = max(lo, int(dist.support()[0]))
     pmf = [float(dist.pmf(k)) for k in range(lo, hi + 1)]
     return {"fn": name, "args": args, "type": "discrete", "lo": lo, "pmf": pmf}

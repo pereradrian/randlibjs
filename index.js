@@ -46,6 +46,14 @@ export { randint } from './src/functions/univariate/randint.js'
 export { poisson } from './src/functions/univariate/poisson.js'
 export { binomial } from './src/functions/univariate/binomial.js'
 export { geometric } from './src/functions/univariate/geometric.js'
+export {
+    integers,
+    bernoulli,
+    negativeBinomial,
+    hypergeometric,
+    logseries,
+    zipf,
+} from './src/functions/univariate/discrete.js'
 
 // Mixtures
 export { mixture } from './src/functions/univariate/mixture.js'

@@ -258,3 +258,64 @@ function binomialInversion(n, p) {
     }
     return x
 }
+
+function logChoose(n, k) {
+    return logFactorial(n) - logFactorial(k) - logFactorial(n - k)
+}
+
+/**
+ * Hypergeometric deviate: number of good items in a sample of `n` drawn without
+ * replacement from `good` good and `bad` bad items. Exact inversion starting at the
+ * mode and searching outwards, O(standard deviation) expected time.
+ * @param {number} good
+ * @param {number} bad
+ * @param {number} n
+ * @returns {number}
+ */
+export function hypergeometricSample(good, bad, n) {
+    const total = good + bad
+    if (n > total / 2) {
+        return good - hypergeometricSample(good, bad, total - n)
+    }
+    if (good > bad) {
+        return n - hypergeometricSample(bad, good, n)
+    }
+    const lo = Math.max(0, n - bad)
+    const hi = Math.min(n, good)
+    if (lo === hi) {
+        return lo
+    }
+    const mode = Math.min(hi, Math.max(lo, Math.floor((n + 1) * (good + 1) / (total + 2))))
+    const pMode = Math.exp(logChoose(good, mode) + logChoose(bad, n - mode) - logChoose(total, n))
+    // ratio p(k + 1) / p(k)
+    const ratio = (k) => (good - k) * (n - k) / ((k + 1) * (bad - n + k + 1))
+    for (;;) {
+        let u = rand() - pMode
+        if (u <= 0) {
+            return mode
+        }
+        let up = mode
+        let down = mode
+        let pUp = pMode
+        let pDown = pMode
+        while (up < hi || down > lo) {
+            if (up < hi) {
+                pUp *= ratio(up)
+                up++
+                u -= pUp
+                if (u <= 0) {
+                    return up
+                }
+            }
+            if (down > lo) {
+                down--
+                pDown /= ratio(down)
+                u -= pDown
+                if (u <= 0) {
+                    return down
+                }
+            }
+        }
+        // only reachable through floating point round-off: retry
+    }
+}
