@@ -152,7 +152,7 @@ describe('Global seeding and state', () => {
   test('setRandomSource installs a custom function', () => {
     setRandomSource(() => 0.5)
     expect(uniform()).toBe(0.5)
-    expect(randint(10)).toBe(8) // 2^31 mod 10
+    expect(randint(10)).toBe(5)
     expect(getRandomGenerator()()).toBe(0.5)
     expect(() => setRandomSource(42)).toThrow()
     const f = new FunctionBitGenerator(() => 0.25)

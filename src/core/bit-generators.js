@@ -237,7 +237,7 @@ export class Xoshiro128StarStar extends BitGenerator {
  * Multiplies two unsigned 32-bit integers returning the full 64-bit product as [hi, lo].
  * @private
  */
-function mul32(a, b) {
+export function mul32(a, b) {
     const a0 = a & 0xffff
     const a1 = a >>> 16
     const b0 = b & 0xffff
@@ -521,9 +521,19 @@ export const BIT_GENERATORS = {
 }
 
 /**
+ * Registers an additional bit generator constructor under a name.
+ * @param {string} name
+ * @param {Function} ctor - Constructor taking a seed.
+ * @private
+ */
+export function registerBitGenerator(name, ctor) {
+    BIT_GENERATORS[name] = ctor
+}
+
+/**
  * Creates a bit generator by name.
  *
- * @param {string} [name='xoshiro128**'] - One of `'xoshiro128**'`, `'pcg32'`, `'mt19937'`.
+ * @param {string} [name='xoshiro128**'] - One of `'xoshiro128**'`, `'pcg32'`, `'mt19937'`, `'pcg64'`.
  * @param {number|bigint|string|number[]} [seed] - Seed. Random if omitted.
  * @returns {BitGenerator}
  */

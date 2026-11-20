@@ -1,0 +1,281 @@
+/**
+ * numpy compatible seeding (SeedSequence) and the PCG64 bit generator, so that
+ * `createGenerator(seed, 'pcg64')` reproduces `np.random.default_rng(seed)` streams.
+ *
+ * @module numpy-compat
+ */
+import { BitGenerator, entropy, registerBitGenerator } from './bit-generators.js'
+
+const INIT_A = 0x43b0d7e5
+const MULT_A = 0x931e8875
+const INIT_B = 0x8b51f9dd
+const MULT_B = 0x58f38ded
+const MIX_MULT_L = 0xca01f9dd
+const MIX_MULT_R = 0x4973f715
+const XSHIFT = 16
+const POOL_SIZE = 4
+
+/**
+ * Splits a non-negative integer (number or bigint) into little-endian 32-bit words, as numpy.
+ * @private
+ */
+function toUint32Words(value) {
+    if (Array.isArray(value) || value instanceof Uint32Array) {
+        const out = []
+        for (const v of value) {
+            out.push(...toUint32Words(v))
+        }
+        return out
+    }
+    let v
+    if (typeof value === 'bigint') {
+        v = value
+    } else if (typeof value === 'number' && Number.isSafeInteger(value)) {
+        v = BigInt(value)
+    } else {
+        throw new Error('SeedSequence entropy must be a non-negative integer, bigint or an array of them.')
+    }
+    if (v < 0n) {
+        throw new Error('SeedSequence entropy must be non-negative.')
+    }
+    if (v === 0n) {
+        return [0]
+    }
+    const words = []
+    while (v > 0n) {
+        words.push(Number(v & 0xffffffffn))
+        v >>= 32n
+    }
+    return words
+}
+
+/**
+ * numpy's `SeedSequence`: hashes arbitrary entropy into a well mixed pool and generates
+ * any number of seed words. Bit-identical to `numpy.random.SeedSequence`.
+ *
+ * @example
+ * new SeedSequence(42).generateState(4)   // same words as SeedSequence(42).generate_state(4, np.uint32)
+ */
+export class SeedSequence {
+    /**
+     * @param {number|bigint|number[]|bigint[]} [entropy] - Entropy. Random (crypto) when omitted.
+     * @param {number[]} [spawnKey=[]] - Spawn key, as numpy.
+     */
+    constructor(entropySource, spawnKey = []) {
+        if (entropySource === undefined || entropySource === null) {
+            const words = entropy(4)
+            entropySource = words.reduce((acc, w, i) => acc | BigInt(w) << BigInt(32 * i), 0n)
+        }
+        this.entropy = entropySource
+        this.spawnKey = spawnKey
+        this.nChildrenSpawned = 0
+        this.pool = this.mixEntropy()
+    }
+
+    /** @private */
+    mixEntropy() {
+        let run = toUint32Words(this.entropy)
+        const spawn = this.spawnKey.length > 0 ? toUint32Words(this.spawnKey) : []
+        if (spawn.length > 0 && run.length < POOL_SIZE) {
+            run = run.concat(new Array(POOL_SIZE - run.length).fill(0))
+        }
+        const data = run.concat(spawn)
+        let hashConst = INIT_A
+        const hashmix = (value) => {
+            value = (value ^ hashConst) >>> 0
+            hashConst = Math.imul(hashConst, MULT_A) >>> 0
+            value = Math.imul(value, hashConst) >>> 0
+            return (value ^ value >>> XSHIFT) >>> 0
+        }
+        const mix = (x, y) => {
+            const r = Math.imul(MIX_MULT_L, x) - Math.imul(MIX_MULT_R, y) >>> 0
+            return (r ^ r >>> XSHIFT) >>> 0
+        }
+        const pool = new Array(POOL_SIZE)
+        for (let i = 0; i < POOL_SIZE; i++) {
+            pool[i] = hashmix(i < data.length ? data[i] : 0)
+        }
+        for (let src = 0; src < POOL_SIZE; src++) {
+            for (let dst = 0; dst < POOL_SIZE; dst++) {
+                if (src !== dst) {
+                    pool[dst] = mix(pool[dst], hashmix(pool[src]))
+                }
+            }
+        }
+        for (let src = POOL_SIZE; src < data.length; src++) {
+            for (let dst = 0; dst < POOL_SIZE; dst++) {
+                pool[dst] = mix(pool[dst], hashmix(data[src]))
+            }
+        }
+        return pool
+    }
+
+    /**
+     * Returns `n` unsigned 32-bit seed words (numpy `generate_state(n, np.uint32)`).
+     * @param {number} n
+     * @returns {number[]}
+     */
+    generateState(n) {
+        let hashConst = INIT_B
+        const out = new Array(n)
+        for (let i = 0; i < n; i++) {
+            let v = this.pool[i % POOL_SIZE]
+            v = (v ^ hashConst) >>> 0
+            hashConst = Math.imul(hashConst, MULT_B) >>> 0
+            v = Math.imul(v, hashConst) >>> 0
+            out[i] = (v ^ v >>> XSHIFT) >>> 0
+        }
+        return out
+    }
+
+    /**
+     * Returns `n` unsigned 64-bit seed words as bigints (numpy `generate_state(n, np.uint64)`).
+     * @param {number} n
+     * @returns {bigint[]}
+     */
+    generateState64(n) {
+        const words = this.generateState(2 * n)
+        return Array.from({ length: n }, (_, i) => BigInt(words[2 * i]) | BigInt(words[2 * i + 1]) << 32n)
+    }
+
+    /**
+     * Creates `n` independent child sequences (numpy `spawn`).
+     * @param {number} n
+     * @returns {SeedSequence[]}
+     */
+    spawn(n) {
+        return Array.from({ length: n }, () => new SeedSequence(this.entropy, [...this.spawnKey, this.nChildrenSpawned++]))
+    }
+}
+
+const MASK64 = (1n << 64n) - 1n
+const MASK128 = (1n << 128n) - 1n
+const PCG64_MULT = 0x2360ed051fc65da44385df649fccf645n
+
+/**
+ * PCG64 (PCG-XSL-RR 128/64), numpy's default bit generator. Seeded through
+ * {@link SeedSequence} exactly as numpy, so `new PCG64(seed).random()` equals
+ * `np.random.default_rng(seed).random()`. Uses BigInt 128-bit arithmetic, so it is slower
+ * than the 32-bit generators; prefer it when cross-language reproducibility matters.
+ */
+export class PCG64 extends BitGenerator {
+    /**
+     * @param {number|bigint|number[]|SeedSequence} [seed] - Seed or SeedSequence. Random if omitted.
+     */
+    constructor(seed) {
+        super()
+        const seq = seed instanceof SeedSequence ? seed : new SeedSequence(seed)
+        const [s0, s1, i0, i1] = seq.generateState64(4)
+        this.seedState(s0 << 64n | s1, i0 << 64n | i1)
+    }
+
+    get name() {
+        return 'pcg64'
+    }
+
+    /** @private */
+    seedState(initState, initSeq) {
+        this.state = 0n
+        this.inc = (initSeq << 1n | 1n) & MASK128
+        this.step()
+        this.state = this.state + initState & MASK128
+        this.step()
+        this.hasUint32 = false
+        this.uinteger = 0
+        this.gauss = null
+    }
+
+    /** @private */
+    step() {
+        this.state = this.state * PCG64_MULT + this.inc & MASK128
+    }
+
+    /**
+     * Next unsigned 64-bit output as a bigint.
+     * @returns {bigint}
+     */
+    nextUint64() {
+        this.step()
+        const s = this.state
+        const rot = s >> 122n
+        const x = (s >> 64n ^ s) & MASK64
+        return (x >> rot | x << (-rot & 63n)) & MASK64
+    }
+
+    /**
+     * Unsigned 32-bit output; uses both halves of each 64-bit output (low half first), as numpy.
+     * @returns {number}
+     */
+    nextUint32() {
+        if (this.hasUint32) {
+            this.hasUint32 = false
+            return this.uinteger
+        }
+        const v = this.nextUint64()
+        this.hasUint32 = true
+        this.uinteger = Number(v >> 32n)
+        return Number(v & 0xffffffffn)
+    }
+
+    /**
+     * Uniform double in [0, 1) from the top 53 bits of one 64-bit output (numpy `random`).
+     * @returns {number}
+     */
+    random() {
+        return Number(this.nextUint64() >> 11n) / 9007199254740992
+    }
+
+    nextUint53() {
+        return Number(this.nextUint64() >> 11n)
+    }
+
+    /**
+     * Advances the state by `delta` steps in O(log delta) (numpy `advance`).
+     * @param {number|bigint} delta
+     * @returns {this}
+     */
+    advance(delta) {
+        let d = BigInt(delta) & MASK128
+        let accMult = 1n
+        let accPlus = 0n
+        let curMult = PCG64_MULT
+        let curPlus = this.inc
+        while (d > 0n) {
+            if (d & 1n) {
+                accMult = accMult * curMult & MASK128
+                accPlus = accPlus * curMult + curPlus & MASK128
+            }
+            curPlus = (curMult + 1n) * curPlus & MASK128
+            curMult = curMult * curMult & MASK128
+            d >>= 1n
+        }
+        this.state = accMult * this.state + accPlus & MASK128
+        this.hasUint32 = false
+        this.gauss = null
+        return this
+    }
+
+    getState() {
+        return {
+            bitGenerator: this.name,
+            state: this.state.toString(),
+            inc: this.inc.toString(),
+            hasUint32: this.hasUint32,
+            uinteger: this.uinteger,
+            gauss: this.gauss,
+        }
+    }
+
+    setState(state) {
+        if (!state || state.state === undefined || state.inc === undefined) {
+            throw new Error('Invalid pcg64 state.')
+        }
+        this.state = BigInt(state.state) & MASK128
+        this.inc = BigInt(state.inc) & MASK128
+        this.hasUint32 = Boolean(state.hasUint32)
+        this.uinteger = state.uinteger >>> 0
+        this.gauss = state.gauss ?? null
+    }
+}
+
+registerBitGenerator('pcg64', PCG64)

@@ -10,6 +10,7 @@ export {
     FunctionBitGenerator,
     createBitGenerator,
 } from './src/core/bit-generators.js'
+export { PCG64, SeedSequence } from './src/core/numpy-compat.js'
 
 // Distributions and sampling functions
 export * from './src/distributions.js'
