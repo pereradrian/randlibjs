@@ -24,5 +24,5 @@ await Promise.all([
   build({ ...common, format: 'esm', outfile: 'dist/randlib.mjs' }),
   build({ ...common, format: 'cjs', outfile: 'dist/randlib.cjs' }),
   build({ ...common, format: 'iife', globalName: 'randlib', outfile: 'dist/randlib.js' }),
-  build({ ...common, format: 'iife', globalName: 'randlib', minify: true, sourcemap: true, outfile: 'dist/randlib.min.js' }),
+  build({ ...common, format: 'iife', globalName: 'randlib', minify: true, sourcemap: true, sourcesContent: false, outfile: 'dist/randlib.min.js' }),
 ])
