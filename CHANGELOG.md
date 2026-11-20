@@ -11,7 +11,7 @@ A complete rewrite that turns randlibjs into a numpy.random + scipy.stats equiva
 ### Added
 
 - **Bit generators**: xoshiro128** (new default), PCG32, MT19937 (numpy `RandomState` seeding) and
-  PCG64 with numpy's `SeedSequence`. They support state snapshots, cloning, `jump`/`advance` and
+  PCG64 with numpy's `SeedSequence`, plus numpy's PCG64DXSM, SFC64 and Philox. They support state snapshots, cloning, `jump`/`advance` and
   `spawn`. The global generator accepts numbers, bigints, strings or arrays as seeds, and a
   bit generator name: `seed(42, 'pcg64')`.
 - **numpy compatibility**: `createGenerator(seed, 'pcg64')` reproduces `np.random.default_rng(seed)`:

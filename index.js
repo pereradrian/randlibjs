@@ -11,6 +11,7 @@ export {
     createBitGenerator,
 } from './src/core/bit-generators.js'
 export { PCG64, SeedSequence } from './src/core/numpy-compat.js'
+export { SFC64, Philox, PCG64DXSM } from './src/core/numpy-bitgens.js'
 
 // Distributions and sampling functions
 export * from './src/distributions.js'

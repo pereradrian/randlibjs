@@ -105,3 +105,42 @@ describe('numpy Generator distribution parity (pcg64)', () => {
     expect(xs.reduce((a, b) => a + b, 0)).toBe(91.06279549240762)
   })
 })
+
+describe('SFC64, Philox and PCG64DXSM (numpy bit generators)', async () => {
+  const { SFC64, Philox, PCG64DXSM } = await import('../index.js')
+  const raw = (g, n) => Array.from({ length: n }, () => String(g.nextUint64()))
+
+  test('raw outputs match numpy random_raw', () => {
+    expect(raw(new SFC64(42), 3)).toEqual(['9775594601838723485', '6977463094773878866', '17439770048677797496'])
+    expect(raw(new Philox(42), 6)).toEqual(['1587852024645073290', '2611271723512893552', '4982337093617253890',
+      '16123152800351476682', '3138981475030020977', '9349039075912046124'])
+    expect(raw(new PCG64DXSM(42), 3)).toEqual(['12329818062196000797', '125530269004142706', '12137922674892001441'])
+  })
+
+  test('random() and distributions through createGenerator', () => {
+    expect(createGenerator(7, 'sfc64').random(2)).toEqual([0.04386058169831253, 0.5872743236851424])
+    expect(createGenerator(7, 'philox').random(2)).toEqual([0.46881748695593284, 0.42614583623918467])
+    expect(createGenerator(7, 'pcg64dxsm').random(2)).toEqual([0.09710597727685988, 0.8237666169088104])
+    const g = createGenerator(3, 'sfc64')
+    expect(g.standardNormal(2)).toEqual([-0.03227010887197446, -1.3223879367601985])
+    expect(g.integers(0, 100, 3)).toEqual([41, 78, 71])
+  })
+
+  test('Philox advance, explicit key and state round trips', () => {
+    expect(raw(new Philox(42).advance(10), 2)).toEqual(['13314018475772627179', '13152455771049288516'])
+    const p = new Philox(undefined, { key: [1n, 2n], counter: [0n, 0n, 0n, 0n] })
+    expect(raw(p, 1)).toEqual(raw(new Philox(undefined, { key: [1, 2] }), 1))
+    for (const g of [new SFC64(1), new Philox(1), new PCG64DXSM(1)]) {
+      g.nextUint32()
+      const snapshot = JSON.parse(JSON.stringify(g.getState()))
+      const expected = [g.nextUint32(), g.random(), g.random(), g.random(), g.random()]
+      const h = g.clone()
+      h.setState(snapshot)
+      expect([h.nextUint32(), h.random(), h.random(), h.random(), h.random()]).toEqual(expected)
+      expect(() => h.setState({})).toThrow()
+    }
+    const wrap = new Philox(undefined, { key: [0, 0], counter: [2n ** 64n - 1n, 0n, 0n, 0n] })
+    wrap.nextUint64()
+    expect(wrap.counter.map(String)).toEqual(['0', '1', '0', '0'])
+  })
+})

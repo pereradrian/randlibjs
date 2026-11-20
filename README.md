@@ -103,6 +103,7 @@ rng.run(() => someCodeUsingTheGlobalFunctions())  // redirect global functions t
 | `PCG32` | `'pcg32'` | Bit-identical to the reference `pcg32_random_r`, 2^63 selectable streams |
 | `MT19937` | `'mt19937'` | Mersenne Twister with numpy `RandomState` seeding |
 | `PCG64` | `'pcg64'` | numpy's default generator with `SeedSequence` seeding and `advance()` |
+| `PCG64DXSM`, `SFC64`, `Philox` | `'pcg64dxsm'`, `'sfc64'`, `'philox'` | The other numpy bit generators, bit-identical to numpy (Philox is counter based with O(1) `advance`) |
 
 `setRandomSource(fn)` installs any function returning floats in [0, 1), such as `Math.random` or a cryptographic source.
 
