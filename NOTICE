@@ -14,3 +14,11 @@ Users of this package are encouraged to review the licenses of individual depend
 
 Copyright (c) 2025 Adrián Muñoz Perera
 All rights reserved.
+
+Third party data
+----------------
+
+src/qmc/sobol-directions.js contains the first 256 dimensions of the Sobol' direction
+numbers "new-joe-kuo-6.21201" by Stephen Joe and Frances Y. Kuo
+(https://web.maths.unsw.edu.au/~fkuo/sobol/), distributed under a BSD-style licence:
+Copyright (c) 2008, Frances Y. Kuo and Stephen Joe. All rights reserved.
