@@ -30,3 +30,18 @@ export * as special from './src/stats/special.js'
 
 // Quasi-Monte Carlo
 export { qmc, Sobol, Halton, LatinHypercube, PoissonDisk } from './src/qmc/qmc.js'
+
+// Stochastic processes and resampling
+export {
+    randomWalk,
+    brownianMotion,
+    brownianBridge,
+    geometricBrownianMotion,
+    ornsteinUhlenbeck,
+    poissonProcess,
+    inhomogeneousPoissonProcess,
+    poissonCountingProcess,
+    markovChain,
+    resample,
+} from './src/processes/processes.js'
+export { bootstrap, permutationTest } from './src/processes/bootstrap.js'
