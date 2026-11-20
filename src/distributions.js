@@ -91,3 +91,14 @@ export {
     uniformBall,
     uuid4,
 } from './functions/univariate/extra.js'
+
+// Random matrices
+export {
+    orthoGroup,
+    specialOrthoGroup,
+    randomCorrelation,
+    lkjCorrelation,
+    wishart,
+    invWishart,
+    matrixNormal,
+} from './functions/multivariate/random-matrices.js'
