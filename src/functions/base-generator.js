@@ -1,35 +1,67 @@
 /**
- * Generates random floats or arrays of random floats given a random number generator function and a size parameter.
+ * Validates a `size` argument and returns it normalised as a shape array, or `null`.
  *
- * @param {Function} generator - The random number generator function. It should return a random float
- *   between 0 (inclusive) and 1 (exclusive) on each call.
- * @param {number|Array|null} [size=null] - The shape of the output:
- *   - If `null`, a single float is returned.
- *   - If a number, a 1D array of the specified size is returned.
- *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.
- * @returns {number|Array} A single random float, an array of random floats, or a multidimensional array
- *   depending on the value of the `size` parameter:
- *   - `null`: A single random float (e.g., `0.532`).
- *   - `number`: A 1D array of random floats (e.g., `[0.1, 0.4, 0.8]`).
- *   - `Array`: A multidimensional array of random floats (e.g., `[[0.1, 0.3], [0.4, 0.8]]`).
- * @throws {Error} Throws an error if the `size` parameter is not a number, an array, or null.
- *
+ * @param {number|number[]|null|undefined} size
+ * @returns {number[]|null}
+ * @throws {Error} If `size` is not null, a non-negative integer or an array of them.
+ * @private
  */
-export function baseGenerator(generator, size) {
-    if (size == null) {
+export function normalizeSize(size) {
+    if (size === null || size === undefined) {
+        return null
+    }
+    if (typeof size === "number") {
+        if (!Number.isInteger(size) || size < 0) {
+            throw new Error(`Size must be a non-negative integer, got ${size}.`)
+        }
+        return [size]
+    }
+    if (Array.isArray(size)) {
+        for (const dim of size) {
+            if (!Number.isInteger(dim) || dim < 0) {
+                throw new Error(`Size dimensions must be non-negative integers, got ${dim}.`)
+            }
+        }
+        return size
+    }
+    throw new Error(`Size must be a number, an array, or null.`)
+}
+
+/**
+ * Builds a (possibly nested) array of the given shape calling `generator` for each element.
+ *
+ * @param {number[]} shape
+ * @param {Function} generator
+ * @returns {Array}
+ * @private
+ */
+export function fillShape(shape, generator) {
+    if (shape.length === 0) {
         return generator()
     }
-    else if (typeof size === "number") {
-        return Array.from({ length: size }, () => generator())
+    const [first, ...rest] = shape
+    const out = new Array(first)
+    for (let i = 0; i < first; i++) {
+        out[i] = rest.length > 0 ? fillShape(rest, generator) : generator()
     }
-    else if (Array.isArray(size)) {
-        const buildArray = (dims) => {
-            const [first, ...rest] = dims
-            return Array.from({ length: first }, () => rest.length > 0 ? buildArray(rest) : generator())
-        }
-        return buildArray(size)
+    return out
+}
+
+/**
+ * Generates random values or arrays of random values given a sampling function and a size parameter.
+ *
+ * @param {Function} generator - Function returning one sample on each call.
+ * @param {number|Array|null} [size=null] - The shape of the output:
+ *   - If `null`, a single value is returned.
+ *   - If a number, a 1D array of the specified size is returned.
+ *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.
+ * @returns {*|Array} A single value, a 1D array or a nested array of the given shape.
+ * @throws {Error} Throws an error if the `size` parameter is not a non-negative integer, an array of them, or null.
+ */
+export function baseGenerator(generator, size) {
+    const shape = normalizeSize(size)
+    if (shape === null) {
+        return generator()
     }
-    else {
-        throw new Error(`Size must be a number, an array, or null.`)
-    }
+    return fillShape(shape, generator)
 }

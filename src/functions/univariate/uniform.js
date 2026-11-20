@@ -1,4 +1,4 @@
-import { getRandomGenerator } from '../seed.js'
+import { rand } from '../../core/state.js'
 import { baseGenerator } from '../base-generator.js'
 
 /**
@@ -18,5 +18,5 @@ export function uniform(low = 0.0, high = 1.0, size = null) {
     if (low >= high) {
         throw new Error("low must be less than high")
     }
-    return baseGenerator(() => getRandomGenerator()() * (high - low) + low, size)
+    return baseGenerator(() => rand() * (high - low) + low, size)
 }

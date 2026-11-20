@@ -1,4 +1,4 @@
-import { getRandomGenerator } from '../seed.js'
+import { rand } from '../../core/state.js'
 import { baseGenerator } from '../base-generator.js'
 
 /**
@@ -24,7 +24,7 @@ export function triangular(a, b, c, size=null) {
 }
 
 function sampleTriangular(a, b, c) {
-    const u = getRandomGenerator()()
+    const u = rand()
     if (u < (c - a) / (b - a)) {
         return a + Math.sqrt(u * (b - a) * (c - a))
     } else {

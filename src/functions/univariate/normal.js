@@ -1,4 +1,4 @@
-import { getRandomGenerator } from '../seed.js'
+import { rand } from '../../core/state.js'
 import { baseGenerator }  from '../base-generator.js'
 import { inverseNormalCDF } from '../util/inverse-normal-cdf.js'
 
@@ -22,5 +22,5 @@ export function normal(loc=0.0, scale = 1.0, size = null) {
     if (scale <= 0.0) {
         throw new Error("standard deviation must be a positive number")
     }
-    return baseGenerator(() => scale*inverseNormalCDF(getRandomGenerator()()) + loc, size)
+    return baseGenerator(() => scale*inverseNormalCDF(rand()) + loc, size)
 }

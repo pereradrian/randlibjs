@@ -1,4 +1,4 @@
-import { getRandomGenerator } from '../seed.js'
+import { rand } from '../../core/state.js'
 import { baseGenerator } from '../base-generator.js'
 
 /**
@@ -20,5 +20,5 @@ export function cauchy(median, gamma, size = null) {
         throw new Error("Scale parameter gamma must be greater than 0")
     }
     // Use the base generator for handling size
-    return baseGenerator(() => median + gamma * Math.tan(Math.PI * (getRandomGenerator()() - 0.5)), size)
+    return baseGenerator(() => median + gamma * Math.tan(Math.PI * (rand() - 0.5)), size)
 }

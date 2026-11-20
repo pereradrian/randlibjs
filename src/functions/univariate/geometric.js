@@ -1,4 +1,4 @@
-import { getRandomGenerator } from '../seed.js'
+import { rand } from '../../core/state.js'
 import { baseGenerator } from '../base-generator.js'
 
 /**
@@ -20,5 +20,5 @@ export function geometric(p, size=null) {
     return baseGenerator(() => sampleGeometric(p), size)
 }
 function sampleGeometric(p) {
-    return Math.ceil(Math.log(1.0 - getRandomGenerator()()) / Math.log(1 - p))
+    return Math.ceil(Math.log(1.0 - rand()) / Math.log(1 - p))
 }

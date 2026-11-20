@@ -1,4 +1,4 @@
-import { getRandomGenerator } from '../seed.js'
+import { rand } from '../../core/state.js'
 import { baseGenerator } from '../base-generator.js'
 
 /**
@@ -19,5 +19,5 @@ export function exponential(lambda, size = null) {
         throw new Error("Rate parameter lambda must be greater than 0")
     }
     // Use the base generator for handling size
-    return baseGenerator(() => -Math.log(1 - getRandomGenerator()()) / lambda, size)
+    return baseGenerator(() => -Math.log(1 - rand()) / lambda, size)
 }

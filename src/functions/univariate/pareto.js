@@ -1,4 +1,4 @@
-import { getRandomGenerator } from '../seed.js'
+import { rand } from '../../core/state.js'
 import { baseGenerator } from '../base-generator.js'
 
 /**
@@ -22,5 +22,5 @@ export function pareto(alpha, xm, size=null) {
         throw new Error("xm must be a positive number")
     }
     // Use baseGenerator to handle the shape of the output.
-    return baseGenerator(() => xm / Math.pow(getRandomGenerator()(), 1 / alpha), size)
+    return baseGenerator(() => xm / Math.pow(rand(), 1 / alpha), size)
 }

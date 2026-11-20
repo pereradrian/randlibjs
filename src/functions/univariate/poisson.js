@@ -1,4 +1,4 @@
-import { getRandomGenerator } from '../seed.js'
+import { rand } from '../../core/state.js'
 import { baseGenerator } from '../base-generator.js'
 import { normal } from './normal.js'
 import { POISSON_LAMBDA_NORMAL_APPROXIMATION_THRESHOLD } from '../util/constants.js'
@@ -10,7 +10,7 @@ function generatePoisson(lambda) {
     let p = 1.0
     do {
         k++
-        p *= getRandomGenerator()()
+        p *= rand()
     } while (p > L)
     return k - 1
 }

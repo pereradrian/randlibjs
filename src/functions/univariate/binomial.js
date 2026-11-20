@@ -1,4 +1,4 @@
-import { getRandomGenerator } from '../seed.js'
+import { rand } from '../../core/state.js'
 import { baseGenerator } from '../base-generator.js'
 
 /**
@@ -21,7 +21,7 @@ export function binomial(n, p, size=null) {
 function sampleBinomial(n, p) {
     let successes = 0
     for (let i = 0; i < n; i++) {
-        if (getRandomGenerator()() < p) {
+        if (rand() < p) {
             successes++
         }
     }

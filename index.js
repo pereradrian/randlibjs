@@ -1,4 +1,4 @@
-import { seed } from './src/functions/seed.js'
+import { seed, setRandomSource, getState, setState } from './src/functions/seed.js'
 import { randint } from './src/functions/univariate/randint.js'
 import { uniform } from './src/functions/univariate/uniform.js'
 import { normal } from './src/functions/univariate/normal.js'
@@ -25,6 +25,9 @@ import { logo } from './src/misc/logo.js'
 
 export {
     seed,
+    setRandomSource,
+    getState,
+    setState,
     randint,
     uniform,
     normal,

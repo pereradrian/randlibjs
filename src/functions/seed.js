@@ -1,63 +1,65 @@
-let randomGenerator = Math.random
+import { createBitGenerator, FunctionBitGenerator } from '../core/bit-generators.js'
+import { getGlobalSource, setGlobalSource } from '../core/state.js'
 
 /**
- * PCG64 Random Number Generator
- * 
- * A JavaScript implementation of the Permuted Congruential Generator (PCG).
- * This algorithm was introduced by Melissa E. O'Neill in her paper:
- * "PCG: A Family of Simple Fast Space-Efficient Statistically Good Algorithms for Random Number Generation" (2014).
- * 
- * Reference:
- * - Paper: https://www.pcg-random.org/pdf/toms-oneill-pcg-family-v1.02.pdf
- * - Website: https://www.pcg-random.org/
+ * Seeds the global random number generator used by all the module level functions.
  *
- * Constants used (multiplier and increment) are based on the PCG64 default configuration:
- * - Multiplier: 6364136223846793005 (prime relative to 2^64, ensures full period).
- * - Increment: 1442695040888963407 (odd, ensures proper state transitions).
- * 
- * This implementation generates 64-bit random numbers and maps them to the range [0, 1).
+ * Calling `seed` with the same value always reproduces the same sequence of samples.
  *
- * @param {number|bigint} seed - The initial seed for the random generator.
- * @returns {function} - A function that generates random numbers in [0, 1).
- */
-function pcg64(seed) {
-    let state = BigInt(seed) // Use BigInt for 64-bit arithmetic
-    const multiplier = 6364136223846793005n // PCG multiplier
-    const increment = 1442695040888963407n // PCG increment
-
-    return function () {
-        // Update the internal state
-        state = state * multiplier + increment & 0xFFFFFFFFFFFFFFFFn
-
-        // Extract high-order bits for randomness
-        const result = Number(state >> 32n) / 0xFFFFFFFF
-
-        // Normalize to [0, 1)
-        return result >= 0 ? result : result + 1
-    }
-}
-
-/**
- * Seeds the random number generator with a specified value.
+ * @example
+ * seed(42)
+ * uniform()                // always the same value
+ * seed(42, 'mt19937')
+ * random()                 // 0.3745401188473625, same as np.random.RandomState(42).random_sample()
  *
- * @param {number} seedValue - Value to initialize the random generator.
+ * @param {number|bigint|string|number[]} [seedValue] - Seed value. When omitted the generator is
+ *   re-seeded from a secure entropy source (crypto.getRandomValues when available).
+ * @param {string} [bitGenerator='xoshiro128**'] - Bit generator: `'xoshiro128**'` (default), `'pcg32'` or `'mt19937'`.
  * @returns {void}
- * @throws {Error} Throws an error if the `seedValue` parameter is not a number.
+ * @throws {Error} If the seed is not a number, bigint, string or array of unsigned 32-bit integers.
  */
-export function seed(seedValue) {
-    if (typeof seedValue === 'bigint' || typeof seedValue === 'number') {
-        randomGenerator = pcg64(BigInt(seedValue) )
-    }
-    else {
-        throw new Error("SeedValue must be a number.")
-    }
+export function seed(seedValue, bitGenerator = 'xoshiro128**') {
+    setGlobalSource(createBitGenerator(bitGenerator, seedValue))
 }
 
 /**
- * Returns the current random generator function.
+ * Replaces the global source of randomness by a function returning uniform doubles in [0, 1),
+ * for example `Math.random` or a custom/secure generator. The state of such a source cannot be saved.
  *
- * @returns {function} The random number generator function.
+ * @param {function(): number} fn - Uniform [0, 1) generator.
+ * @returns {void}
+ */
+export function setRandomSource(fn) {
+    setGlobalSource(new FunctionBitGenerator(fn))
+}
+
+/**
+ * Returns the state of the global generator, which can later be restored with {@link setState}.
+ *
+ * @returns {Object} A JSON serialisable snapshot of the global generator.
+ */
+export function getState() {
+    return getGlobalSource().getState()
+}
+
+/**
+ * Restores a state previously obtained with {@link getState}.
+ *
+ * @param {Object} state - Snapshot returned by `getState`.
+ * @returns {void}
+ */
+export function setState(state) {
+    const source = createBitGenerator(state.bitGenerator, 0)
+    source.setState(state)
+    setGlobalSource(source)
+}
+
+/**
+ * Returns the current global random generator as a function returning doubles in [0, 1).
+ *
+ * @returns {function(): number} The random number generator function.
  */
 export function getRandomGenerator() {
-    return randomGenerator
+    const source = getGlobalSource()
+    return () => source.random()
 }
