@@ -1,7 +1,7 @@
 {
   "name": "randlibjs",
   "version": "2.0.0",
-  "description": "Random number generation for JavaScript: numpy.random and scipy.stats style distributions, reproducible bit generators (xoshiro128**, PCG32, MT19937), exact samplers, Generator objects. Zero dependencies, browser and Node.",
+  "description": "Seedable, reproducible random number generation: exact samplers for 75+ probability distributions, distribution objects (pdf, cdf, quantiles), quasi-Monte Carlo, random matrices and stochastic processes. Zero dependencies, browser and Node.",
   "type": "module",
   "main": "./dist/randlib.cjs",
   "module": "./index.js",

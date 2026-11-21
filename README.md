@@ -1,6 +1,6 @@
 # randlibjs
 
-**numpy.random + scipy.stats for JavaScript.** Reproducible random number generation with exact samplers for 80+ probability distributions, numpy-compatible bit generators, scipy-style distribution objects, quasi-Monte Carlo, random matrices and stochastic processes. Zero dependencies, ~29 kB gzipped, works in browsers and Node.js, ships TypeScript types.
+Seedable, reproducible random number generation for JavaScript. Exact samplers for 75+ probability distributions, distribution objects with densities, CDFs and quantiles, quasi-Monte Carlo, random matrices, stochastic processes and resampling. Zero dependencies, ~29 kB gzipped, runs in browsers and Node.js, ships TypeScript types.
 
 [![Version](https://img.shields.io/npm/v/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
 [![License](https://img.shields.io/npm/l/randlibjs.svg)](https://github.com/pereradrian/randlibjs/blob/master/LICENSE)
@@ -9,12 +9,13 @@
 [![jsDelivr](https://data.jsdelivr.com/v1/package/npm/randlibjs/badge)](https://www.jsdelivr.com/package/npm/randlibjs)
 [![Downloads](https://img.shields.io/npm/dm/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
 
-- **Same numbers as Python.** `createGenerator(seed, 'pcg64')` reproduces `np.random.default_rng(seed)`: `random`, `uniform`, `integers`, `normal` (numpy's exact ziggurat), `binomial` and `poisson` bit for bit, and `exponential`, `gamma`, `beta`, `chisquare`, ... up to last-bit libm rounding. `'mt19937'` reproduces the legacy `np.random.RandomState(seed)`. Simulations can be prototyped in Python and replayed in the browser, or the other way round.
-- **Exact samplers.** No approximations: Poisson (PTRS), binomial (O(log n) for any n), hypergeometric (populations of billions), truncated normal deep in the tails (Robert's algorithm), and more. All of them are validated against scipy with goodness-of-fit tests.
-- **Everything numpy.random has**, plus about 30 distributions from scipy.stats and beyond.
-- **scipy.stats-style distribution objects** with `pdf`, `cdf`, `ppf`, `sf`, `isf`, moments and intervals. Tail quantiles are computed on the accurate side. For example `stats.f(5, 10).isf(1e-12)` is exact to 16 digits, where scipy is off by 2e-5.
-- **Real bit generators:** xoshiro128** (default), PCG32, MT19937 and PCG64 with numpy's SeedSequence. They all support state save and restore, cloning, independent child streams (`spawn`) and jumps.
-- **Quasi-Monte Carlo** (Sobol, Halton, Latin hypercube, Poisson disk), **random matrices** (Haar orthogonal, LKJ, Wishart, …), **stochastic processes** (Brownian motion, GBM, Ornstein–Uhlenbeck, Poisson processes, Markov chains) and **resampling** (bootstrap BCa, permutation tests).
+- **Exact samplers.** No approximations or lookup tables: ziggurat normals, PTRS Poisson, BTPE binomial (O(1) for any n), hypergeometric for populations of billions, truncated normals deep in the tails, and more. Every sampler passes goodness-of-fit tests against reference implementations.
+- **Distribution objects** with `pdf`, `cdf`, `ppf`, `sf`, `isf`, moments and intervals, including finite mixtures. Tails are computed on the accurate side: `stats.f(5, 10).isf(1e-12)` is exact to 16 digits.
+- **Serious bit generators:** xoshiro128** (default), PCG32, PCG64, PCG64DXSM, SFC64, Philox and MT19937, with state save/restore, cloning, independent child streams (`spawn`) and jumps.
+- **Reproducible across languages.** With the `'pcg64'` bit generator the streams are identical to numpy's `default_rng(seed)`, and with `'mt19937'` to `RandomState(seed)`, so a simulation can be prototyped in Python and replayed in the browser, or the other way round.
+- **Beyond sampling:** quasi-Monte Carlo (Sobol, Halton, Latin hypercube, Poisson disk), random matrices (Haar orthogonal, LKJ, Wishart, …), stochastic processes (Brownian motion, GBM, Ornstein–Uhlenbeck, Poisson processes, Markov chains) and resampling (bootstrap BCa, permutation tests).
+
+If you know numpy and scipy you will feel at home: the reference tables below list the equivalent of every function.
 
 ## Installation
 
@@ -107,7 +108,7 @@ rng.run(() => someCodeUsingTheGlobalFunctions())  // redirect global functions t
 
 `setRandomSource(fn)` installs any function returning floats in [0, 1), such as `Math.random` or a cryptographic source.
 
-### Matching numpy exactly
+### Reproducing numpy streams
 
 ```js
 createGenerator(42, 'pcg64').random()       // 0.7739560485559633 === np.random.default_rng(42).random()
