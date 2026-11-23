@@ -222,10 +222,28 @@ stats.poisson(4).pmf([0, 1, 2])  // arrays (and nested arrays) are mapped elemen
 
 Mixtures: `stats.mixture([stats.normal(0, 1), stats.normal(5, 2)], [0.7, 0.3])` has the same methods (continuous or discrete components).
 
+### Fitting distributions to data
+
+`fit(data)` returns the distribution with maximum likelihood parameters, like scipy's `dist.fit`:
+
+```js
+const d = stats.gamma.fit(waitingTimes)   // Gamma { shape, scale }
+d.ppf(0.95)                               // 95th percentile of the fitted model
+stats.weibull.fit(lifetimes).mean()
+stats.binomial.fit(successes, { n: 20 })  // known number of trials
+```
+
+Closed forms where they exist (normal, uniform, exponential, lognormal, rayleigh, pareto, laplace,
+poisson, geometric, bernoulli, binomial and negativeBinomial with known `n`), Newton iterations for
+gamma, chisquare, beta and weibull (solved to rounding, slightly more precise than scipy's numerical
+fit for weibull), and Nelder–Mead on the likelihood for logistic, gumbel, cauchy and studentT. Families
+without a location parameter here (gamma, weibull, ...) match scipy's fit with `floc=0`.
+Results are checked against scipy in the test suite.
+
 Continuous: `normal` (`norm`), `uniform`, `exponential`, `gamma`, `chisquare` (`chi2`), `beta`, `studentT` (`t`), `f`, `lognormal`, `cauchy`, `laplace`, `logistic`, `gumbel`, `weibull`, `pareto`, `triangular`, `rayleigh`, `truncatedNormal`.
 Discrete: `binomial`, `poisson`, `geometric`, `negativeBinomial`, `hypergeometric`, `bernoulli`, `randint`.
 
-The `special` namespace exports the special functions behind them: `gammaFn`, `logGamma`, `logBeta`, `digamma`, `erf`, `erfc`, `gammaP`, `gammaQ`, `gammaPInv`, `betaInc`, `betaIncInv`, `normalCDF`, `inverseNormalCDF`.
+The `special` namespace exports the special functions behind them: `gammaFn`, `logGamma`, `logBeta`, `digamma`, `trigamma`, `erf`, `erfc`, `gammaP`, `gammaQ`, `gammaPInv`, `betaInc`, `betaIncInv`, `normalCDF`, `inverseNormalCDF`.
 
 ## Quasi-Monte Carlo (`qmc`)
 

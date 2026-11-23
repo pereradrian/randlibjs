@@ -11,6 +11,10 @@ All notable changes to this project are documented here. The format follows
 - **Typed-array output** ([#26](https://github.com/pereradrian/randlibjs/issues/26)): every
   univariate sampler accepts a typed array as `size` and fills it in place
   (`normal(0, 1, new Float32Array(n))`), with exactly the same values as `size = n`.
+- **`fit()`** ([#27](https://github.com/pereradrian/randlibjs/issues/27)): maximum likelihood fitting
+  for 20 `stats` families (`stats.gamma.fit(data)`, `stats.binomial.fit(data, { n })`), checked
+  against scipy.stats.
+- `special.trigamma`.
 
 ### Changed
 

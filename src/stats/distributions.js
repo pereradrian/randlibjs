@@ -22,6 +22,7 @@ import {
 import {
     assertFinite, assertPositive, assertNonNegative, assertProbability, assertNonNegativeInteger,
 } from '../functions/util/validate.js'
+import { makeFitters, toData } from './fit.js'
 
 function mapValues(x, fn) {
     if (Array.isArray(x)) {
@@ -1136,6 +1137,12 @@ function makeMixture(components, weights) {
  * Factories of frozen distributions, scipy.stats style. Parameters use the same names and
  * conventions as the corresponding sampling functions of the library.
  *
+ * Most families also have `fit(data, options)`, which returns the distribution with maximum
+ * likelihood parameters (scipy's `dist.fit`; families without a location parameter in this
+ * library correspond to scipy with `floc=0`): `stats.gamma.fit(data)`. `binomial.fit` and
+ * `negativeBinomial.fit` need the known `n`: `stats.binomial.fit(data, { n: 20 })`.
+ * Families without `fit`: f, triangular, truncatedNormal, hypergeometric, randint, mixture.
+ *
  * @namespace stats
  * @property {function(number=, number=): ContinuousDistribution} normal - normal(loc, scale)
  * @property {function(number=, number=): ContinuousDistribution} uniform - uniform(low, high)
@@ -1165,34 +1172,52 @@ function makeMixture(components, weights) {
  * @property {function(Array, number[]): ContinuousDistribution} mixture - mixture(components, weights):
  *   finite mixture of stats distributions (all continuous or all discrete), weights normalised.
  */
+const FIT = makeFitters({ Logistic, Gumbel, Cauchy, StudentT })
+
+/**
+ * Attaches `fit(data, options)` to a family factory: maximum likelihood estimates of the
+ * parameters, returned as a frozen distribution of the family.
+ * @template {(...args: any[]) => any} F
+ * @param {F} factory
+ * @param {function(number[], Object): number[]} fitter
+ * @param {number} [min=2] - Minimum number of observations.
+ * @returns {F & { fit: (data: ArrayLike<number>, options?: { n?: number }) => ReturnType<F> }}
+ * @private
+ */
+function withFit(factory, fitter, min = 2) {
+    return Object.assign(factory, {
+        fit: (data, options = {}) => factory(...fitter(toData(data, min), options)),
+    })
+}
+
 export const stats = Object.freeze({
-    normal: (loc, scale) => new Normal(loc, scale),
-    norm: (loc, scale) => new Normal(loc, scale),
-    uniform: (low, high) => new Uniform(low, high),
-    exponential: (rate) => new Exponential(rate),
-    gamma: (shape, scale) => new Gamma(shape, scale),
-    chisquare: (df) => new ChiSquare(df),
-    chi2: (df) => new ChiSquare(df),
-    beta: (a, b) => new Beta(a, b),
-    studentT: (df, loc, scale) => new StudentT(df, loc, scale),
-    t: (df, loc, scale) => new StudentT(df, loc, scale),
+    normal: withFit((loc, scale) => new Normal(loc, scale), FIT.normal),
+    norm: withFit((loc, scale) => new Normal(loc, scale), FIT.normal),
+    uniform: withFit((low, high) => new Uniform(low, high), FIT.uniform),
+    exponential: withFit((rate) => new Exponential(rate), FIT.exponential, 1),
+    gamma: withFit((shape, scale) => new Gamma(shape, scale), FIT.gamma),
+    chisquare: withFit((df) => new ChiSquare(df), FIT.chisquare),
+    chi2: withFit((df) => new ChiSquare(df), FIT.chisquare),
+    beta: withFit((a, b) => new Beta(a, b), FIT.beta),
+    studentT: withFit((df, loc, scale) => new StudentT(df, loc, scale), FIT.studentT, 3),
+    t: withFit((df, loc, scale) => new StudentT(df, loc, scale), FIT.studentT, 3),
     f: (dfnum, dfden) => new FDist(dfnum, dfden),
-    lognormal: (mu, sigma) => new LogNormal(mu, sigma),
-    cauchy: (loc, scale) => new Cauchy(loc, scale),
-    laplace: (loc, scale) => new Laplace(loc, scale),
-    logistic: (loc, scale) => new Logistic(loc, scale),
-    gumbel: (loc, scale) => new Gumbel(loc, scale),
-    weibull: (shape, scale) => new Weibull(shape, scale),
-    pareto: (alpha, xm) => new Pareto(alpha, xm),
+    lognormal: withFit((mu, sigma) => new LogNormal(mu, sigma), FIT.lognormal),
+    cauchy: withFit((loc, scale) => new Cauchy(loc, scale), FIT.cauchy),
+    laplace: withFit((loc, scale) => new Laplace(loc, scale), FIT.laplace),
+    logistic: withFit((loc, scale) => new Logistic(loc, scale), FIT.logistic),
+    gumbel: withFit((loc, scale) => new Gumbel(loc, scale), FIT.gumbel),
+    weibull: withFit((shape, scale) => new Weibull(shape, scale), FIT.weibull),
+    pareto: withFit((alpha, xm) => new Pareto(alpha, xm), FIT.pareto),
     triangular: (low, high, mode) => new Triangular(low, high, mode),
-    rayleigh: (scale) => new Rayleigh(scale),
+    rayleigh: withFit((scale) => new Rayleigh(scale), FIT.rayleigh, 1),
     truncatedNormal: (loc, scale, low, high) => new TruncatedNormal(loc, scale, low, high),
-    binomial: (n, p) => new Binomial(n, p),
-    poisson: (lambda) => new Poisson(lambda),
-    geometric: (p) => new Geometric(p),
-    negativeBinomial: (n, p) => new NegativeBinomial(n, p),
+    binomial: withFit((n, p) => new Binomial(n, p), FIT.binomial, 1),
+    poisson: withFit((lambda) => new Poisson(lambda), FIT.poisson, 1),
+    geometric: withFit((p) => new Geometric(p), FIT.geometric, 1),
+    negativeBinomial: withFit((n, p) => new NegativeBinomial(n, p), FIT.negativeBinomial, 1),
     hypergeometric: (ngood, nbad, nsample) => new Hypergeometric(ngood, nbad, nsample),
-    bernoulli: (p) => new Bernoulli(p),
+    bernoulli: withFit((p) => new Bernoulli(p), FIT.bernoulli, 1),
     randint: (low, high) => new DiscreteUniform(low, high),
     mixture: (components, weights) => makeMixture(components, weights),
 })
