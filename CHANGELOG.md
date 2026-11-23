@@ -8,6 +8,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- `stats.f(...).sf(x)` and `cdf(x)` in the far tails: for tiny x with small degrees of freedom
+  the survival function returned exactly 1 (found by the new property-based tests).
 - TypeScript projects using `require('randlibjs')` with `moduleResolution: node16`/`nodenext`
   now get CommonJS declarations (`types/index.d.cts`) instead of ESM ones.
 - Documentation: `standard_normal` matches numpy bit for bit except for the rare draws from the
@@ -15,6 +17,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Property-based tests with fast-check (reproducibility, supports, quantile/cdf consistency).
 - CI: numpy parity check against the current numpy release, publint, Are the Types Wrong,
   bundle size budgets, coverage upload, CodeQL and OpenSSF Scorecard.
 
