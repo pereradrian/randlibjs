@@ -1,0 +1,40 @@
+# Regenerates numpy streams with the latest numpy and checks that randlibjs reproduces
+# them (78,000+ values over 4 bit generators, 5 seeds and 17 samplers, plus RandomState).
+name: numpy parity
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+
+      - name: Install the latest numpy
+        run: pip install --upgrade numpy
+
+      - run: npm ci
+
+      - name: Draw the reference streams with numpy
+        run: python scripts/numpy_parity.py > parity.json
+
+      - name: Compare with randlibjs
+        run: node scripts/check-numpy-parity.mjs parity.json
