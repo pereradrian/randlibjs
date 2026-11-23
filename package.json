@@ -25,6 +25,7 @@
     "index.js",
     "src",
     "dist",
+    "!dist/randlib.js",
     "types",
     "LICENSE",
     "NOTICE",

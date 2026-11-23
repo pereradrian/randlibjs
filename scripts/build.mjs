@@ -1,8 +1,9 @@
 // Builds the distributable bundles into dist/:
-//   randlib.mjs      ES module bundle
-//   randlib.cjs      CommonJS bundle (require)
-//   randlib.js       IIFE exposing the global `randlib` (browsers, <script>)
-//   randlib.min.js   minified IIFE, the file served by jsDelivr / unpkg
+//   randlib.mjs      minified ES module bundle (CDN <script type="module">)
+//   randlib.cjs      CommonJS bundle (require), readable for clear stack traces
+//   randlib.min.js   minified IIFE exposing the global `randlib`, served by jsDelivr / unpkg
+//   randlib.js       readable IIFE, attached to GitHub releases only (not published to npm)
+// npm consumers of the ES module import the tree-shakable sources (index.js, src/).
 import { build } from 'esbuild'
 import { readFileSync, rmSync } from 'node:fs'
 
@@ -21,8 +22,8 @@ const common = {
 }
 
 await Promise.all([
-  build({ ...common, format: 'esm', outfile: 'dist/randlib.mjs' }),
+  build({ ...common, format: 'esm', minify: true, outfile: 'dist/randlib.mjs' }),
   build({ ...common, format: 'cjs', outfile: 'dist/randlib.cjs' }),
   build({ ...common, format: 'iife', globalName: 'randlib', outfile: 'dist/randlib.js' }),
-  build({ ...common, format: 'iife', globalName: 'randlib', minify: true, sourcemap: true, sourcesContent: false, outfile: 'dist/randlib.min.js' }),
+  build({ ...common, format: 'iife', globalName: 'randlib', minify: true, outfile: 'dist/randlib.min.js' }),
 ])

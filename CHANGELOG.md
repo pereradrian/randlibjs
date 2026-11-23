@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- Smaller npm package (tarball 370 kB → 265 kB, unpacked 1.4 MB → 950 kB): `dist/randlib.mjs` is
+  now minified, the readable `dist/randlib.js` is only attached to GitHub releases, and the source
+  map of `randlib.min.js` is no longer shipped. What a browser downloads is unchanged
+  (31 kB brotli for the full bundle, less with tree shaking).
+
 ## [2.0.1] - 2026-11-23
 
 ### Fixed
