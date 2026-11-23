@@ -59,8 +59,10 @@ jobs:
       - name: Create GitHub release with signed provenance
         run: |
           cp "$BUNDLE" randlib.intoto.jsonl
-          gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}" \
+          # created as a draft with every asset, then published: works with immutable releases
+          gh release create "${GITHUB_REF_NAME}" --draft --generate-notes --title "${GITHUB_REF_NAME}" \
             dist/randlib.min.js dist/randlib.js dist/randlib.mjs dist/randlib.cjs randlib.intoto.jsonl
+          gh release edit "${GITHUB_REF_NAME}" --draft=false
         env:
           BUNDLE: ${{ steps.attest.outputs.bundle-path }}
           GH_TOKEN: ${{ github.token }}
