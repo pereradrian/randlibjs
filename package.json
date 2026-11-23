@@ -7,9 +7,14 @@
   "module": "./index.js",
   "exports": {
     ".": {
-      "types": "./types/index.d.ts",
-      "import": "./index.js",
-      "require": "./dist/randlib.cjs",
+      "import": {
+        "types": "./types/index.d.ts",
+        "default": "./index.js"
+      },
+      "require": {
+        "types": "./types/index.d.cts",
+        "default": "./dist/randlib.cjs"
+      },
       "default": "./index.js"
     },
     "./package.json": "./package.json"
