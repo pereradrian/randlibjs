@@ -7,6 +7,11 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: development
+    ignore:
+      # TypeScript 7 emits looser declarations from our JSDoc (more `any`, lost callback
+      # signatures); revisit when its JS declaration emit matches 5.x.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
     open-pull-requests-limit: 5
 
   - package-ecosystem: github-actions
