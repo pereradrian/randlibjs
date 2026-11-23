@@ -4,7 +4,8 @@ import { standardNormal as sampleStandardNormal } from '../../core/samplers.js'
 /**
  * Generates random numbers or arrays of random numbers for a normal (Gaussian) distribution.
  *
- * Samples are exact (Marsaglia polar method), not approximations.
+ * Samples are exact, not approximations: numpy's 256-layer ziggurat (the legacy polar
+ * method with the `'mt19937'` bit generator, as numpy's `RandomState`).
  *
  * @example
  * normal()              // one N(0, 1) sample
