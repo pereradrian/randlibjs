@@ -11,22 +11,27 @@ on:
       - 'v*'
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub release
+      id-token: write # npm trusted publishing and provenance
+      attestations: write # build provenance for the release assets
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 22.x
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.x
           registry-url: https://registry.npmjs.org
 
-      # trusted publishing needs npm 11.5.1 or newer
-      - run: npm install -g npm@latest
+      # npm stage needs npm 11.15 or newer
+      - run: npm install -g npm@12.2.3
 
       - run: npm ci
 
@@ -40,7 +45,21 @@ jobs:
       - name: Stage the release on npm
         run: npm stage publish . --provenance --access public
 
-      - name: Create GitHub release
-        run: gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}" dist/randlib.min.js dist/randlib.js dist/randlib.mjs dist/randlib.cjs
+      - name: Build provenance for the browser bundles
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/randlib.min.js
+            dist/randlib.js
+            dist/randlib.mjs
+            dist/randlib.cjs
+
+      - name: Create GitHub release with signed provenance
+        run: |
+          cp "$BUNDLE" randlib.intoto.jsonl
+          gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}" \
+            dist/randlib.min.js dist/randlib.js dist/randlib.mjs dist/randlib.cjs randlib.intoto.jsonl
         env:
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
           GH_TOKEN: ${{ github.token }}
