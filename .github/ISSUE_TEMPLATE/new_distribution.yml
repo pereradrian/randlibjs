@@ -1,0 +1,21 @@
+name: New distribution or feature
+description: Request a distribution, sampler or utility
+labels: [enhancement]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Distribution or feature
+      placeholder: e.g. generalized inverse Gaussian
+    validations:
+      required: true
+  - type: textarea
+    id: reference
+    attributes:
+      label: Reference implementation or paper
+      description: numpy / scipy / R function, or the paper with the sampling algorithm.
+  - type: textarea
+    id: usecase
+    attributes:
+      label: Use case
+      description: What would you use it for?
