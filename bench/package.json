@@ -1,0 +1,20 @@
+{
+  "name": "randlibjs-bench",
+  "private": true,
+  "type": "module",
+  "description": "Comparison benchmark of randlibjs against other JavaScript random libraries (not published).",
+  "scripts": {
+    "bench": "node compare.mjs"
+  },
+  "dependencies": {
+    "@stdlib/random-base-beta": "^0.2.2",
+    "@stdlib/random-base-binomial": "^0.2.2",
+    "@stdlib/random-base-gamma": "^0.2.2",
+    "@stdlib/random-base-normal": "^0.2.2",
+    "@stdlib/random-base-poisson": "^0.2.2",
+    "@stdlib/random-base-uniform": "^0.2.3",
+    "d3-random": "^3.0.2",
+    "jstat": "^1.9.6",
+    "seedrandom": "^3.0.5"
+  }
+}

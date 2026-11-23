@@ -256,6 +256,33 @@ Rough throughput on Node 22 (`node scripts/benchmark.mjs`), in millions of sampl
 | xoshiro128** (default) | ~70 | ~44 | ~25–30 | ~20 | ~15–20 | ~12 | ~15 |
 | pcg64 (numpy parity) | ~9 | ~12 | ~4.5 | ~6 | ~3 | ~3 | ~3 |
 
+## Compared with other libraries
+
+| | randlibjs | [stdlib](https://github.com/stdlib-js/stdlib) | [d3-random](https://github.com/d3/d3-random) | [jStat](https://github.com/jstat/jstat) | [seedrandom](https://github.com/davidbau/seedrandom) |
+|---|---|---|---|---|---|
+| Seedable | ✅ | ✅ | ✅ (LCG source) | ❌ (`Math.random`) | ✅ |
+| Streams identical to numpy | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Densities, CDFs, quantiles | ✅ same package | ✅ separate packages | ❌ | ✅ | ❌ |
+| Quasi-Monte Carlo, random matrices, processes | ✅ | partly | ❌ | ❌ | ❌ |
+| Distributions | 75+ | dozens | 17 | about 20 | uniform only |
+
+Throughput in millions of samples per second, one draw per call (Node 22, `cd bench && npm install && npm run bench`; timings vary by machine, compare within a row):
+
+| | randlibjs | stdlib | d3-random | jStat | seedrandom |
+|---|---|---|---|---|---|
+| uniform | 27–60 | 44–67 | 95–122 | 42–46 | 28–34 |
+| normal | 20 | 28–42 | 31–33 | 20 | — |
+| gamma(2.5) | 15–19 | 7.5–9 | 20–22 | 6.5 | — |
+| beta(2, 5) | 8–9 | 4.5 | 9.5–12 | 2.5–3.3 | — |
+| poisson(4) | 9–13 | 3.7 | 9.2–9.7 | — | — |
+| binomial(100, 0.3) | 4 | 8 | 3 | — | — |
+| binomial(1e9, 0.3) | 13–17 | 5.5–9.6 | 0.8–1.4 | — | — |
+
+randlibjs is in the same range as the fastest libraries and well ahead where the algorithm matters
+(gamma, Poisson, huge binomials, which are O(1) here). d3-random's speed comes from a 32-bit LCG
+source, which is much weaker statistically than xoshiro128\*\* or PCG. randlibjs also pays a little
+for drawing every normal from 64 random bits, which is what makes numpy-identical streams possible.
+
 ## Examples
 
 The [`examples/`](examples) folder has runnable scripts:
@@ -281,12 +308,18 @@ Run them with `node examples/<name>.mjs`.
 
 ```bash
 npm install
-npm test            # 490+ tests, including goodness-of-fit tests against scipy
+npm test               # 500+ tests, including goodness-of-fit tests against scipy
 npm run lint
-npm run build       # dist/ bundles and types/
+npm run build          # dist/ bundles and types/
+npm run check:package  # publint + Are the Types Wrong on the packed package
+npm run size           # bundle size budgets
 npm run coverage
-npm run docs        # JSDoc API reference into docs/docs
+npm run docs           # JSDoc API reference into docs/docs
 ```
+
+`python scripts/numpy_parity.py > parity.json && node scripts/check-numpy-parity.mjs parity.json`
+checks that randlibjs reproduces the installed numpy (CI runs it weekly against the latest numpy).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for adding distributions.
 
 The reference data in `test/fixtures` is generated with numpy/scipy by `python scripts/make_reference.py` and `python scripts/make_stats_reference.py`.
 
