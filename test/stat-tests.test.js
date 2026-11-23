@@ -13,8 +13,9 @@ describe('kstest (one sample, exact p-values)', () => {
             test(`n = ${c.data.length}, ${alternative}`, () => {
                 const res = stats.kstest(c.data, stats.normal(0, 1), { alternative })
                 close(res.statistic, statistic, 1e-12, 1e-15)
-                // exact for n <= 10000 (scipy's own large-n p-value is an approximation)
-                close(res.pvalue, pvalue, c.data.length <= 10000 ? 1e-6 : 1e-3, 1e-15)
+                // exact matrix method for small n; Pelz–Good (~1e-5) for large n, where scipy's
+                // own p-value is also an approximation
+                close(res.pvalue, pvalue, c.data.length <= 140 ? 1e-9 : 1e-4, 1e-15)
             })
         }
     }

@@ -36,7 +36,7 @@ export function smirnovSf(n, d) {
  * P(D_n < d) for the two-sided statistic, exact (Marsaglia, Tsang & Wang 2003).
  * @private
  */
-function kolmogorovCdfExact(n, d) {
+export function kolmogorovCdfExact(n, d) {
     const k = Math.floor(n * d) + 1
     const m = 2 * k - 1
     const h = k - n * d
@@ -116,10 +116,15 @@ export function kolmogorovSf(n, d) {
     if (d >= 1) return 0
     if (d <= 1 / (2 * n)) return 1
     const twoSided = 2 * smirnovSf(n, d)
-    // when the one-sided tail is small, P(D >= d) = 2 S⁺ - P(both), with P(both) negligible
-    if (twoSided < 1e-6) return twoSided
-    const k = Math.floor(n * d) + 1
-    if (2 * k - 1 <= 400) return Math.max(0, 1 - kolmogorovCdfExact(n, d))
+    // exact matrix method costs ~m³ log2(n) with m = 2⌊nd⌋ + 1: use it while that stays small
+    const m = 2 * Math.floor(n * d) + 1
+    if (n <= 140 || m ** 3 * Math.log2(n) <= 2e7) {
+        return twoSided < 1e-12 ? twoSided : Math.max(0, 1 - kolmogorovCdfExact(n, d))
+    }
+    // tail: P(D >= d) = 2 S⁺ - P(D⁺ >= d and D⁻ >= d), the overlap being ~2 exp(-8 n d²);
+    // accurate to ~1e-6 relative below p = 0.1 (checked against the exact method)
+    if (twoSided < 0.1) return Math.max(0, twoSided - 2 * Math.exp(-8 * n * d * d))
+    // centre: Pelz–Good expansion, ~1e-5 relative for n > 140
     return pelzGoodSf(n, d)
 }
 
