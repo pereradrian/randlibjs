@@ -24,6 +24,7 @@ import {
 } from '../functions/util/validate.js'
 import { makeFitters, toData } from './fit.js'
 import { FAMILIES } from './families.js'
+import { kstest, ks2samp, chisquareTest, andersonDarling, describe, gaussianKde } from './tests.js'
 
 import { mapValues, ContinuousDistribution, DiscreteDistribution } from './base.js'
 
@@ -946,5 +947,12 @@ export const stats = Object.freeze({
     mixture: (components, weights) => makeMixture(components, weights),
     erlang: (k, rate = 1) => new Gamma(k, 1 / rate),
     ...FAMILIES,
+    // statistical tests and descriptive statistics (scipy.stats names in camelCase)
+    kstest,
+    ks2samp,
+    chisquareTest,
+    andersonDarling,
+    describe,
+    gaussianKde,
 })
 
