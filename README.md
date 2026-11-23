@@ -240,10 +240,35 @@ fit for weibull), and Nelder–Mead on the likelihood for logistic, gumbel, cauc
 without a location parameter here (gamma, weibull, ...) match scipy's fit with `floc=0`.
 Results are checked against scipy in the test suite.
 
-Continuous: `normal` (`norm`), `uniform`, `exponential`, `gamma`, `chisquare` (`chi2`), `beta`, `studentT` (`t`), `f`, `lognormal`, `cauchy`, `laplace`, `logistic`, `gumbel`, `weibull`, `pareto`, `triangular`, `rayleigh`, `truncatedNormal`.
-Discrete: `binomial`, `poisson`, `geometric`, `negativeBinomial`, `hypergeometric`, `bernoulli`, `randint`.
+Every univariate sampler has a distribution object, with the same parameters as the sampler:
+
+Continuous: `normal` (`norm`), `uniform`, `exponential`, `gamma`, `erlang`, `chisquare` (`chi2`), `chi`, `beta`, `betaPrime`, `kumaraswamy`, `studentT` (`t`), `f`, `noncentralChisquare`, `noncentralF`, `lognormal`, `cauchy`, `laplace`, `logistic`, `gumbel`, `weibull`, `frechet`, `generalizedExtremeValue`, `generalizedPareto`, `pareto`, `burr12`, `logLogistic`, `triangular`, `rayleigh`, `maxwell`, `nakagami`, `halfNormal`, `truncatedNormal`, `skewNormal`, `exGaussian`, `wald`, `levy`, `inverseGamma`, `loguniform`, `power`, `semicircle`, `vonmises`.
+Discrete: `binomial`, `poisson`, `geometric`, `negativeBinomial`, `hypergeometric`, `bernoulli`, `randint`, `betaBinomial`, `logseries`, `zipf`, `skellam`.
+
+All are checked against scipy.stats, including quantiles down to 1e-12; tail probabilities are
+computed on the side that does not cancel. (For the von Mises 1e-12 quantile randlibjs agrees with
+mpmath where scipy is 16% off.)
 
 The `special` namespace exports the special functions behind them: `gammaFn`, `logGamma`, `logBeta`, `digamma`, `trigamma`, `erf`, `erfc`, `gammaP`, `gammaQ`, `gammaPInv`, `betaInc`, `betaIncInv`, `normalCDF`, `inverseNormalCDF`.
+
+### Statistical tests and density estimation
+
+```js
+const data = stats.gamma(2, 1.5).sample(500)
+
+stats.kstest(data, stats.gamma(2, 1.5))         // { statistic, pvalue }, exact p-value
+stats.kstest(data, (x) => 1 - Math.exp(-x), { alternative: 'greater' })
+stats.ks2samp(groupA, groupB)                   // two-sample, exact for n·m <= 1e6
+stats.chisquareTest([16, 18, 16, 14, 12, 12])   // Pearson goodness of fit
+stats.andersonDarling(data)                     // normality: statistic, critical values, p-value
+stats.describe(data)                            // nobs, min, max, mean, variance, skewness, kurtosis
+
+const kde = stats.gaussianKde(data)             // Scott's rule; 'silverman' or a factor
+kde.pdf([1, 2, 3]); kde.cdf(2); kde.sample(100)
+```
+
+Together with `fit` this gives the whole fit, check and compare workflow. Results match scipy.stats
+(KS p-values exact for small samples, ~1e-7 in the tails and ~1e-5 elsewhere for large ones).
 
 ## Quasi-Monte Carlo (`qmc`)
 
@@ -261,6 +286,27 @@ new qmc.PoissonDisk(2, { radius: 0.05 }).fillSpace()   // blue noise
 ```
 
 Unscrambled Sobol and Halton points and the discrepancies are identical to `scipy.stats.qmc`.
+
+## Copulas
+
+Random vectors with uniform margins and a chosen dependence; map each coordinate through any
+`ppf` to get dependent variables with arbitrary margins:
+
+```js
+import { gaussianCopula, tCopula, claytonCopula, gumbelCopula, frankCopula, copulaTheta, stats } from 'randlibjs'
+
+const [u, v] = gaussianCopula([[1, 0.7], [0.7, 1]])
+const loss = stats.lognormal(0, 1).ppf(u)          // dependent margins
+const rate = stats.gamma(2, 0.5).ppf(v)
+
+tCopula(corr, 4, 10000)                            // joint extremes (tail dependence)
+claytonCopula(copulaTheta('clayton', 0.5), 3, 1000) // Kendall's τ = 0.5, 3 dimensions
+gumbelCopula(2, 2, 1000)                            // upper tail dependence
+frankCopula(5, 2, 1000)
+```
+
+The Archimedean families are sampled exactly in any dimension (Marshall–Olkin). `copulaTau` and
+`copulaTheta` convert between each family's parameter and Kendall's τ.
 
 ## Stochastic processes and resampling
 

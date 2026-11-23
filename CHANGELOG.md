@@ -4,6 +4,31 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **27 more distribution objects** ([#31](https://github.com/pereradrian/randlibjs/issues/31)): every
+  univariate sampler now has a `stats` family (halfNormal, maxwell, chi, nakagami, levy, frechet,
+  logLogistic, kumaraswamy, betaPrime, inverseGamma, loguniform, semicircle, burr12, erlang,
+  generalizedExtremeValue, generalizedPareto, skewNormal, exGaussian, power, wald, vonmises,
+  noncentralChisquare, noncentralF, logseries, zipf, skellam, betaBinomial), checked against scipy.
+- **Statistical tests** ([#32](https://github.com/pereradrian/randlibjs/issues/32)): `stats.kstest`,
+  `stats.ks2samp`, `stats.chisquareTest`, `stats.andersonDarling`, `stats.describe` and
+  `stats.gaussianKde`, checked against scipy.
+- **Copulas** ([#33](https://github.com/pereradrian/randlibjs/issues/33)): `gaussianCopula`, `tCopula`,
+  `claytonCopula`, `gumbelCopula`, `frankCopula`, plus `copulaTau` / `copulaTheta`.
+
+### Changed
+
+- Faster single draws ([#34](https://github.com/pereradrian/randlibjs/issues/34)): `normal()` ~20 →
+  ~29 M/s, `uniform()` ~30 → ~137 M/s, with identical streams.
+
+### Fixed
+
+- Discrete quantiles never terminated for distributions with infinite variance, and far upper
+  quantiles of heavy-tailed discrete distributions were slow.
+
 ## [2.1.0] - 2026-11-23
 
 ### Added
