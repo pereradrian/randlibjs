@@ -4,6 +4,20 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- TypeScript projects using `require('randlibjs')` with `moduleResolution: node16`/`nodenext`
+  now get CommonJS declarations (`types/index.d.cts`) instead of ESM ones.
+- Documentation: `standard_normal` matches numpy bit for bit except for the rare draws from the
+  ziggurat tail (|x| > 3.654), which can differ in the last bit because they use `log1p`.
+
+### Added
+
+- CI: numpy parity check against the current numpy release, publint, Are the Types Wrong,
+  bundle size budgets, coverage upload, CodeQL and OpenSSF Scorecard.
+
 ## [2.0.0] - 2026-11-20
 
 A complete rewrite that turns randlibjs into a numpy.random + scipy.stats equivalent for JavaScript.

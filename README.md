@@ -2,12 +2,20 @@
 
 Seedable, reproducible random number generation for JavaScript. Exact samplers for 75+ probability distributions, distribution objects with densities, CDFs and quantiles, quasi-Monte Carlo, random matrices, stochastic processes and resampling. Zero dependencies, ~29 kB gzipped, runs in browsers and Node.js, ships TypeScript types.
 
-[![Version](https://img.shields.io/npm/v/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
-[![License](https://img.shields.io/npm/l/randlibjs.svg)](https://github.com/pereradrian/randlibjs/blob/master/LICENSE)
-[![Build Status](https://github.com/pereradrian/randlibjs/actions/workflows/ci.yml/badge.svg)](https://github.com/pereradrian/randlibjs/actions)
-[![Codecov](https://codecov.io/gh/pereradrian/randlibjs/branch/master/graph/badge.svg)](https://codecov.io/gh/pereradrian/randlibjs)
-[![jsDelivr](https://data.jsdelivr.com/v1/package/npm/randlibjs/badge)](https://www.jsdelivr.com/package/npm/randlibjs)
+[![npm](https://img.shields.io/npm/v/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
 [![Downloads](https://img.shields.io/npm/dm/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
+[![jsDelivr](https://data.jsdelivr.com/v1/package/npm/randlibjs/badge)](https://www.jsdelivr.com/package/npm/randlibjs)
+[![Bundle size](https://img.shields.io/bundlephobia/minzip/randlibjs)](https://bundlephobia.com/package/randlibjs)
+[![Types](https://img.shields.io/npm/types/randlibjs)](https://www.npmjs.com/package/randlibjs)
+[![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](package.json)
+[![License](https://img.shields.io/npm/l/randlibjs.svg)](LICENSE)
+
+[![CI](https://github.com/pereradrian/randlibjs/actions/workflows/ci.yml/badge.svg)](https://github.com/pereradrian/randlibjs/actions/workflows/ci.yml)
+[![numpy parity](https://github.com/pereradrian/randlibjs/actions/workflows/numpy-parity.yml/badge.svg)](https://github.com/pereradrian/randlibjs/actions/workflows/numpy-parity.yml)
+[![Codecov](https://codecov.io/gh/pereradrian/randlibjs/branch/master/graph/badge.svg)](https://codecov.io/gh/pereradrian/randlibjs)
+[![CodeQL](https://github.com/pereradrian/randlibjs/actions/workflows/codeql.yml/badge.svg)](https://github.com/pereradrian/randlibjs/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pereradrian/randlibjs/badge)](https://scorecard.dev/viewer/?uri=github.com/pereradrian/randlibjs)
+[![npm provenance](https://img.shields.io/badge/npm-provenance-blue?logo=npm)](https://www.npmjs.com/package/randlibjs#provenance)
 
 - **Exact samplers.** No approximations or lookup tables: ziggurat normals, PTRS Poisson, BTPE binomial (O(1) for any n), hypergeometric for populations of billions, truncated normals deep in the tails, and more. Every sampler passes goodness-of-fit tests against reference implementations.
 - **Distribution objects** with `pdf`, `cdf`, `ppf`, `sf`, `isf`, moments and intervals, including finite mixtures. Tails are computed on the accurate side: `stats.f(5, 10).isf(1e-12)` is exact to 16 digits.
