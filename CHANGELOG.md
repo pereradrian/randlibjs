@@ -20,8 +20,8 @@ All notable changes to this project are documented here. The format follows
 
 - Smaller npm package (tarball 370 kB → 265 kB, unpacked 1.4 MB → 950 kB): `dist/randlib.mjs` is
   now minified, the readable `dist/randlib.js` is only attached to GitHub releases, and the source
-  map of `randlib.min.js` is no longer shipped. What a browser downloads is unchanged
-  (31 kB brotli for the full bundle, less with tree shaking).
+  map of `randlib.min.js` is no longer shipped. The browser bundle is 33 kB brotli with the new
+  `fit` (31 kB before); tree-shaken imports only pull what they use (`seed` + `normal`: 5 kB).
 
 ## [2.0.1] - 2026-11-23
 
