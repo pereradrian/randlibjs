@@ -180,6 +180,28 @@ export class ContinuousDistribution {
         return (lo + hi) / 2
     }
 
+    /**
+     * Generic upper quantile by bracketing and bisection on the survival function, accurate
+     * far into the upper tail when `_sf` is.
+     * @protected
+     */
+    _isfBySf(q) {
+        if (q >= 0.5) return this._ppf(1 - q)
+        const [lo0, hi0] = this.support
+        if (q === 0) return hi0
+        let lo = Number.isFinite(lo0) ? lo0 : -1
+        let hi = Number.isFinite(hi0) ? hi0 : 1
+        while (!Number.isFinite(lo0) && this._sf(lo) < q) lo *= 2
+        while (!Number.isFinite(hi0) && this._sf(hi) > q) hi = hi > 0 ? hi * 2 : 1
+        for (let i = 0; i < 2100; i++) {
+            const mid = (lo + hi) / 2
+            if (mid === lo || mid === hi) break
+            if (this._sf(mid) > q) lo = mid
+            else hi = mid
+        }
+        return (lo + hi) / 2
+    }
+
     /** @protected */
     _sample(size) {
         return mapValues(samplers.random(size), (u) => this._ppf(u))
@@ -243,7 +265,9 @@ export class DiscreteDistribution extends ContinuousDistribution {
         let k = Math.round(this.mean() || 0)
         if (!Number.isFinite(k)) k = Number.isFinite(lo) ? lo : 0
         k = Math.min(Math.max(k, lo), hi)
-        const sd = Math.sqrt(this.variance()) || 1
+        const sd0 = Math.sqrt(this.variance())
+        // an infinite or undefined variance (e.g. Zipf with a <= 3) still needs a finite step
+        const sd = Number.isFinite(sd0) && sd0 > 0 ? sd0 : 1
         let step = Math.max(1, Math.ceil(sd))
         // bracket
         let a = k
@@ -276,10 +300,30 @@ export class DiscreteDistribution extends ContinuousDistribution {
         if (q === 1) return lo - 1
         if (q === 0) return hi
         const target = q * (1 + 1e-12)
+        // start near the answer, then bracket with doubling steps and bisect on sf: ppf(1 - q)
+        // cannot resolve tiny q, and the answer can be very far out (heavy tails)
         let k = this._ppf(Math.min(1, Math.max(0, 1 - q)))
-        while (k > lo && this._sf(k - 1) <= target) k--
-        while (k < hi && this._sf(k) > target) k++
-        return k
+        if (!Number.isFinite(k)) k = Number.isFinite(lo) ? lo : 0
+        let a = k // sf(a) > target, or a = lo - 1
+        let b = k // sf(b) <= target
+        let step = 1
+        while (a >= lo && this._sf(a) <= target) {
+            b = a
+            a = a - step < lo ? lo - 1 : a - step
+            step *= 2
+        }
+        step = 1
+        while (b < hi && this._sf(b) > target) {
+            a = b
+            b = Math.min(hi, b + step)
+            step *= 2
+        }
+        while (b - a > 1) {
+            const mid = Math.floor((a + b) / 2)
+            if (this._sf(mid) <= target) b = mid
+            else a = mid
+        }
+        return b
     }
 
     median() {
