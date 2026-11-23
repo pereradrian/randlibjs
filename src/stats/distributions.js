@@ -509,15 +509,19 @@ class FDist extends ContinuousDistribution {
         const { d1, d2 } = this
         return 0.5 * (d1 * Math.log(d1 * x) + d2 * Math.log(d2) - (d1 + d2) * Math.log(d1 * x + d2)) - Math.log(x) - logBeta(d1 / 2, d2 / 2)
     }
+    // cdf and sf use the incomplete beta on whichever argument is small: the other one
+    // rounds to 1 in the far tails (e.g. sf(1e-190) with tiny degrees of freedom).
     _cdf(x) {
         if (x <= 0) return 0
         const { d1, d2 } = this
-        return betaInc(d1 * x / (d1 * x + d2), d1 / 2, d2 / 2)
+        const z = d1 * x / (d1 * x + d2)
+        return z <= 0.5 ? betaInc(z, d1 / 2, d2 / 2) : 1 - betaInc(d2 / (d1 * x + d2), d2 / 2, d1 / 2)
     }
     _sf(x) {
         if (x <= 0) return 1
         const { d1, d2 } = this
-        return betaInc(d2 / (d1 * x + d2), d2 / 2, d1 / 2)
+        const z = d1 * x / (d1 * x + d2)
+        return z <= 0.5 ? 1 - betaInc(z, d1 / 2, d2 / 2) : betaInc(d2 / (d1 * x + d2), d2 / 2, d1 / 2)
     }
     _ppf(p) {
         if (p > 0.5) return this._isf(1 - p)

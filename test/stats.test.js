@@ -145,3 +145,15 @@ describe('special functions', () => {
     expect(special.logChoose(10, 3)).toBeCloseTo(Math.log(120), 13)
   })
 })
+
+describe('F distribution far tails', () => {
+  test('cdf and sf stay complementary when the beta argument rounds to 1', () => {
+    // found by the property tests: sf(9.7e-195) of F(0.1, 0.1) used to be exactly 1
+    const d = stats.f(0.1, 0.1)
+    const x = d.ppf(1e-10)
+    expect(d.cdf(x)).toBeCloseTo(1e-10, 20)
+    expect(d.sf(x)).toBe(1 - 1e-10)
+    expect(d.sf(1e-300)).toBeLessThan(1)
+    expect(d.cdf(1e300) + d.sf(1e300)).toBe(1)
+  })
+})
