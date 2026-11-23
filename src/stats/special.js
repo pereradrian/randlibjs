@@ -283,3 +283,22 @@ export function digamma(x) {
     const f = 1 / (x * x)
     return result + Math.log(x) - 0.5 / x - f * (1 / 12 - f * (1 / 120 - f * (1 / 252 - f * (1 / 240 - f / 132))))
 }
+
+/**
+ * Trigamma function ψ₁(x) = d²/dx² log Γ(x), for x > 0.
+ * @param {number} x
+ * @returns {number}
+ */
+export function trigamma(x) {
+    if (!(x > 0)) {
+        return NaN
+    }
+    let result = 0
+    while (x < 16) {
+        result += 1 / (x * x)
+        x += 1
+    }
+    const f = 1 / (x * x)
+    // asymptotic series 1/x + 1/(2x²) + Σ B₂ₖ / x^(2k+1)
+    return result + 1 / x + f / 2 + f / x * (1 / 6 - f * (1 / 30 - f * (1 / 42 - f * (1 / 30 - f * 5 / 66))))
+}

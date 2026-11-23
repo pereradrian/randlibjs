@@ -143,6 +143,12 @@ describe('special functions', () => {
     expect(special.betaIncInv(0.579825, 2, 5)).toBeCloseTo(0.3, 12)
     expect(special.logBeta(2, 3)).toBeCloseTo(Math.log(1 / 12), 14)
     expect(special.logChoose(10, 3)).toBeCloseTo(Math.log(120), 13)
+    // trigamma: exact values and scipy.special.polygamma(1, x)
+    expect(special.trigamma(1)).toBeCloseTo(Math.PI ** 2 / 6, 15)
+    expect(special.trigamma(0.5)).toBeCloseTo(Math.PI ** 2 / 2, 14)
+    expect(special.trigamma(123.4)).toBeCloseTo(0.008136651610865263, 16)
+    expect(special.trigamma(0.01)).toBeCloseTo(10001.621213528313, 9)
+    expect(special.trigamma(-1)).toBeNaN()
   })
 })
 
