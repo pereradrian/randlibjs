@@ -300,13 +300,13 @@ Throughput in millions of samples per second, one draw per call (Node 22, `cd be
 
 | | randlibjs | stdlib | d3-random | jStat | seedrandom |
 |---|---|---|---|---|---|
-| uniform | 27–60 | 44–67 | 95–122 | 42–46 | 28–34 |
-| normal | 20 | 28–42 | 31–33 | 20 | — |
-| gamma(2.5) | 15–19 | 7.5–9 | 20–22 | 6.5 | — |
-| beta(2, 5) | 8–9 | 4.5 | 9.5–12 | 2.5–3.3 | — |
-| poisson(4) | 9–13 | 3.7 | 9.2–9.7 | — | — |
-| binomial(100, 0.3) | 4 | 8 | 3 | — | — |
-| binomial(1e9, 0.3) | 13–17 | 5.5–9.6 | 0.8–1.4 | — | — |
+| uniform | 136–139 | 79–80 | 143–150 | 61–64 | 30–35 |
+| normal | 25–29 | 40–46 | 31–37 | 20–21 | — |
+| gamma(2.5) | 18–19 | 10–11 | 26–28 | 6.7–7.2 | — |
+| beta(2, 5) | 6–10 | 3.5–4.9 | 6.8–8.4 | 2.4 | — |
+| poisson(4) | 9 | 2.3 | 6.6 | — | — |
+| binomial(100, 0.3) | 3.6–3.7 | 5.7 | 2.4 | — | — |
+| binomial(1e9, 0.3) | 16 | 7.1 | 1.1 | — | — |
 
 randlibjs is in the same range as the fastest libraries and well ahead where the algorithm matters
 (gamma, Poisson, huge binomials, which are O(1) here). d3-random's speed comes from a 32-bit LCG
