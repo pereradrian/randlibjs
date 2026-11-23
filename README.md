@@ -14,6 +14,7 @@ Seedable, reproducible random number generation for JavaScript. Exact samplers f
 [![numpy parity](https://github.com/pereradrian/randlibjs/actions/workflows/numpy-parity.yml/badge.svg)](https://github.com/pereradrian/randlibjs/actions/workflows/numpy-parity.yml)
 [![Codecov](https://codecov.io/gh/pereradrian/randlibjs/branch/master/graph/badge.svg)](https://codecov.io/gh/pereradrian/randlibjs)
 [![CodeQL](https://github.com/pereradrian/randlibjs/actions/workflows/codeql.yml/badge.svg)](https://github.com/pereradrian/randlibjs/actions/workflows/codeql.yml)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/17029/badge)](https://www.bestpractices.dev/projects/17029)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pereradrian/randlibjs/badge)](https://scorecard.dev/viewer/?uri=github.com/pereradrian/randlibjs)
 [![npm provenance](https://img.shields.io/badge/npm-provenance-blue?logo=npm)](https://www.npmjs.com/package/randlibjs#provenance)
 
