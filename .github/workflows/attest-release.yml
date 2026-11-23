@@ -1,0 +1,67 @@
+# Adds signed build provenance to an existing GitHub release (e.g. one published before the
+# release workflow attested its assets). The tag is rebuilt from source and the provenance is
+# only issued if the rebuilt bundles are byte-for-byte identical to the published assets.
+name: Attest an existing release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag, e.g. v2.0.0'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # upload the provenance bundle to the release
+      id-token: write # Sigstore signing
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.x
+
+      - run: npm ci
+
+      - name: Rebuild the bundles
+        run: node scripts/build.mjs
+
+      - name: Check the rebuild matches the published assets
+        run: |
+          mkdir published
+          gh release download "$TAG" --dir published --pattern 'randlib.*'
+          for f in randlib.min.js randlib.js randlib.mjs randlib.cjs; do
+            cmp "published/$f" "dist/$f"
+            echo "identical: $f"
+          done
+        env:
+          TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Build provenance
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/randlib.min.js
+            dist/randlib.js
+            dist/randlib.mjs
+            dist/randlib.cjs
+
+      - name: Attach the provenance to the release
+        run: |
+          cp "$BUNDLE" randlib.intoto.jsonl
+          gh release upload "$TAG" randlib.intoto.jsonl --clobber
+        env:
+          TAG: ${{ inputs.tag }}
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+          GH_TOKEN: ${{ github.token }}
