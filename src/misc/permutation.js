@@ -121,6 +121,7 @@ function cartesian(dims) {
  * @returns {number|Array}
  */
 export function random(size = null) {
+    if (size === null || size === undefined) return rand()
     return baseGenerator(rand, size)
 }
 

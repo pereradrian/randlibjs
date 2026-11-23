@@ -19,5 +19,6 @@ export function exponential(lambda = 1.0, size = null) {
         throw new Error("Rate parameter lambda must be greater than 0")
     }
     // Use the base generator for handling size
+    if (size === null || size === undefined) return -Math.log(1 - rand()) / lambda
     return baseGenerator(() => -Math.log(1 - rand()) / lambda, size)
 }

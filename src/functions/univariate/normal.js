@@ -27,6 +27,8 @@ export function normal(loc = 0.0, scale = 1.0, size = null) {
     if (scale < 0.0) {
         throw new Error("standard deviation must be a non-negative number")
     }
+    // scalar fast path: no closure or size handling on the most common call
+    if (size === null || size === undefined) return loc + scale * sampleStandardNormal()
     return baseGenerator(() => loc + scale * sampleStandardNormal(), size)
 }
 
@@ -38,5 +40,6 @@ export function normal(loc = 0.0, scale = 1.0, size = null) {
  * @returns {number|Array} Standard normal samples.
  */
 export function standardNormal(size = null) {
+    if (size === null || size === undefined) return sampleStandardNormal()
     return baseGenerator(sampleStandardNormal, size)
 }

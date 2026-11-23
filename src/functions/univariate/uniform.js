@@ -18,5 +18,6 @@ export function uniform(low = 0.0, high = 1.0, size = null) {
     if (low >= high) {
         throw new Error("low must be less than high")
     }
+    if (size === null || size === undefined) return rand() * (high - low) + low
     return baseGenerator(() => rand() * (high - low) + low, size)
 }
