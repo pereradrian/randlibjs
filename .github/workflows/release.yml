@@ -3,6 +3,8 @@ name: Publish to npm
 # Runs when a version tag (e.g. v2.0.0) is pushed. Publishes with npm trusted
 # publishing (OIDC): no token is stored. The package's settings on npmjs.com must
 # list this repository and workflow file (release.yml) as a trusted publisher.
+# The version is staged, not published: approve it on npmjs.com or with
+# `npm stage approve <stage-id>` (2FA) to make it live.
 on:
   push:
     tags:
@@ -31,8 +33,12 @@ jobs:
       - name: Check tag matches package.json version
         run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
 
-      # prepublishOnly runs lint, tests and the build
-      - run: npm publish --provenance --access public
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+      - name: Stage the release on npm
+        run: npm stage publish . --provenance --access public
 
       - name: Create GitHub release
         run: gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}" dist/randlib.min.js dist/randlib.js dist/randlib.mjs dist/randlib.cjs
