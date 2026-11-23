@@ -21,3 +21,9 @@ updates:
     groups:
       actions:
         patterns: ['*']
+
+  # numpy for the parity check: tracks every numpy release (hashes are updated too)
+  - package-ecosystem: pip
+    directory: /scripts/parity
+    schedule:
+      interval: weekly

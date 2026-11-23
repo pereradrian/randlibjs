@@ -48,7 +48,9 @@ CI runs all of these on Node 20, 22 and 24.
 With the `pcg64` (and `pcg64dxsm`, `sfc64`, `philox`, `mt19937`) bit generators,
 randlibjs reproduces numpy streams. Changes to samplers used by numpy must keep
 `test/numpy-compat.test.js` passing. The **numpy parity** CI workflow regenerates
-the reference values from Python on every change to make sure the fixtures are real.
+the reference values from Python on every change to make sure the fixtures are real. It installs
+numpy from `scripts/parity/requirements.txt` (pinned with hashes, bumped by Dependabot to every new
+numpy release).
 
 ## Commits
 

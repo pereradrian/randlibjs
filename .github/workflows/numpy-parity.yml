@@ -1,4 +1,4 @@
-# Regenerates numpy streams with the latest numpy and checks that randlibjs reproduces
+# Regenerates numpy streams with the latest numpy release and checks that randlibjs reproduces
 # them (78,000+ values over 4 bit generators, 5 seeds and 17 samplers, plus RandomState).
 name: numpy parity
 
@@ -28,8 +28,10 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install the latest numpy
-        run: pip install --upgrade numpy
+      # numpy is pinned with hashes in scripts/parity/requirements.txt and Dependabot bumps it to
+      # every new release, so this checks the latest numpy with verifiable downloads
+      - name: Install numpy
+        run: pip install --require-hashes --no-deps -r scripts/parity/requirements.txt
 
       - run: npm ci
 
