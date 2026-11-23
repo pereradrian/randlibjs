@@ -17,8 +17,10 @@ function usesLegacy(source) {
 
 /**
  * Standard normal deviate. Uses numpy's 256-layer ziggurat (bit-identical to
- * `default_rng(seed).standard_normal()` with PCG64), or numpy's legacy polar method for
- * MT19937 (bit-identical to `RandomState(seed).standard_normal()`).
+ * `default_rng(seed).standard_normal()` with PCG64, except that the rare draws from the
+ * tail, |x| > 3.654, go through `log1p` and can differ from numpy in the last bit), or
+ * numpy's legacy polar method for MT19937 (bit-identical to
+ * `RandomState(seed).standard_normal()`).
  * @returns {number}
  */
 export function standardNormal() {
