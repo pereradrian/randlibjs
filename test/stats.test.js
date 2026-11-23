@@ -13,6 +13,14 @@ function close(actual, expected, rel = 1e-9, abs = 1e-13) {
   expect(Math.abs(actual - expected)).toBeLessThanOrEqual(abs + rel * Math.abs(expected))
 }
 
+/** Whether scipy's quantile x really has cdf(x) = p (to 1e-6 relative, on the small side). */
+function scipyHolds(d, x, p) {
+  x = decode(x)
+  if (!Number.isFinite(x)) return true
+  const [got, want] = p < 0.5 ? [d.cdf(x), p] : [d.sf(x), 1 - p]
+  return Math.abs(got - want) <= 1e-6 * want + 1e-300
+}
+
 describe('stats distributions against scipy.stats', () => {
   for (const c of cases) {
     describe(`${c.fn}(${c.args.join(', ')})`, () => {
@@ -47,14 +55,16 @@ describe('stats distributions against scipy.stats', () => {
           const q = c.q[i]
           if (q < 0.5) close(d.cdf(v), q, 1e-9, slack(v))
           else close(d.sf(v), 1 - q, 1e-6, slack(v))
-          // ... and agree with scipy (whose own quantiles are less precise in some tails)
-          close(v, c.ppf[i], 1e-4, 1e-12)
+          // ... and agree with scipy (whose own quantiles are less precise in some tails), unless
+          // scipy's value itself misses the target probability (e.g. vonmises(40) at 1e-12,
+          // where scipy is 16% off and randlibjs matches mpmath to 16 digits)
+          if (scipyHolds(d, c.ppf[i], q)) close(v, c.ppf[i], 1e-4, 1e-12)
         })
         d.isf(c.q).forEach((v, i) => {
           const q = c.q[i]
           if (q < 0.5) close(d.sf(v), q, 1e-9, slack(v))
           else close(d.cdf(v), 1 - q, 1e-6, slack(v))
-          close(v, c.isf[i], 1e-4, 1e-12)
+          if (scipyHolds(d, c.isf[i], 1 - q)) close(v, c.isf[i], 1e-4, 1e-12)
         })
       })
 
@@ -161,5 +171,41 @@ describe('F distribution far tails', () => {
     expect(d.sf(x)).toBe(1 - 1e-10)
     expect(d.sf(1e-300)).toBeLessThan(1)
     expect(d.cdf(1e300) + d.sf(1e300)).toBe(1)
+  })
+})
+
+describe('distribution families added in 2.2.0: extra checks', () => {
+  test('von Mises far-tail quantile matches mpmath (scipy is 16% off here)', () => {
+    // mpmath: cdf^-1(1e-12) for kappa = 40 is -1.1845378463522233444
+    expect(stats.vonmises(0, 40).ppf(1e-12)).toBeCloseTo(-1.184537846352223, 13)
+  })
+
+  test('Kumaraswamy (not in scipy): closed forms are consistent', () => {
+    const d = stats.kumaraswamy(2, 3)
+    for (const q of [1e-12, 0.01, 0.5, 0.99, 1 - 1e-9]) {
+      expect(d.cdf(d.ppf(q))).toBeCloseTo(q, 14)
+      expect(d.sf(d.isf(q))).toBeCloseTo(q, 14)
+    }
+    // mean = b B(1 + 1/a, b), variance from the second moment, against quadrature
+    const xs = Array.from({ length: 20001 }, (_, i) => i / 20000)
+    const m = xs.reduce((s, x) => s + x * d.pdf(x), 0) / 20000
+    expect(d.mean()).toBeCloseTo(m, 6)
+    seed(3)
+    expect(mean(d.sample(20000))).toBeCloseTo(d.mean(), 2)
+  })
+
+  test('sampling matches each new family (Kolmogorov-Smirnov)', () => {
+    seed(12)
+    for (const [name, args] of [
+      ['halfNormal', [2, 1]], ['maxwell', [1.5]], ['chi', [3]], ['nakagami', [1.7, 2]], ['levy', [1, 2]],
+      ['frechet', [3, 2, 1]], ['logLogistic', [3, 2]], ['kumaraswamy', [2, 3]], ['betaPrime', [2, 5]],
+      ['inverseGamma', [3, 2]], ['loguniform', [1, 100]], ['semicircle', [2]], ['burr12', [2, 3, 1.5]],
+      ['erlang', [3, 2]], ['generalizedExtremeValue', [0.2, 1, 2]], ['generalizedPareto', [0.3, 1, 2]],
+      ['skewNormal', [1, 2, 4]], ['exGaussian', [1, 2, 0.5]], ['power', [2.5]], ['wald', [2, 3]],
+      ['vonmises', [0.5, 2]], ['noncentralChisquare', [3, 2.5]], ['noncentralF', [3, 8, 2]],
+    ]) {
+      const d = stats[name](...args)
+      expectKS(d.sample(4000), (x) => d.cdf(x))
+    }
   })
 })

@@ -23,6 +23,7 @@ import {
     assertFinite, assertPositive, assertNonNegative, assertProbability, assertNonNegativeInteger,
 } from '../functions/util/validate.js'
 import { makeFitters, toData } from './fit.js'
+import { FAMILIES } from './families.js'
 
 import { mapValues, ContinuousDistribution, DiscreteDistribution } from './base.js'
 
@@ -943,5 +944,7 @@ export const stats = Object.freeze({
     bernoulli: withFit((p) => new Bernoulli(p), FIT.bernoulli, 1),
     randint: (low, high) => new DiscreteUniform(low, high),
     mixture: (components, weights) => makeMixture(components, weights),
+    erlang: (k, rate = 1) => new Gamma(k, 1 / rate),
+    ...FAMILIES,
 })
 
