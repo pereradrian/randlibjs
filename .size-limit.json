@@ -1,0 +1,5 @@
+[
+  { "name": "Browser bundle (dist/randlib.min.js)", "path": "dist/randlib.min.js", "import": false, "limit": "36 kB" },
+  { "name": "Tree-shaken: seed + normal", "path": "index.js", "import": "{ seed, normal }", "limit": "6 kB" },
+  { "name": "Everything (ESM)", "path": "index.js", "import": "*", "limit": "36 kB" }
+]

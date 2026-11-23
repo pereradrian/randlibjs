@@ -8,6 +8,9 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -17,10 +20,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -39,13 +42,49 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Run coverage
-        if: matrix.node-version == '22.x'
+  coverage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      - run: npm ci
+
+      - name: Run tests with coverage
         run: npm run coverage
 
-      - name: Upload coverage reports to Codecov
-        if: matrix.node-version == '22.x'
-        uses: codecov/codecov-action@v5
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: pereradrian/randlibjs
+          files: coverage/lcov.info
+          use_oidc: true
+          fail_ci_if_error: false
+
+  package:
+    # checks what users actually install: export maps, types, bundle size
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Lint the package (publint)
+        run: npx publint --strict
+
+      - name: Check the type declarations resolve everywhere (Are the Types Wrong)
+        run: npx attw --pack .
+
+      - name: Bundle size budget (size-limit)
+        run: npx size-limit
