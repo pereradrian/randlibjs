@@ -102,3 +102,12 @@ export {
     invWishart,
     matrixNormal,
 } from './functions/multivariate/random-matrices.js'
+
+// Copulas
+export {
+    gaussianCopula,
+    tCopula,
+    claytonCopula,
+    gumbelCopula,
+    frankCopula,
+} from './functions/multivariate/copulas.js'
