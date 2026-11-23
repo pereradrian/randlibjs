@@ -1,7 +1,8 @@
 name: Publish to npm
 
-# Runs when a version tag (e.g. v2.0.0) is pushed. Requires the NPM_TOKEN
-# repository secret (an npm automation / granular token with publish rights).
+# Runs when a version tag (e.g. v2.0.0) is pushed. Publishes with npm trusted
+# publishing (OIDC): no token is stored. The package's settings on npmjs.com must
+# list this repository and workflow file (release.yml) as a trusted publisher.
 on:
   push:
     tags:
@@ -22,6 +23,9 @@ jobs:
           node-version: 22.x
           registry-url: https://registry.npmjs.org
 
+      # trusted publishing needs npm 11.5.1 or newer
+      - run: npm install -g npm@latest
+
       - run: npm ci
 
       - name: Check tag matches package.json version
@@ -29,8 +33,6 @@ jobs:
 
       # prepublishOnly runs lint, tests and the build
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub release
         run: gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}" dist/randlib.min.js dist/randlib.js dist/randlib.mjs dist/randlib.cjs
