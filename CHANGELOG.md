@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Typed-array output** ([#26](https://github.com/pereradrian/randlibjs/issues/26)): every
+  univariate sampler accepts a typed array as `size` and fills it in place
+  (`normal(0, 1, new Float32Array(n))`), with exactly the same values as `size = n`.
+
 ### Changed
 
 - Smaller npm package (tarball 370 kB → 265 kB, unpacked 1.4 MB → 950 kB): `dist/randlib.mjs` is

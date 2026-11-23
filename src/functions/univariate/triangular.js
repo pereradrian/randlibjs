@@ -9,7 +9,7 @@ import { baseGenerator } from '../base-generator.js'
  * @param {number} a - Lower limit.
  * @param {number} b - Upper limit.
  * @param {number} c - Mode, with a <= c <= b.
- * @param {number|Array|null} [size=null] - The shape of the output:
+ * @param {number|Array|ArrayBufferView|null} [size=null] - The shape of the output:
  *   - If `null`, a single number is returned.
  *   - If a number, a 1D array of the specified size is returned.
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.

@@ -18,7 +18,7 @@ import {
  *
  * @param {number} low - Lowest integer (or the upper bound if `high` is null).
  * @param {number|null} [high=null] - Upper bound.
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @param {boolean} [endpoint=false] - Include `high`.
  * @returns {number|Array}
  */
@@ -44,7 +44,7 @@ export function integers(low, high = null, size = null, endpoint = false) {
  * Draws samples from a Bernoulli distribution: 1 with probability `p`, 0 otherwise.
  *
  * @param {number} [p=0.5] - Success probability in [0, 1].
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function bernoulli(p = 0.5, size = null) {
@@ -58,7 +58,7 @@ export function bernoulli(p = 0.5, size = null) {
  *
  * @param {number} n - Number of successes (> 0).
  * @param {number} p - Success probability in (0, 1].
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function negativeBinomial(n, p, size = null) {
@@ -78,7 +78,7 @@ export function negativeBinomial(n, p, size = null) {
  * @param {number} ngood - Number of good items (non-negative integer).
  * @param {number} nbad - Number of bad items (non-negative integer).
  * @param {number} nsample - Number of items drawn, <= ngood + nbad.
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function hypergeometric(ngood, nbad, nsample, size = null) {
@@ -95,7 +95,7 @@ export function hypergeometric(ngood, nbad, nsample, size = null) {
  * Draws samples from a logarithmic series distribution (support 1, 2, ...), Kemp's algorithm.
  *
  * @param {number} p - Shape parameter in [0, 1).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function logseries(p, size = null) {
@@ -129,7 +129,7 @@ export function logseries(p, size = null) {
  * (support 1, 2, ...), Devroye's rejection algorithm as used by numpy.
  *
  * @param {number} a - Exponent (> 1).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function zipf(a, size = null) {

@@ -5,7 +5,7 @@ import { baseGenerator } from '../base-generator.js'
  * Generates random samples from an exponential distribution.
  *
  * @param {number} [lambda=1] - The rate parameter (must be > 0). Note: numpy uses the scale 1/lambda.
- * @param {number|Array|null} [size=null] - The shape of the output:
+ * @param {number|Array|ArrayBufferView|null} [size=null] - The shape of the output:
  *   - If `null`, a single value is returned.
  *   - If a number, a 1D array of the specified size is returned.
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.

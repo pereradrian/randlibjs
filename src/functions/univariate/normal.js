@@ -13,7 +13,7 @@ import { standardNormal as sampleStandardNormal } from '../../core/samplers.js'
  *
  * @param {number} [loc=0.0] - The mean of the normal distribution to sample. 0.0 by default.
  * @param {number} [scale=1.0] - The standard deviation of the normal distribution to sample. 1.0 by default.
- * @param {number|Array|null} [size=null] - The shape of the output:
+ * @param {number|Array|ArrayBufferView|null} [size=null] - The shape of the output:
  *   - If `null`, a single number is returned.
  *   - If a number, a 1D array of the specified size is returned.
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.
@@ -34,7 +34,7 @@ export function normal(loc = 0.0, scale = 1.0, size = null) {
  * Draws samples from the standard normal distribution N(0, 1).
  * Equivalent to numpy's `standard_normal`.
  *
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array} Standard normal samples.
  */
 export function standardNormal(size = null) {

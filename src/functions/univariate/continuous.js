@@ -12,7 +12,7 @@ import { assertNumber, assertPositive, assertNonNegative, assertFinite } from '.
 /**
  * Draws samples from the standard exponential distribution (rate 1, mean 1).
  *
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function standardExponential(size = null) {
@@ -23,7 +23,7 @@ export function standardExponential(size = null) {
  * Draws samples from a standard gamma distribution with the given shape (scale 1).
  *
  * @param {number} shape - Shape `k` (>= 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function standardGamma(shape, size = null) {
@@ -40,7 +40,7 @@ export function standardGamma(shape, size = null) {
  *
  * @param {number} shape - Shape `k` (>= 0).
  * @param {number} [scale=1] - Scale `theta` (>= 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function gamma(shape, scale = 1.0, size = null) {
@@ -54,7 +54,7 @@ export function gamma(shape, scale = 1.0, size = null) {
  *
  * @param {number} a - Alpha (> 0).
  * @param {number} b - Beta (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function beta(a, b, size = null) {
@@ -72,7 +72,7 @@ function chisq(df) {
  *
  * @param {number} dfnum - Degrees of freedom of the numerator (> 0).
  * @param {number} dfden - Degrees of freedom of the denominator (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function f(dfnum, dfden, size = null) {
@@ -98,7 +98,7 @@ function noncentralChisq(df, nonc) {
  *
  * @param {number} df - Degrees of freedom (> 0).
  * @param {number} nonc - Non-centrality (>= 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function noncentralChisquare(df, nonc, size = null) {
@@ -113,7 +113,7 @@ export function noncentralChisquare(df, nonc, size = null) {
  * @param {number} dfnum - Numerator degrees of freedom (> 0).
  * @param {number} dfden - Denominator degrees of freedom (> 0).
  * @param {number} nonc - Non-centrality (>= 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function noncentralF(dfnum, dfden, nonc, size = null) {
@@ -127,7 +127,7 @@ export function noncentralF(dfnum, dfden, nonc, size = null) {
  * Draws samples from Student's t distribution with `df` degrees of freedom.
  *
  * @param {number} df - Degrees of freedom (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function standardT(df, size = null) {
@@ -145,7 +145,7 @@ export function standardT(df, size = null) {
  * @param {number} df - Degrees of freedom (> 0).
  * @param {number} [loc=0] - Location.
  * @param {number} [scale=1] - Scale (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function studentT(df, loc = 0, scale = 1, size = null) {
@@ -158,7 +158,7 @@ export function studentT(df, loc = 0, scale = 1, size = null) {
 /**
  * Draws samples from the standard Cauchy distribution (median 0, scale 1).
  *
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function standardCauchy(size = null) {
@@ -176,7 +176,7 @@ export function standardCauchy(size = null) {
  *
  * @param {number} [loc=0] - Location (mean / median).
  * @param {number} [scale=1] - Scale (>= 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function laplace(loc = 0, scale = 1, size = null) {
@@ -196,7 +196,7 @@ export function laplace(loc = 0, scale = 1, size = null) {
  *
  * @param {number} [loc=0] - Location (mean).
  * @param {number} [scale=1] - Scale (>= 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function logistic(loc = 0, scale = 1, size = null) {
@@ -216,7 +216,7 @@ export function logistic(loc = 0, scale = 1, size = null) {
  *
  * @param {number} [loc=0] - Location (mode).
  * @param {number} [scale=1] - Scale (>= 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function gumbel(loc = 0, scale = 1, size = null) {
@@ -236,7 +236,7 @@ export function gumbel(loc = 0, scale = 1, size = null) {
  * Multiply by a scale `lambda` to obtain the two-parameter Weibull.
  *
  * @param {number} a - Shape (>= 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function weibull(a, size = null) {
@@ -248,7 +248,7 @@ export function weibull(a, size = null) {
  * Draws samples from the Rayleigh distribution.
  *
  * @param {number} [scale=1] - Scale / mode (>= 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function rayleigh(scale = 1, size = null) {
@@ -261,7 +261,7 @@ export function rayleigh(scale = 1, size = null) {
  * (density a·x^(a-1)).
  *
  * @param {number} a - Exponent parameter (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function power(a, size = null) {
@@ -274,7 +274,7 @@ export function power(a, size = null) {
  *
  * @param {number} mean - Distribution mean (> 0).
  * @param {number} scale - Shape parameter lambda (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function wald(mean, scale, size = null) {
@@ -296,7 +296,7 @@ export function wald(mean, scale, size = null) {
  *
  * @param {number} mu - Mode / center of the distribution.
  * @param {number} kappa - Concentration (>= 0). 0 gives the uniform distribution on the circle.
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function vonmises(mu, kappa, size = null) {

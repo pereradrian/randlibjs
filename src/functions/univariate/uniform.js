@@ -6,7 +6,7 @@ import { baseGenerator } from '../base-generator.js'
  *
  * @param {number} [low=0.0] - The lower bound. 0.0 by default.
  * @param {number} [high=1.0] - The upper bound. 1.0 by default.
- * @param {number|Array|null} [size=null] - The shape of the output:
+ * @param {number|Array|ArrayBufferView|null} [size=null] - The shape of the output:
  *   - If `null`, a single float is returned.
  *   - If a number, a 1D array of the specified size is returned.
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.

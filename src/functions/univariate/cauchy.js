@@ -6,7 +6,7 @@ import { baseGenerator } from '../base-generator.js'
  *
  * @param {number} median - Location parameter (median of the distribution).
  * @param {number} gamma - Scale parameter (dispersion of the distribution, must be > 0).
- * @param {number|Array|null} [size=null] - The shape of the output:
+ * @param {number|Array|ArrayBufferView|null} [size=null] - The shape of the output:
  *   - If `null`, a single value is returned.
  *   - If a number, a 1D array of the specified size is returned.
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.

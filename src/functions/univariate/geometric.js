@@ -7,7 +7,7 @@ import { baseGenerator } from '../base-generator.js'
  * the number of trials needed to get the first success (support 1, 2, 3, ...), as numpy.
  *
  * @param {number} p - Probability of success in each trial, in (0, 1].
- * @param {number|Array|null} [size=null] - The shape of the output:
+ * @param {number|Array|ArrayBufferView|null} [size=null] - The shape of the output:
  *   - If `null`, a single number is returned.
  *   - If a number, a 1D array of the specified size is returned.
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.

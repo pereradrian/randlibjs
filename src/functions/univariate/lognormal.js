@@ -6,7 +6,7 @@ import { normal } from './normal.js'
  *
  * @param {number} [loc=0.0] - The mean of the underlying normal distribution to sample. 0.0 by default.
  * @param {number} [scale=1.0] - The standard deviation of the underlying normal distribution to sample. 1.0 by default.
- * @param {number|Array|null} [size=null] - The shape of the output:
+ * @param {number|Array|ArrayBufferView|null} [size=null] - The shape of the output:
  *   - If `null`, a single number is returned.
  *   - If a number, a 1D array of the specified size is returned.
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.

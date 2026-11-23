@@ -7,7 +7,7 @@ import { assertPositive } from '../util/validate.js'
  * Non-integer degrees of freedom are supported (as numpy).
  *
  * @param {number} k - Degrees of freedom (> 0).
- * @param {number|Array|null} [size=null] - The shape of the output:
+ * @param {number|Array|ArrayBufferView|null} [size=null] - The shape of the output:
  *   - If `null`, a single number is returned.
  *   - If a number, a 1D array of the specified size is returned.
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.

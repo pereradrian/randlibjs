@@ -12,7 +12,7 @@ import { assertPositive } from '../util/validate.js'
  *
  * @param {number} alpha - The tail index (> 0).
  * @param {number} [xm=1] - The minimum value / scale (> 0).
- * @param {number|Array|null} [size=null] - The shape of the output:
+ * @param {number|Array|ArrayBufferView|null} [size=null] - The shape of the output:
  *   - If `null`, a single number is returned.
  *   - If a number, a 1D array of the specified size is returned.
  *   - If an array (e.g., [m, n]), a multidimensional array of the specified shape is returned.
@@ -30,7 +30,7 @@ export function pareto(alpha, xm = 1, size = null) {
  * This is numpy's `pareto(a)`.
  *
  * @param {number} a - Shape (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function lomax(a, size = null) {

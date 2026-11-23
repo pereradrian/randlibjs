@@ -117,7 +117,7 @@ function cartesian(dims) {
  * Returns uniformly distributed floats in the half-open interval [0, 1)
  * (numpy's `random` / `random_sample`).
  *
- * @param {number|number[]|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function random(size = null) {

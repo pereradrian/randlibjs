@@ -84,7 +84,7 @@ function truncatedStandard(a, b) {
  * @param {number} [scale=1] - Standard deviation of the parent normal distribution (> 0).
  * @param {number} [low=-Infinity] - Lower bound.
  * @param {number} [high=Infinity] - Upper bound (> low).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function truncatedNormal(loc = 0, scale = 1, low = -Infinity, high = Infinity, size = null) {
@@ -105,7 +105,7 @@ export function truncatedNormal(loc = 0, scale = 1, low = -Infinity, high = Infi
  *
  * @param {number} [scale=1] - Scale (> 0).
  * @param {number} [loc=0] - Location.
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function halfNormal(scale = 1, loc = 0, size = null) {
@@ -120,7 +120,7 @@ export function halfNormal(scale = 1, loc = 0, size = null) {
  * @param {number} [loc=0] - Location.
  * @param {number} [scale=1] - Scale (> 0).
  * @param {number} [shape=0] - Skewness parameter alpha; 0 gives the normal distribution.
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function skewNormal(loc = 0, scale = 1, shape = 0, size = null) {
@@ -142,7 +142,7 @@ export function skewNormal(loc = 0, scale = 1, shape = 0, size = null) {
  *
  * @param {number} [loc=0] - Location.
  * @param {number} [scale=1] - Scale (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function levy(loc = 0, scale = 1, size = null) {
@@ -163,7 +163,7 @@ export function levy(loc = 0, scale = 1, size = null) {
  * @param {number} alpha - Shape (> 0).
  * @param {number} [scale=1] - Scale (> 0).
  * @param {number} [loc=0] - Location (minimum).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function frechet(alpha, scale = 1, loc = 0, size = null) {
@@ -181,7 +181,7 @@ export function frechet(alpha, scale = 1, loc = 0, size = null) {
  * @param {number} [xi=0] - Shape.
  * @param {number} [loc=0] - Location.
  * @param {number} [scale=1] - Scale (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function generalizedExtremeValue(xi = 0, loc = 0, scale = 1, size = null) {
@@ -200,7 +200,7 @@ export function generalizedExtremeValue(xi = 0, loc = 0, scale = 1, size = null)
  * @param {number} [xi=0] - Shape; 0 gives the exponential distribution.
  * @param {number} [loc=0] - Location (threshold).
  * @param {number} [scale=1] - Scale (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function generalizedPareto(xi = 0, loc = 0, scale = 1, size = null) {
@@ -218,7 +218,7 @@ export function generalizedPareto(xi = 0, loc = 0, scale = 1, size = null) {
  *
  * @param {number} shape - Shape (> 0).
  * @param {number} [scale=1] - Scale (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function inverseGamma(shape, scale = 1, size = null) {
@@ -232,7 +232,7 @@ export function inverseGamma(shape, scale = 1, size = null) {
  *
  * @param {number} a - Shape (> 0).
  * @param {number} b - Shape (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function betaPrime(a, b, size = null) {
@@ -246,7 +246,7 @@ export function betaPrime(a, b, size = null) {
  *
  * @param {number} a - Shape (> 0).
  * @param {number} b - Shape (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function kumaraswamy(a, b, size = null) {
@@ -260,7 +260,7 @@ export function kumaraswamy(a, b, size = null) {
  *
  * @param {number} k - Shape (positive integer).
  * @param {number} [rate=1] - Rate (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function erlang(k, rate = 1, size = null) {
@@ -273,7 +273,7 @@ export function erlang(k, rate = 1, size = null) {
  * Draws samples from the chi distribution (square root of a chi-square variable).
  *
  * @param {number} df - Degrees of freedom (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function chi(df, size = null) {
@@ -285,7 +285,7 @@ export function chi(df, size = null) {
  * Draws samples from the Maxwell–Boltzmann distribution.
  *
  * @param {number} [scale=1] - Scale (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function maxwell(scale = 1, size = null) {
@@ -298,7 +298,7 @@ export function maxwell(scale = 1, size = null) {
  *
  * @param {number} m - Shape (>= 0.5).
  * @param {number} [omega=1] - Spread, E[X²] (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function nakagami(m, omega = 1, size = null) {
@@ -316,7 +316,7 @@ export function nakagami(m, omega = 1, size = null) {
  *
  * @param {number} low - Lower bound (> 0).
  * @param {number} high - Upper bound (> low).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function loguniform(low, high, size = null) {
@@ -336,7 +336,7 @@ export function loguniform(low, high, size = null) {
  * @param {number} c - Shape (> 0).
  * @param {number} d - Shape (> 0).
  * @param {number} [scale=1] - Scale (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function burr12(c, d, scale = 1, size = null) {
@@ -351,7 +351,7 @@ export function burr12(c, d, scale = 1, size = null) {
  *
  * @param {number} c - Shape (> 0).
  * @param {number} [scale=1] - Scale / median (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function logLogistic(c, scale = 1, size = null) {
@@ -367,7 +367,7 @@ export function logLogistic(c, scale = 1, size = null) {
  * Draws samples from the Wigner semicircle distribution on [-radius, radius].
  *
  * @param {number} [radius=1] - Radius (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function semicircle(radius = 1, size = null) {
@@ -382,7 +382,7 @@ export function semicircle(radius = 1, size = null) {
  * @param {number} [mu=0] - Mean of the normal component.
  * @param {number} [sigma=1] - Standard deviation of the normal component (> 0).
  * @param {number} [lambda=1] - Rate of the exponential component (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function exGaussian(mu = 0, sigma = 1, lambda = 1, size = null) {
@@ -398,7 +398,7 @@ export function exGaussian(mu = 0, sigma = 1, lambda = 1, size = null) {
  * @param {number} n - Number of trials (non-negative integer).
  * @param {number} a - Alpha (> 0).
  * @param {number} b - Beta (> 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function betaBinomial(n, a, b, size = null) {
@@ -413,7 +413,7 @@ export function betaBinomial(n, a, b, size = null) {
  *
  * @param {number} mu1 - Mean of the first Poisson variable (>= 0).
  * @param {number} mu2 - Mean of the second Poisson variable (>= 0).
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function skellam(mu1, mu2, size = null) {
@@ -425,7 +425,7 @@ export function skellam(mu1, mu2, size = null) {
 /**
  * Draws samples from the Rademacher distribution: -1 or 1 with equal probability.
  *
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function rademacher(size = null) {
@@ -437,7 +437,7 @@ export function rademacher(size = null) {
  * Uses Walker's alias method: O(k) setup, O(1) per sample.
  *
  * @param {number[]} p - Probabilities or weights of each category.
- * @param {number|Array|null} [size=null] - Output shape.
+ * @param {number|Array|ArrayBufferView|null} [size=null] - Output shape.
  * @returns {number|Array}
  */
 export function categorical(p, size = null) {

@@ -86,8 +86,19 @@ Every sampling function takes its parameters followed by an optional `size`:
 | `null` / omitted | a single value |
 | `n` | an array of `n` values |
 | `[m, n, ...]` | a nested array with that shape |
+| a typed array (`new Float32Array(n)`, `new Int32Array(n)`, ...) | filled in place and returned |
 
 Multivariate samplers return one vector (or matrix) per element.
+
+Typed-array output gives exactly the same values as `size = n`. Use it to halve memory with
+`Float32Array`, to store counts compactly in integer arrays, or to hand samples straight to WebGL /
+WebGPU buffers, Web Workers (transferable, no copy), WebAssembly or canvas:
+
+```js
+const noise = normal(0, 1, new Float32Array(1_000_000))   // 4 MB instead of 8 MB
+const counts = poisson(3, new Uint16Array(4096))
+worker.postMessage(noise, [noise.buffer])                 // zero-copy transfer
+```
 
 ## Reproducibility and generators
 

@@ -1,5 +1,5 @@
 {
-  "include": ["test/types/consumer.ts"],
+  "include": ["test/types/consumer.ts", "test/types/typed-arrays.ts"],
   "compilerOptions": {
     "noEmit": true,
     "strict": true,
