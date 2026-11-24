@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- **New logo** ([#35](https://github.com/pereradrian/randlibjs/issues/35)): `logo()` now draws a bell curve
+  filled with a random circle packing whose centres are normal draws, with a few samples falling in from
+  above. It takes `{ seed, background, foreground, rounded }`; with a seed the logo is reproducible and
+  the global stream is left untouched. `npm run logo` writes the official mark to `.github/assets`.
+
 ## [2.2.0] - 2026-11-23
 
 ### Added

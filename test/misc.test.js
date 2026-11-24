@@ -1,4 +1,4 @@
-import { choice, permutation, randString, shuffle, logo, seed } from '../index.js'
+import { choice, permutation, randString, shuffle, logo, seed, random } from '../index.js'
 import { describe, test, expect } from 'vitest'
 
 describe('Choice module tests', () => {
@@ -71,5 +71,34 @@ describe('Logo module tests', () => {
     expect(svg).toContain('<svg')       // contains the svg tag
     expect(svg).toContain('<rect')      // contains the base rectangle
     expect(svg).toContain('<circle')    // contains at least one circle
+  })
+
+  test('Is reproducible with a seed and leaves the global stream alone', () => {
+    seed(3)
+    const expected = random()
+    seed(3)
+    const before = logo(64, { seed: 7 })
+    expect(random()).toBe(expected)
+    expect(logo(64, { seed: 7 })).toBe(before)
+    expect(logo(64, { seed: 8 })).not.toBe(before)
+    expect(logo(64, { seed: 7, rounded: false })).toContain('rx="0"')
+    expect(logo(64, { seed: 7, background: 'none' })).not.toContain('<rect')
+  })
+
+  test('Keeps every circle inside the canvas and apart from the others', () => {
+    const svg = logo(1000, { seed: 1 })
+    const cs = [...svg.matchAll(/cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/g)].map((m) => m.slice(1).map(Number))
+    expect(cs.length).toBeGreaterThan(80)
+    for (const [x, y, r] of cs) {
+      expect(x - r).toBeGreaterThan(0)
+      expect(x + r).toBeLessThan(1000)
+      expect(y - r).toBeGreaterThan(0)
+      expect(y + r).toBeLessThan(1000)
+    }
+    for (let i = 0; i < cs.length; i++) {
+      for (let j = i + 1; j < cs.length; j++) {
+        expect(Math.hypot(cs[i][0] - cs[j][0], cs[i][1] - cs[j][1])).toBeGreaterThan(cs[i][2] + cs[j][2])
+      }
+    }
   })
 })
