@@ -1,6 +1,6 @@
 {
   "name": "randlibjs",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Seedable, reproducible random number generation: exact samplers for 75+ probability distributions, distribution objects (pdf, cdf, quantiles), quasi-Monte Carlo, random matrices and stochastic processes. Zero dependencies, browser and Node.",
   "type": "module",
   "main": "./dist/randlib.cjs",

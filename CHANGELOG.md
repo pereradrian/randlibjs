@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.2.1] - 2026-11-24
 
 ### Changed
 
@@ -12,6 +12,8 @@ All notable changes to this project are documented here. The format follows
   filled with a random circle packing whose centres are normal draws, with a few samples falling in from
   above. It takes `{ seed, background, foreground, rounded }`; with a seed the logo is reproducible and
   the global stream is left untouched. `npm run logo` writes the official mark to `.github/assets`.
+- **New home**: the project moved to the [randlibjs](https://github.com/randlibjs) GitHub organization;
+  the site is now https://randlibjs.github.io/randlibjs/ and the package links point there.
 
 ## [2.2.0] - 2026-11-23
 
