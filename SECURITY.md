@@ -10,7 +10,7 @@
 ## Reporting a vulnerability
 
 Please **do not open a public issue**. Use GitHub's private vulnerability reporting:
-[Report a vulnerability](https://github.com/pereradrian/randlibjs/security/advisories/new).
+[Report a vulnerability](https://github.com/randlibjs/randlibjs/security/advisories/new).
 You will get an answer within a week.
 
 ## Scope

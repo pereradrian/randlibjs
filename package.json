@@ -52,7 +52,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pereradrian/randlibjs.git"
+    "url": "git+https://github.com/randlibjs/randlibjs.git"
   },
   "keywords": [
     "random",
@@ -77,9 +77,9 @@
     "access": "public"
   },
   "bugs": {
-    "url": "https://github.com/pereradrian/randlibjs/issues"
+    "url": "https://github.com/randlibjs/randlibjs/issues"
   },
-  "homepage": "https://pereradrian.github.io/randlibjs/",
+  "homepage": "https://randlibjs.github.io/randlibjs/",
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@eslint/js": "^10.0.1",

@@ -8,7 +8,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
-- **New logo** ([#35](https://github.com/pereradrian/randlibjs/issues/35)): `logo()` now draws a bell curve
+- **New logo** ([#35](https://github.com/randlibjs/randlibjs/issues/35)): `logo()` now draws a bell curve
   filled with a random circle packing whose centres are normal draws, with a few samples falling in from
   above. It takes `{ seed, background, foreground, rounded }`; with a seed the logo is reproducible and
   the global stream is left untouched. `npm run logo` writes the official mark to `.github/assets`.
@@ -17,20 +17,20 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- **27 more distribution objects** ([#31](https://github.com/pereradrian/randlibjs/issues/31)): every
+- **27 more distribution objects** ([#31](https://github.com/randlibjs/randlibjs/issues/31)): every
   univariate sampler now has a `stats` family (halfNormal, maxwell, chi, nakagami, levy, frechet,
   logLogistic, kumaraswamy, betaPrime, inverseGamma, loguniform, semicircle, burr12, erlang,
   generalizedExtremeValue, generalizedPareto, skewNormal, exGaussian, power, wald, vonmises,
   noncentralChisquare, noncentralF, logseries, zipf, skellam, betaBinomial), checked against scipy.
-- **Statistical tests** ([#32](https://github.com/pereradrian/randlibjs/issues/32)): `stats.kstest`,
+- **Statistical tests** ([#32](https://github.com/randlibjs/randlibjs/issues/32)): `stats.kstest`,
   `stats.ks2samp`, `stats.chisquareTest`, `stats.andersonDarling`, `stats.describe` and
   `stats.gaussianKde`, checked against scipy.
-- **Copulas** ([#33](https://github.com/pereradrian/randlibjs/issues/33)): `gaussianCopula`, `tCopula`,
+- **Copulas** ([#33](https://github.com/randlibjs/randlibjs/issues/33)): `gaussianCopula`, `tCopula`,
   `claytonCopula`, `gumbelCopula`, `frankCopula`, plus `copulaTau` / `copulaTheta`.
 
 ### Changed
 
-- Faster single draws ([#34](https://github.com/pereradrian/randlibjs/issues/34)): `normal()` ~20 →
+- Faster single draws ([#34](https://github.com/randlibjs/randlibjs/issues/34)): `normal()` ~20 →
   ~29 M/s, `uniform()` ~30 → ~137 M/s, with identical streams.
 
 ### Fixed
@@ -42,10 +42,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- **Typed-array output** ([#26](https://github.com/pereradrian/randlibjs/issues/26)): every
+- **Typed-array output** ([#26](https://github.com/randlibjs/randlibjs/issues/26)): every
   univariate sampler accepts a typed array as `size` and fills it in place
   (`normal(0, 1, new Float32Array(n))`), with exactly the same values as `size = n`.
-- **`fit()`** ([#27](https://github.com/pereradrian/randlibjs/issues/27)): maximum likelihood fitting
+- **`fit()`** ([#27](https://github.com/randlibjs/randlibjs/issues/27)): maximum likelihood fitting
   for 20 `stats` families (`stats.gamma.fit(data)`, `stats.binomial.fit(data, { n })`), checked
   against scipy.stats.
 - `special.trigamma`.
@@ -156,4 +156,4 @@ A complete rewrite that turns randlibjs into a numpy.random + scipy.stats equiva
 
 ## [1.0.23] and earlier
 
-See the [git history](https://github.com/pereradrian/randlibjs/commits/master).
+See the [git history](https://github.com/randlibjs/randlibjs/commits/master).

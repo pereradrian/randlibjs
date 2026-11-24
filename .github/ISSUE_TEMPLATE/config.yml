@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Questions and ideas
-    url: https://github.com/pereradrian/randlibjs/discussions
+    url: https://github.com/randlibjs/randlibjs/discussions
     about: Ask how to do something or share what you built.
   - name: Interactive showcase
-    url: https://pereradrian.github.io/randlibjs/
+    url: https://randlibjs.github.io/randlibjs/
     about: Try every sampler live in the browser.

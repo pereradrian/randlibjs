@@ -1,4 +1,4 @@
-<p align="center"><img src="https://raw.githubusercontent.com/pereradrian/randlibjs/master/.github/assets/logo.svg" alt="randlibjs logo: a bell curve packed with random circles" width="128" height="128"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/randlibjs/randlibjs/master/.github/assets/logo.svg" alt="randlibjs logo: a bell curve packed with random circles" width="128" height="128"></p>
 
 # randlibjs
 
@@ -12,12 +12,12 @@ Seedable, reproducible random number generation for JavaScript. Exact samplers f
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](package.json)
 [![License](https://img.shields.io/npm/l/randlibjs.svg)](LICENSE)
 
-[![CI](https://github.com/pereradrian/randlibjs/actions/workflows/ci.yml/badge.svg)](https://github.com/pereradrian/randlibjs/actions/workflows/ci.yml)
-[![numpy parity](https://github.com/pereradrian/randlibjs/actions/workflows/numpy-parity.yml/badge.svg)](https://github.com/pereradrian/randlibjs/actions/workflows/numpy-parity.yml)
-[![Codecov](https://codecov.io/gh/pereradrian/randlibjs/branch/master/graph/badge.svg)](https://codecov.io/gh/pereradrian/randlibjs)
-[![CodeQL](https://github.com/pereradrian/randlibjs/actions/workflows/codeql.yml/badge.svg)](https://github.com/pereradrian/randlibjs/actions/workflows/codeql.yml)
+[![CI](https://github.com/randlibjs/randlibjs/actions/workflows/ci.yml/badge.svg)](https://github.com/randlibjs/randlibjs/actions/workflows/ci.yml)
+[![numpy parity](https://github.com/randlibjs/randlibjs/actions/workflows/numpy-parity.yml/badge.svg)](https://github.com/randlibjs/randlibjs/actions/workflows/numpy-parity.yml)
+[![Codecov](https://codecov.io/gh/randlibjs/randlibjs/branch/master/graph/badge.svg)](https://codecov.io/gh/randlibjs/randlibjs)
+[![CodeQL](https://github.com/randlibjs/randlibjs/actions/workflows/codeql.yml/badge.svg)](https://github.com/randlibjs/randlibjs/actions/workflows/codeql.yml)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/17029/badge)](https://www.bestpractices.dev/projects/17029)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pereradrian/randlibjs/badge)](https://scorecard.dev/viewer/?uri=github.com/pereradrian/randlibjs)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/randlibjs/randlibjs/badge)](https://scorecard.dev/viewer/?uri=github.com/randlibjs/randlibjs)
 [![npm provenance](https://img.shields.io/badge/npm-provenance-blue?logo=npm)](https://www.npmjs.com/package/randlibjs#provenance)
 
 - **Exact samplers.** No approximations or lookup tables: ziggurat normals, PTRS Poisson, BTPE binomial (O(1) for any n), hypergeometric for populations of billions, truncated normals deep in the tails, and more. Every sampler passes goodness-of-fit tests against reference implementations.
@@ -378,8 +378,8 @@ Run them with `node examples/<name>.mjs`.
 
 ## Documentation
 
-- [Interactive showcase](https://pereradrian.github.io/randlibjs/)
-- [API reference](https://pereradrian.github.io/randlibjs/docs/)
+- [Interactive showcase](https://randlibjs.github.io/randlibjs/)
+- [API reference](https://randlibjs.github.io/randlibjs/docs/)
 - [Changelog](CHANGELOG.md)
 
 ## Development

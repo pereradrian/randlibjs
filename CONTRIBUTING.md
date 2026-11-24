@@ -5,7 +5,7 @@ Thanks for helping. Bug reports, new distributions, accuracy fixes and documenta
 ## Setup
 
 ```bash
-git clone https://github.com/pereradrian/randlibjs.git
+git clone https://github.com/randlibjs/randlibjs.git
 cd randlibjs
 npm install
 npm test
