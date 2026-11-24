@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/pereradrian/randlibjs/master/.github/assets/logo.svg" alt="randlibjs logo: a bell curve packed with random circles" width="128" height="128"></p>
+
 # randlibjs
 
 Seedable, reproducible random number generation for JavaScript. Exact samplers for 75+ probability distributions, distribution objects with densities, CDFs and quantiles, quasi-Monte Carlo, random matrices, stochastic processes and resampling. Zero dependencies, ~29 kB gzipped, runs in browsers and Node.js, ships TypeScript types.

@@ -47,7 +47,8 @@
     "build:types": "node scripts/build-types.mjs",
     "typecheck": "npm run build:types && tsc -p tsconfig.check.json",
     "size": "size-limit",
-    "check:package": "publint --strict && attw --pack ."
+    "check:package": "publint --strict && attw --pack .",
+    "logo": "node scripts/make-logo.mjs"
   },
   "repository": {
     "type": "git",
@@ -82,6 +83,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@eslint/js": "^10.0.1",
+    "@resvg/resvg-js": "^2.6.2",
     "@size-limit/preset-small-lib": "^14.3.0",
     "@vitest/coverage-v8": "^5.1.1",
     "esbuild": "^0.28.2",
