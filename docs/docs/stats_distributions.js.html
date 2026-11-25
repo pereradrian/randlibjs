@@ -50,287 +50,13 @@ import {
 import {
     assertFinite, assertPositive, assertNonNegative, assertProbability, assertNonNegativeInteger,
 } from '../functions/util/validate.js'
+import { makeFitters, toData } from './fit.js'
+import { FAMILIES } from './families.js'
+import { kstest, ks2samp, chisquareTest, andersonDarling, describe, gaussianKde } from './tests.js'
 
-function mapValues(x, fn) {
-    if (Array.isArray(x)) {
-        return x.map((v) => mapValues(v, fn))
-    }
-    return fn(x)
-}
+import { mapValues, ContinuousDistribution, DiscreteDistribution } from './base.js'
 
-function checkProbability(q) {
-    if (typeof q !== 'number' || Number.isNaN(q) || q &lt; 0 || q > 1) {
-        return false
-    }
-    return true
-}
-
-/**
- * Base class of the continuous distributions.
- */
-export class ContinuousDistribution {
-    /** Lower end of the support. */
-    get support() {
-        return [-Infinity, Infinity]
-    }
-
-    /**
-     * Probability density function.
-     * @param {number|Array} x
-     * @returns {number|Array}
-     */
-    pdf(x) {
-        return mapValues(x, (v) => Math.exp(this._logpdf(v)))
-    }
-
-    /**
-     * Logarithm of the probability density function.
-     * @param {number|Array} x
-     * @returns {number|Array}
-     */
-    logpdf(x) {
-        return mapValues(x, (v) => this._logpdf(v))
-    }
-
-    /**
-     * Cumulative distribution function P(X &lt;= x).
-     * @param {number|Array} x
-     * @returns {number|Array}
-     */
-    cdf(x) {
-        return mapValues(x, (v) => this._cdf(v))
-    }
-
-    /**
-     * Survival function P(X > x) = 1 - cdf(x), computed accurately in the upper tail.
-     * @param {number|Array} x
-     * @returns {number|Array}
-     */
-    sf(x) {
-        return mapValues(x, (v) => this._sf(v))
-    }
-
-    /**
-     * Logarithm of the cumulative distribution function.
-     * @param {number|Array} x
-     * @returns {number|Array}
-     */
-    logcdf(x) {
-        return mapValues(x, (v) => Math.log(this._cdf(v)))
-    }
-
-    /**
-     * Logarithm of the survival function.
-     * @param {number|Array} x
-     * @returns {number|Array}
-     */
-    logsf(x) {
-        return mapValues(x, (v) => Math.log(this._sf(v)))
-    }
-
-    /**
-     * Percent point function (quantile, inverse of the cdf).
-     * @param {number|Array} q - Probabilities in [0, 1].
-     * @returns {number|Array}
-     */
-    ppf(q) {
-        return mapValues(q, (p) => (checkProbability(p) ? this._ppf(p) : NaN))
-    }
-
-    /**
-     * Inverse survival function: x such that sf(x) = q.
-     * @param {number|Array} q - Probabilities in [0, 1].
-     * @returns {number|Array}
-     */
-    isf(q) {
-        return mapValues(q, (p) => (checkProbability(p) ? this._isf(p) : NaN))
-    }
-
-    /**
-     * Draws random samples.
-     * @param {number|number[]|null} [size=null] - Output shape.
-     * @param {Object} [rng] - Optional `Generator` to draw from instead of the global generator.
-     * @returns {number|Array}
-     */
-    sample(size = null, rng = undefined) {
-        return rng ? rng.run(() => this._sample(size)) : this._sample(size)
-    }
-
-    /** Alias of {@link ContinuousDistribution#sample} (scipy name). */
-    rvs(size = null, rng = undefined) {
-        return this.sample(size, rng)
-    }
-
-    /** @returns {number} The mean. */
-    mean() {
-        return NaN
-    }
-
-    /** @returns {number} The variance. */
-    variance() {
-        return NaN
-    }
-
-    /** @returns {number} The standard deviation. */
-    std() {
-        return Math.sqrt(this.variance())
-    }
-
-    /** @returns {number} The median. */
-    median() {
-        return this._ppf(0.5)
-    }
-
-    /**
-     * Equal-tail interval containing a fraction `confidence` of the probability mass.
-     * @param {number} confidence - In [0, 1].
-     * @returns {number[]} [lower, upper]
-     */
-    interval(confidence) {
-        if (!checkProbability(confidence)) {
-            throw new Error('confidence must be in [0, 1].')
-        }
-        const alpha = (1 - confidence) / 2
-        return [this._ppf(alpha), this._isf(alpha)]
-    }
-
-    /** @protected */
-    _sf(x) {
-        return 1 - this._cdf(x)
-    }
-
-    /** @protected */
-    _isf(q) {
-        return this._ppf(1 - q)
-    }
-
-    /**
-     * Generic quantile by bracketing and bisection on the cdf.
-     * @protected
-     */
-    _ppf(p) {
-        const [lo0, hi0] = this.support
-        if (p === 0) return lo0
-        if (p === 1) return hi0
-        let lo = Number.isFinite(lo0) ? lo0 : -1
-        let hi = Number.isFinite(hi0) ? hi0 : 1
-        while (!Number.isFinite(lo0) &amp;&amp; this._cdf(lo) > p) lo *= 2
-        while (!Number.isFinite(hi0) &amp;&amp; this._cdf(hi) &lt; p) hi *= 2
-        for (let i = 0; i &lt; 200; i++) {
-            const mid = (lo + hi) / 2
-            if (mid === lo || mid === hi) break
-            if (this._cdf(mid) &lt; p) lo = mid
-            else hi = mid
-        }
-        return (lo + hi) / 2
-    }
-
-    /** @protected */
-    _sample(size) {
-        return mapValues(samplers.random(size), (u) => this._ppf(u))
-    }
-}
-
-/**
- * Base class of the discrete distributions (support on integers).
- */
-export class DiscreteDistribution extends ContinuousDistribution {
-    /**
-     * Probability mass function.
-     * @param {number|Array} k
-     * @returns {number|Array}
-     */
-    pmf(k) {
-        return mapValues(k, (v) => (Number.isInteger(v) ? Math.exp(this._logpmf(v)) : 0))
-    }
-
-    /**
-     * Logarithm of the probability mass function.
-     * @param {number|Array} k
-     * @returns {number|Array}
-     */
-    logpmf(k) {
-        return mapValues(k, (v) => (Number.isInteger(v) ? this._logpmf(v) : -Infinity))
-    }
-
-    /**
-     * Not available: discrete distributions have a {@link DiscreteDistribution#pmf}.
-     * @param {number|Array} _x
-     * @returns {number|Array}
-     * @throws {Error}
-     */
-    // eslint-disable-next-line no-unused-vars
-    pdf(_x) {
-        throw new Error('Discrete distributions have a pmf, not a pdf.')
-    }
-
-    /** @protected */
-    _cdf(x) {
-        const [lo, hi] = this.support
-        const k = Math.floor(x)
-        if (k &lt; lo) return 0
-        if (k >= hi) return 1
-        let s = 0
-        for (let i = lo; i &lt;= k; i++) s += Math.exp(this._logpmf(i))
-        return Math.min(1, s)
-    }
-
-    /**
-     * Smallest integer k with cdf(k) >= p.
-     * @protected
-     */
-    _ppf(p) {
-        const [lo, hi] = this.support
-        if (p === 0) return lo - 1
-        if (p === 1) return hi
-        // relative tolerance so exact ties (cdf(k) == p in exact arithmetic) resolve correctly
-        const target = p * (1 - 1e-12)
-        let k = Math.round(this.mean() || 0)
-        if (!Number.isFinite(k)) k = Number.isFinite(lo) ? lo : 0
-        k = Math.min(Math.max(k, lo), hi)
-        const sd = Math.sqrt(this.variance()) || 1
-        let step = Math.max(1, Math.ceil(sd))
-        // bracket
-        let a = k
-        let b = k
-        while (a > lo &amp;&amp; this._cdf(a - 1) >= target) {
-            b = a
-            a = Math.max(lo, a - step)
-            step *= 2
-        }
-        step = Math.max(1, Math.ceil(sd))
-        while (this._cdf(b) &lt; target) {
-            a = b
-            b = Math.min(hi, b + step)
-            step *= 2
-            if (b === hi) break
-        }
-        // binary search for the smallest k in [a, b] with cdf(k) >= p
-        while (a &lt; b) {
-            const mid = Math.floor((a + b) / 2)
-            if (this._cdf(mid) >= target) b = mid
-            else a = mid + 1
-        }
-        return a
-    }
-
-    /** @protected */
-    _isf(q) {
-        // smallest k with sf(k) &lt;= q
-        const [lo, hi] = this.support
-        if (q === 1) return lo - 1
-        if (q === 0) return hi
-        const target = q * (1 + 1e-12)
-        let k = this._ppf(Math.min(1, Math.max(0, 1 - q)))
-        while (k > lo &amp;&amp; this._sf(k - 1) &lt;= target) k--
-        while (k &lt; hi &amp;&amp; this._sf(k) > target) k++
-        return k
-    }
-
-    median() {
-        return this._ppf(0.5)
-    }
-}
+export { ContinuousDistribution, DiscreteDistribution }
 
 // ---------------------------------------------------------------- continuous
 
@@ -537,15 +263,19 @@ class FDist extends ContinuousDistribution {
         const { d1, d2 } = this
         return 0.5 * (d1 * Math.log(d1 * x) + d2 * Math.log(d2) - (d1 + d2) * Math.log(d1 * x + d2)) - Math.log(x) - logBeta(d1 / 2, d2 / 2)
     }
+    // cdf and sf use the incomplete beta on whichever argument is small: the other one
+    // rounds to 1 in the far tails (e.g. sf(1e-190) with tiny degrees of freedom).
     _cdf(x) {
         if (x &lt;= 0) return 0
         const { d1, d2 } = this
-        return betaInc(d1 * x / (d1 * x + d2), d1 / 2, d2 / 2)
+        const z = d1 * x / (d1 * x + d2)
+        return z &lt;= 0.5 ? betaInc(z, d1 / 2, d2 / 2) : 1 - betaInc(d2 / (d1 * x + d2), d2 / 2, d1 / 2)
     }
     _sf(x) {
         if (x &lt;= 0) return 1
         const { d1, d2 } = this
-        return betaInc(d2 / (d1 * x + d2), d2 / 2, d1 / 2)
+        const z = d1 * x / (d1 * x + d2)
+        return z &lt;= 0.5 ? 1 - betaInc(z, d1 / 2, d2 / 2) : betaInc(d2 / (d1 * x + d2), d2 / 2, d1 / 2)
     }
     _ppf(p) {
         if (p > 0.5) return this._isf(1 - p)
@@ -1160,6 +890,12 @@ function makeMixture(components, weights) {
  * Factories of frozen distributions, scipy.stats style. Parameters use the same names and
  * conventions as the corresponding sampling functions of the library.
  *
+ * Most families also have `fit(data, options)`, which returns the distribution with maximum
+ * likelihood parameters (scipy's `dist.fit`; families without a location parameter in this
+ * library correspond to scipy with `floc=0`): `stats.gamma.fit(data)`. `binomial.fit` and
+ * `negativeBinomial.fit` need the known `n`: `stats.binomial.fit(data, { n: 20 })`.
+ * Families without `fit`: f, triangular, truncatedNormal, hypergeometric, randint, mixture.
+ *
  * @namespace stats
  * @property {function(number=, number=): ContinuousDistribution} normal - normal(loc, scale)
  * @property {function(number=, number=): ContinuousDistribution} uniform - uniform(low, high)
@@ -1189,36 +925,63 @@ function makeMixture(components, weights) {
  * @property {function(Array, number[]): ContinuousDistribution} mixture - mixture(components, weights):
  *   finite mixture of stats distributions (all continuous or all discrete), weights normalised.
  */
+const FIT = makeFitters({ Logistic, Gumbel, Cauchy, StudentT })
+
+/**
+ * Attaches `fit(data, options)` to a family factory: maximum likelihood estimates of the
+ * parameters, returned as a frozen distribution of the family.
+ * @template {(...args: any[]) => any} F
+ * @param {F} factory
+ * @param {function(number[], Object): number[]} fitter
+ * @param {number} [min=2] - Minimum number of observations.
+ * @returns {F &amp; { fit: (data: ArrayLike&lt;number>, options?: { n?: number }) => ReturnType&lt;F> }}
+ * @private
+ */
+function withFit(factory, fitter, min = 2) {
+    return Object.assign(factory, {
+        fit: (data, options = {}) => factory(...fitter(toData(data, min), options)),
+    })
+}
+
 export const stats = Object.freeze({
-    normal: (loc, scale) => new Normal(loc, scale),
-    norm: (loc, scale) => new Normal(loc, scale),
-    uniform: (low, high) => new Uniform(low, high),
-    exponential: (rate) => new Exponential(rate),
-    gamma: (shape, scale) => new Gamma(shape, scale),
-    chisquare: (df) => new ChiSquare(df),
-    chi2: (df) => new ChiSquare(df),
-    beta: (a, b) => new Beta(a, b),
-    studentT: (df, loc, scale) => new StudentT(df, loc, scale),
-    t: (df, loc, scale) => new StudentT(df, loc, scale),
+    normal: withFit((loc, scale) => new Normal(loc, scale), FIT.normal),
+    norm: withFit((loc, scale) => new Normal(loc, scale), FIT.normal),
+    uniform: withFit((low, high) => new Uniform(low, high), FIT.uniform),
+    exponential: withFit((rate) => new Exponential(rate), FIT.exponential, 1),
+    gamma: withFit((shape, scale) => new Gamma(shape, scale), FIT.gamma),
+    chisquare: withFit((df) => new ChiSquare(df), FIT.chisquare),
+    chi2: withFit((df) => new ChiSquare(df), FIT.chisquare),
+    beta: withFit((a, b) => new Beta(a, b), FIT.beta),
+    studentT: withFit((df, loc, scale) => new StudentT(df, loc, scale), FIT.studentT, 3),
+    t: withFit((df, loc, scale) => new StudentT(df, loc, scale), FIT.studentT, 3),
     f: (dfnum, dfden) => new FDist(dfnum, dfden),
-    lognormal: (mu, sigma) => new LogNormal(mu, sigma),
-    cauchy: (loc, scale) => new Cauchy(loc, scale),
-    laplace: (loc, scale) => new Laplace(loc, scale),
-    logistic: (loc, scale) => new Logistic(loc, scale),
-    gumbel: (loc, scale) => new Gumbel(loc, scale),
-    weibull: (shape, scale) => new Weibull(shape, scale),
-    pareto: (alpha, xm) => new Pareto(alpha, xm),
+    lognormal: withFit((mu, sigma) => new LogNormal(mu, sigma), FIT.lognormal),
+    cauchy: withFit((loc, scale) => new Cauchy(loc, scale), FIT.cauchy),
+    laplace: withFit((loc, scale) => new Laplace(loc, scale), FIT.laplace),
+    logistic: withFit((loc, scale) => new Logistic(loc, scale), FIT.logistic),
+    gumbel: withFit((loc, scale) => new Gumbel(loc, scale), FIT.gumbel),
+    weibull: withFit((shape, scale) => new Weibull(shape, scale), FIT.weibull),
+    pareto: withFit((alpha, xm) => new Pareto(alpha, xm), FIT.pareto),
     triangular: (low, high, mode) => new Triangular(low, high, mode),
-    rayleigh: (scale) => new Rayleigh(scale),
+    rayleigh: withFit((scale) => new Rayleigh(scale), FIT.rayleigh, 1),
     truncatedNormal: (loc, scale, low, high) => new TruncatedNormal(loc, scale, low, high),
-    binomial: (n, p) => new Binomial(n, p),
-    poisson: (lambda) => new Poisson(lambda),
-    geometric: (p) => new Geometric(p),
-    negativeBinomial: (n, p) => new NegativeBinomial(n, p),
+    binomial: withFit((n, p) => new Binomial(n, p), FIT.binomial, 1),
+    poisson: withFit((lambda) => new Poisson(lambda), FIT.poisson, 1),
+    geometric: withFit((p) => new Geometric(p), FIT.geometric, 1),
+    negativeBinomial: withFit((n, p) => new NegativeBinomial(n, p), FIT.negativeBinomial, 1),
     hypergeometric: (ngood, nbad, nsample) => new Hypergeometric(ngood, nbad, nsample),
-    bernoulli: (p) => new Bernoulli(p),
+    bernoulli: withFit((p) => new Bernoulli(p), FIT.bernoulli, 1),
     randint: (low, high) => new DiscreteUniform(low, high),
     mixture: (components, weights) => makeMixture(components, weights),
+    erlang: (k, rate = 1) => new Gamma(k, 1 / rate),
+    ...FAMILIES,
+    // statistical tests and descriptive statistics (scipy.stats names in camelCase)
+    kstest,
+    ks2samp,
+    chisquareTest,
+    andersonDarling,
+    describe,
+    gaussianKde,
 })
 
 </code></pre>
@@ -1231,13 +994,13 @@ export const stats = Object.freeze({
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li><li><a href="module-stats-DiscreteMixture.html">DiscreteMixture</a></li><li><a href="module-stats-Mixture.html">Mixture</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialBtpe">binomialBtpe</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mapShape2">mapShape2</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#randomLoggam">randomLoggam</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-copulas.html">copulas</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-logo.html">logo</a></li><li><a href="module-numpy-bitgens.html">numpy-bitgens</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-bitgens.NumpyBitGenerator64.html">NumpyBitGenerator64</a></li><li><a href="module-numpy-bitgens.PCG64DXSM.html">PCG64DXSM</a></li><li><a href="module-numpy-bitgens.Philox.html">Philox</a></li><li><a href="module-numpy-bitgens.SFC64.html">SFC64</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats-base.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats-base.DiscreteDistribution.html">DiscreteDistribution</a></li><li><a href="module-stats-families.BetaBinomial.html">BetaBinomial</a></li><li><a href="module-stats-families.BetaPrime.html">BetaPrime</a></li><li><a href="module-stats-families.Burr12.html">Burr12</a></li><li><a href="module-stats-families.Chi.html">Chi</a></li><li><a href="module-stats-families.ExGaussian.html">ExGaussian</a></li><li><a href="module-stats-families.Frechet.html">Frechet</a></li><li><a href="module-stats-families.GeneralizedExtremeValue.html">GeneralizedExtremeValue</a></li><li><a href="module-stats-families.GeneralizedPareto.html">GeneralizedPareto</a></li><li><a href="module-stats-families.HalfNormal.html">HalfNormal</a></li><li><a href="module-stats-families.InverseGamma.html">InverseGamma</a></li><li><a href="module-stats-families.Kumaraswamy.html">Kumaraswamy</a></li><li><a href="module-stats-families.Levy.html">Levy</a></li><li><a href="module-stats-families.LogLogistic.html">LogLogistic</a></li><li><a href="module-stats-families.LogSeries.html">LogSeries</a></li><li><a href="module-stats-families.LogUniform.html">LogUniform</a></li><li><a href="module-stats-families.Maxwell.html">Maxwell</a></li><li><a href="module-stats-families.Nakagami.html">Nakagami</a></li><li><a href="module-stats-families.NoncentralChisquare.html">NoncentralChisquare</a></li><li><a href="module-stats-families.NoncentralF.html">NoncentralF</a></li><li><a href="module-stats-families.PowerLaw.html">PowerLaw</a></li><li><a href="module-stats-families.Semicircle.html">Semicircle</a></li><li><a href="module-stats-families.Skellam.html">Skellam</a></li><li><a href="module-stats-families.SkewNormal.html">SkewNormal</a></li><li><a href="module-stats-families.VonMises.html">VonMises</a></li><li><a href="module-stats-families.Wald.html">Wald</a></li><li><a href="module-stats-families.Zipf.html">Zipf</a></li><li><a href="module-stats-tests.GaussianKde.html">GaussianKde</a></li><li><a href="module-stats-DiscreteMixture.html">DiscreteMixture</a></li><li><a href="module-stats-Mixture.html">Mixture</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialBtpe">binomialBtpe</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mapShape2">mapShape2</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#randomLoggam">randomLoggam</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:46:08 GMT+0100 (hora estándar de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Nov 25 2026 12:22:36 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>
