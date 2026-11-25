@@ -48,6 +48,7 @@
     "typecheck": "npm run build:types && tsc -p tsconfig.check.json",
     "size": "size-limit",
     "check:package": "publint --strict && attw --pack .",
+    "check:claims": "node scripts/check-claims.mjs",
     "logo": "node scripts/make-logo.mjs"
   },
   "repository": {
