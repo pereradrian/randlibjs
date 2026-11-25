@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: stats/base.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: stats/base.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Base classes of the frozen distributions (see the `stats` module).
+ *
+ * @module stats-base
+ * @private
+ */
+import * as samplers from '../distributions.js'
+
+export function mapValues(x, fn) {
+    if (Array.isArray(x)) {
+        return x.map((v) => mapValues(v, fn))
+    }
+    return fn(x)
+}
+
+export function checkProbability(q) {
+    if (typeof q !== 'number' || Number.isNaN(q) || q &lt; 0 || q > 1) {
+        return false
+    }
+    return true
+}
+
+/**
+ * Base class of the continuous distributions.
+ */
+export class ContinuousDistribution {
+    /** Lower end of the support. */
+    get support() {
+        return [-Infinity, Infinity]
+    }
+
+    /**
+     * Probability density function.
+     * @param {number|Array} x
+     * @returns {number|Array}
+     */
+    pdf(x) {
+        return mapValues(x, (v) => Math.exp(this._logpdf(v)))
+    }
+
+    /**
+     * Logarithm of the probability density function.
+     * @param {number|Array} x
+     * @returns {number|Array}
+     */
+    logpdf(x) {
+        return mapValues(x, (v) => this._logpdf(v))
+    }
+
+    /**
+     * Cumulative distribution function P(X &lt;= x).
+     * @param {number|Array} x
+     * @returns {number|Array}
+     */
+    cdf(x) {
+        return mapValues(x, (v) => this._cdf(v))
+    }
+
+    /**
+     * Survival function P(X > x) = 1 - cdf(x), computed accurately in the upper tail.
+     * @param {number|Array} x
+     * @returns {number|Array}
+     */
+    sf(x) {
+        return mapValues(x, (v) => this._sf(v))
+    }
+
+    /**
+     * Logarithm of the cumulative distribution function.
+     * @param {number|Array} x
+     * @returns {number|Array}
+     */
+    logcdf(x) {
+        return mapValues(x, (v) => Math.log(this._cdf(v)))
+    }
+
+    /**
+     * Logarithm of the survival function.
+     * @param {number|Array} x
+     * @returns {number|Array}
+     */
+    logsf(x) {
+        return mapValues(x, (v) => Math.log(this._sf(v)))
+    }
+
+    /**
+     * Percent point function (quantile, inverse of the cdf).
+     * @param {number|Array} q - Probabilities in [0, 1].
+     * @returns {number|Array}
+     */
+    ppf(q) {
+        return mapValues(q, (p) => (checkProbability(p) ? this._ppf(p) : NaN))
+    }
+
+    /**
+     * Inverse survival function: x such that sf(x) = q.
+     * @param {number|Array} q - Probabilities in [0, 1].
+     * @returns {number|Array}
+     */
+    isf(q) {
+        return mapValues(q, (p) => (checkProbability(p) ? this._isf(p) : NaN))
+    }
+
+    /**
+     * Draws random samples.
+     * @param {number|number[]|null} [size=null] - Output shape.
+     * @param {Object} [rng] - Optional `Generator` to draw from instead of the global generator.
+     * @returns {number|Array}
+     */
+    sample(size = null, rng = undefined) {
+        return rng ? rng.run(() => this._sample(size)) : this._sample(size)
+    }
+
+    /** Alias of {@link ContinuousDistribution#sample} (scipy name). */
+    rvs(size = null, rng = undefined) {
+        return this.sample(size, rng)
+    }
+
+    /** @returns {number} The mean. */
+    mean() {
+        return NaN
+    }
+
+    /** @returns {number} The variance. */
+    variance() {
+        return NaN
+    }
+
+    /** @returns {number} The standard deviation. */
+    std() {
+        return Math.sqrt(this.variance())
+    }
+
+    /** @returns {number} The median. */
+    median() {
+        return this._ppf(0.5)
+    }
+
+    /**
+     * Equal-tail interval containing a fraction `confidence` of the probability mass.
+     * @param {number} confidence - In [0, 1].
+     * @returns {number[]} [lower, upper]
+     */
+    interval(confidence) {
+        if (!checkProbability(confidence)) {
+            throw new Error('confidence must be in [0, 1].')
+        }
+        const alpha = (1 - confidence) / 2
+        return [this._ppf(alpha), this._isf(alpha)]
+    }
+
+    /** @protected */
+    _sf(x) {
+        return 1 - this._cdf(x)
+    }
+
+    /** @protected */
+    _isf(q) {
+        return this._ppf(1 - q)
+    }
+
+    /**
+     * Generic quantile by bracketing and bisection on the cdf.
+     * @protected
+     */
+    _ppf(p) {
+        const [lo0, hi0] = this.support
+        if (p === 0) return lo0
+        if (p === 1) return hi0
+        let lo = Number.isFinite(lo0) ? lo0 : -1
+        let hi = Number.isFinite(hi0) ? hi0 : 1
+        while (!Number.isFinite(lo0) &amp;&amp; this._cdf(lo) > p) lo *= 2
+        while (!Number.isFinite(hi0) &amp;&amp; this._cdf(hi) &lt; p) hi *= 2
+        for (let i = 0; i &lt; 200; i++) {
+            const mid = (lo + hi) / 2
+            if (mid === lo || mid === hi) break
+            if (this._cdf(mid) &lt; p) lo = mid
+            else hi = mid
+        }
+        return (lo + hi) / 2
+    }
+
+    /**
+     * Generic upper quantile by bracketing and bisection on the survival function, accurate
+     * far into the upper tail when `_sf` is.
+     * @protected
+     */
+    _isfBySf(q) {
+        if (q >= 0.5) return this._ppf(1 - q)
+        const [lo0, hi0] = this.support
+        if (q === 0) return hi0
+        let lo = Number.isFinite(lo0) ? lo0 : -1
+        let hi = Number.isFinite(hi0) ? hi0 : 1
+        while (!Number.isFinite(lo0) &amp;&amp; this._sf(lo) &lt; q) lo *= 2
+        while (!Number.isFinite(hi0) &amp;&amp; this._sf(hi) > q) hi = hi > 0 ? hi * 2 : 1
+        for (let i = 0; i &lt; 2100; i++) {
+            const mid = (lo + hi) / 2
+            if (mid === lo || mid === hi) break
+            if (this._sf(mid) > q) lo = mid
+            else hi = mid
+        }
+        return (lo + hi) / 2
+    }
+
+    /** @protected */
+    _sample(size) {
+        return mapValues(samplers.random(size), (u) => this._ppf(u))
+    }
+}
+
+/**
+ * Base class of the discrete distributions (support on integers).
+ */
+export class DiscreteDistribution extends ContinuousDistribution {
+    /**
+     * Probability mass function.
+     * @param {number|Array} k
+     * @returns {number|Array}
+     */
+    pmf(k) {
+        return mapValues(k, (v) => (Number.isInteger(v) ? Math.exp(this._logpmf(v)) : 0))
+    }
+
+    /**
+     * Logarithm of the probability mass function.
+     * @param {number|Array} k
+     * @returns {number|Array}
+     */
+    logpmf(k) {
+        return mapValues(k, (v) => (Number.isInteger(v) ? this._logpmf(v) : -Infinity))
+    }
+
+    /**
+     * Not available: discrete distributions have a {@link DiscreteDistribution#pmf}.
+     * @param {number|Array} _x
+     * @returns {number|Array}
+     * @throws {Error}
+     */
+    // eslint-disable-next-line no-unused-vars
+    pdf(_x) {
+        throw new Error('Discrete distributions have a pmf, not a pdf.')
+    }
+
+    /** @protected */
+    _cdf(x) {
+        const [lo, hi] = this.support
+        const k = Math.floor(x)
+        if (k &lt; lo) return 0
+        if (k >= hi) return 1
+        let s = 0
+        for (let i = lo; i &lt;= k; i++) s += Math.exp(this._logpmf(i))
+        return Math.min(1, s)
+    }
+
+    /**
+     * Smallest integer k with cdf(k) >= p.
+     * @protected
+     */
+    _ppf(p) {
+        const [lo, hi] = this.support
+        if (p === 0) return lo - 1
+        if (p === 1) return hi
+        // relative tolerance so exact ties (cdf(k) == p in exact arithmetic) resolve correctly
+        const target = p * (1 - 1e-12)
+        let k = Math.round(this.mean() || 0)
+        if (!Number.isFinite(k)) k = Number.isFinite(lo) ? lo : 0
+        k = Math.min(Math.max(k, lo), hi)
+        const sd0 = Math.sqrt(this.variance())
+        // an infinite or undefined variance (e.g. Zipf with a &lt;= 3) still needs a finite step
+        const sd = Number.isFinite(sd0) &amp;&amp; sd0 > 0 ? sd0 : 1
+        let step = Math.max(1, Math.ceil(sd))
+        // bracket
+        let a = k
+        let b = k
+        while (a > lo &amp;&amp; this._cdf(a - 1) >= target) {
+            b = a
+            a = Math.max(lo, a - step)
+            step *= 2
+        }
+        step = Math.max(1, Math.ceil(sd))
+        while (this._cdf(b) &lt; target) {
+            a = b
+            b = Math.min(hi, b + step)
+            step *= 2
+            if (b === hi) break
+        }
+        // binary search for the smallest k in [a, b] with cdf(k) >= p
+        while (a &lt; b) {
+            const mid = Math.floor((a + b) / 2)
+            if (this._cdf(mid) >= target) b = mid
+            else a = mid + 1
+        }
+        return a
+    }
+
+    /** @protected */
+    _isf(q) {
+        // smallest k with sf(k) &lt;= q
+        const [lo, hi] = this.support
+        if (q === 1) return lo - 1
+        if (q === 0) return hi
+        const target = q * (1 + 1e-12)
+        // start near the answer, then bracket with doubling steps and bisect on sf: ppf(1 - q)
+        // cannot resolve tiny q, and the answer can be very far out (heavy tails)
+        let k = this._ppf(Math.min(1, Math.max(0, 1 - q)))
+        if (!Number.isFinite(k)) k = Number.isFinite(lo) ? lo : 0
+        let a = k // sf(a) > target, or a = lo - 1
+        let b = k // sf(b) &lt;= target
+        let step = 1
+        while (a >= lo &amp;&amp; this._sf(a) &lt;= target) {
+            b = a
+            a = a - step &lt; lo ? lo - 1 : a - step
+            step *= 2
+        }
+        step = 1
+        while (b &lt; hi &amp;&amp; this._sf(b) > target) {
+            a = b
+            b = Math.min(hi, b + step)
+            step *= 2
+        }
+        while (b - a > 1) {
+            const mid = Math.floor((a + b) / 2)
+            if (this._sf(mid) &lt;= target) b = mid
+            else a = mid
+        }
+        return b
+    }
+
+    median() {
+        return this._ppf(0.5)
+    }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-copulas.html">copulas</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-logo.html">logo</a></li><li><a href="module-numpy-bitgens.html">numpy-bitgens</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-bitgens.NumpyBitGenerator64.html">NumpyBitGenerator64</a></li><li><a href="module-numpy-bitgens.PCG64DXSM.html">PCG64DXSM</a></li><li><a href="module-numpy-bitgens.Philox.html">Philox</a></li><li><a href="module-numpy-bitgens.SFC64.html">SFC64</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats-base.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats-base.DiscreteDistribution.html">DiscreteDistribution</a></li><li><a href="module-stats-families.BetaBinomial.html">BetaBinomial</a></li><li><a href="module-stats-families.BetaPrime.html">BetaPrime</a></li><li><a href="module-stats-families.Burr12.html">Burr12</a></li><li><a href="module-stats-families.Chi.html">Chi</a></li><li><a href="module-stats-families.ExGaussian.html">ExGaussian</a></li><li><a href="module-stats-families.Frechet.html">Frechet</a></li><li><a href="module-stats-families.GeneralizedExtremeValue.html">GeneralizedExtremeValue</a></li><li><a href="module-stats-families.GeneralizedPareto.html">GeneralizedPareto</a></li><li><a href="module-stats-families.HalfNormal.html">HalfNormal</a></li><li><a href="module-stats-families.InverseGamma.html">InverseGamma</a></li><li><a href="module-stats-families.Kumaraswamy.html">Kumaraswamy</a></li><li><a href="module-stats-families.Levy.html">Levy</a></li><li><a href="module-stats-families.LogLogistic.html">LogLogistic</a></li><li><a href="module-stats-families.LogSeries.html">LogSeries</a></li><li><a href="module-stats-families.LogUniform.html">LogUniform</a></li><li><a href="module-stats-families.Maxwell.html">Maxwell</a></li><li><a href="module-stats-families.Nakagami.html">Nakagami</a></li><li><a href="module-stats-families.NoncentralChisquare.html">NoncentralChisquare</a></li><li><a href="module-stats-families.NoncentralF.html">NoncentralF</a></li><li><a href="module-stats-families.PowerLaw.html">PowerLaw</a></li><li><a href="module-stats-families.Semicircle.html">Semicircle</a></li><li><a href="module-stats-families.Skellam.html">Skellam</a></li><li><a href="module-stats-families.SkewNormal.html">SkewNormal</a></li><li><a href="module-stats-families.VonMises.html">VonMises</a></li><li><a href="module-stats-families.Wald.html">Wald</a></li><li><a href="module-stats-families.Zipf.html">Zipf</a></li><li><a href="module-stats-tests.GaussianKde.html">GaussianKde</a></li><li><a href="module-stats-DiscreteMixture.html">DiscreteMixture</a></li><li><a href="module-stats-Mixture.html">Mixture</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialBtpe">binomialBtpe</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mapShape2">mapShape2</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#randomLoggam">randomLoggam</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Nov 25 2026 12:22:36 GMT+0100 (hora estándar de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

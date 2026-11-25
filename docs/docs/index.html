@@ -43,22 +43,31 @@
 
 
     <section>
-        <article><h1 id="randlibjs">randlibjs</h1>
-<p><strong>numpy.random + scipy.stats for JavaScript.</strong> Reproducible random number generation with exact samplers for 80+ probability distributions, numpy-compatible bit generators, scipy-style distribution objects, quasi-Monte Carlo, random matrices and stochastic processes. Zero dependencies, ~29 kB gzipped, works in browsers and Node.js, ships TypeScript types.</p>
-<p><a href="https://www.npmjs.com/package/randlibjs"><img src="https://img.shields.io/npm/v/randlibjs.svg" alt="Version"></a>
-<a href="https://github.com/randlibjs/randlibjs/blob/master/LICENSE"><img src="https://img.shields.io/npm/l/randlibjs.svg" alt="License"></a>
-<a href="https://github.com/randlibjs/randlibjs/actions"><img src="https://github.com/randlibjs/randlibjs/actions/workflows/ci.yml/badge.svg" alt="Build Status"></a>
-<a href="https://codecov.io/gh/randlibjs/randlibjs"><img src="https://codecov.io/gh/randlibjs/randlibjs/branch/master/graph/badge.svg" alt="Codecov"></a>
+        <article><p align="center"><img src="https://raw.githubusercontent.com/randlibjs/randlibjs/master/.github/assets/logo.svg" alt="randlibjs logo: a bell curve packed with random circles" width="128" height="128"></p>
+<h1 id="randlibjs">randlibjs</h1>
+<p>Seedable, reproducible random number generation for JavaScript. Exact samplers for 75+ probability distributions, distribution objects with densities, CDFs and quantiles, quasi-Monte Carlo, random matrices, stochastic processes and resampling. Zero dependencies, ~50 kB gzipped in full (~5 kB tree-shaken to <code>seed</code> + <code>normal</code>), runs in browsers and Node.js, ships TypeScript types.</p>
+<p><a href="https://www.npmjs.com/package/randlibjs"><img src="https://img.shields.io/npm/v/randlibjs.svg" alt="npm"></a>
+<a href="https://www.npmjs.com/package/randlibjs"><img src="https://img.shields.io/npm/dm/randlibjs.svg" alt="Downloads"></a>
 <a href="https://www.jsdelivr.com/package/npm/randlibjs"><img src="https://data.jsdelivr.com/v1/package/npm/randlibjs/badge" alt="jsDelivr"></a>
-<a href="https://www.npmjs.com/package/randlibjs"><img src="https://img.shields.io/npm/dm/randlibjs.svg" alt="Downloads"></a></p>
+<a href="https://bundlephobia.com/package/randlibjs"><img src="https://img.shields.io/bundlephobia/minzip/randlibjs" alt="Bundle size"></a>
+<a href="https://www.npmjs.com/package/randlibjs"><img src="https://img.shields.io/npm/types/randlibjs" alt="Types"></a>
+<a href="package.json"><img src="https://img.shields.io/badge/dependencies-0-brightgreen" alt="Zero dependencies"></a>
+<a href="LICENSE"><img src="https://img.shields.io/npm/l/randlibjs.svg" alt="License"></a></p>
+<p><a href="https://github.com/randlibjs/randlibjs/actions/workflows/ci.yml"><img src="https://github.com/randlibjs/randlibjs/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+<a href="https://github.com/randlibjs/randlibjs/actions/workflows/numpy-parity.yml"><img src="https://github.com/randlibjs/randlibjs/actions/workflows/numpy-parity.yml/badge.svg" alt="numpy parity"></a>
+<a href="https://codecov.io/gh/randlibjs/randlibjs"><img src="https://codecov.io/gh/randlibjs/randlibjs/branch/master/graph/badge.svg" alt="Codecov"></a>
+<a href="https://github.com/randlibjs/randlibjs/actions/workflows/codeql.yml"><img src="https://github.com/randlibjs/randlibjs/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
+<a href="https://www.bestpractices.dev/projects/17029"><img src="https://www.bestpractices.dev/projects/17029/badge" alt="OpenSSF Best Practices"></a>
+<a href="https://scorecard.dev/viewer/?uri=github.com/randlibjs/randlibjs"><img src="https://api.scorecard.dev/projects/github.com/randlibjs/randlibjs/badge" alt="OpenSSF Scorecard"></a>
+<a href="https://www.npmjs.com/package/randlibjs#provenance"><img src="https://img.shields.io/badge/npm-provenance-blue?logo=npm" alt="npm provenance"></a></p>
 <ul>
-<li><strong>Same numbers as Python.</strong> <code>createGenerator(seed, 'pcg64')</code> reproduces <code>np.random.default_rng(seed)</code>: <code>random</code>, <code>uniform</code>, <code>integers</code>, <code>normal</code> (numpy's exact ziggurat), <code>binomial</code> and <code>poisson</code> bit for bit, and <code>exponential</code>, <code>gamma</code>, <code>beta</code>, <code>chisquare</code>, ... up to last-bit libm rounding. <code>'mt19937'</code> reproduces the legacy <code>np.random.RandomState(seed)</code>. Simulations can be prototyped in Python and replayed in the browser, or the other way round.</li>
-<li><strong>Exact samplers.</strong> No approximations: Poisson (PTRS), binomial (O(log n) for any n), hypergeometric (populations of billions), truncated normal deep in the tails (Robert's algorithm), and more. All of them are validated against scipy with goodness-of-fit tests.</li>
-<li><strong>Everything numpy.random has</strong>, plus about 30 distributions from scipy.stats and beyond.</li>
-<li><strong>scipy.stats-style distribution objects</strong> with <code>pdf</code>, <code>cdf</code>, <code>ppf</code>, <code>sf</code>, <code>isf</code>, moments and intervals. Tail quantiles are computed on the accurate side. For example <code>stats.f(5, 10).isf(1e-12)</code> is exact to 16 digits, where scipy is off by 2e-5.</li>
-<li><strong>Real bit generators:</strong> xoshiro128** (default), PCG32, MT19937 and PCG64 with numpy's SeedSequence. They all support state save and restore, cloning, independent child streams (<code>spawn</code>) and jumps.</li>
-<li><strong>Quasi-Monte Carlo</strong> (Sobol, Halton, Latin hypercube, Poisson disk), <strong>random matrices</strong> (Haar orthogonal, LKJ, Wishart, …), <strong>stochastic processes</strong> (Brownian motion, GBM, Ornstein–Uhlenbeck, Poisson processes, Markov chains) and <strong>resampling</strong> (bootstrap BCa, permutation tests).</li>
+<li><strong>Exact samplers.</strong> Exact algorithms rather than approximations: ziggurat normals, PTRS Poisson, BTPE binomial (O(1) for any n), hypergeometric for populations of billions, truncated normals deep in the tails, and more. Every univariate sampler passes goodness-of-fit tests against reference distributions.</li>
+<li><strong>Distribution objects</strong> with <code>pdf</code>, <code>cdf</code>, <code>ppf</code>, <code>sf</code>, <code>isf</code>, moments and intervals, including finite mixtures. Tails are computed on the accurate side: <code>stats.f(5, 10).isf(1e-12)</code> is exact to 16 digits.</li>
+<li><strong>Serious bit generators:</strong> xoshiro128** (default), PCG32, PCG64, PCG64DXSM, SFC64, Philox and MT19937, with state save/restore, cloning, independent child streams (<code>spawn</code>) and jumps.</li>
+<li><strong>Reproducible across languages.</strong> With the <code>'pcg64'</code> bit generator the streams follow numpy's <code>default_rng(seed)</code>, and with <code>'mt19937'</code> <code>RandomState(seed)</code>: the random bits, uniforms, integers and ordinary normals are identical, and values that go through <code>Math.log</code>, <code>exp</code> or <code>pow</code> (exponential, gamma, beta, the ziggurat tail) agree to 1e-13, so a simulation can be prototyped in Python and replayed in the browser, or the other way round.</li>
+<li><strong>Beyond sampling:</strong> quasi-Monte Carlo (Sobol, Halton, Latin hypercube, Poisson disk), random matrices (Haar orthogonal, LKJ, Wishart, …), stochastic processes (Brownian motion, GBM, Ornstein–Uhlenbeck, Poisson processes, Markov chains) and resampling (bootstrap BCa, permutation tests).</li>
 </ul>
+<p>If you know numpy and scipy you will feel at home: the reference tables below list the equivalent of every function.</p>
 <h2 id="installation">Installation</h2>
 <pre class="prettyprint source lang-bash"><code>npm install randlibjs
 </code></pre>
@@ -119,9 +128,20 @@ stats.binomial(20, 0.3).pmf(6)
 <td><code>[m, n, ...]</code></td>
 <td>a nested array with that shape</td>
 </tr>
+<tr>
+<td>a typed array (<code>new Float32Array(n)</code>, <code>new Int32Array(n)</code>, ...)</td>
+<td>filled in place and returned</td>
+</tr>
 </tbody>
 </table>
 <p>Multivariate samplers return one vector (or matrix) per element.</p>
+<p>Typed-array output gives exactly the same values as <code>size = n</code>. Use it to halve memory with
+<code>Float32Array</code>, to store counts compactly in integer arrays, or to hand samples straight to WebGL /
+WebGPU buffers, Web Workers (transferable, no copy), WebAssembly or canvas:</p>
+<pre class="prettyprint source lang-js"><code>const noise = normal(0, 1, new Float32Array(1_000_000))   // 4 MB instead of 8 MB
+const counts = poisson(3, new Uint16Array(4096))
+worker.postMessage(noise, [noise.buffer])                 // zero-copy transfer
+</code></pre>
 <h2 id="reproducibility-and-generators">Reproducibility and generators</h2>
 <pre class="prettyprint source lang-js"><code>import { seed, getState, setState, createGenerator, random } from 'randlibjs'
 
@@ -166,10 +186,15 @@ rng.run(() => someCodeUsingTheGlobalFunctions())  // redirect global functions t
 <td><code>'pcg64'</code></td>
 <td>numpy's default generator with <code>SeedSequence</code> seeding and <code>advance()</code></td>
 </tr>
+<tr>
+<td><code>PCG64DXSM</code>, <code>SFC64</code>, <code>Philox</code></td>
+<td><code>'pcg64dxsm'</code>, <code>'sfc64'</code>, <code>'philox'</code></td>
+<td>The other numpy bit generators, bit-identical to numpy (Philox is counter based with O(1) <code>advance</code>)</td>
+</tr>
 </tbody>
 </table>
 <p><code>setRandomSource(fn)</code> installs any function returning floats in [0, 1), such as <code>Math.random</code> or a cryptographic source.</p>
-<h3 id="matching-numpy-exactly">Matching numpy exactly</h3>
+<h3 id="reproducing-numpy-streams">Reproducing numpy streams</h3>
 <pre class="prettyprint source lang-js"><code>createGenerator(42, 'pcg64').random()       // 0.7739560485559633 === np.random.default_rng(42).random()
 createGenerator(42, 'pcg64').integers(0, 10, 5)  // [0, 7, 6, 4, 4] === default_rng(42).integers(0, 10, 5)
 createGenerator(42, 'pcg64').standardNormal()    // 0.30471707975443135 === default_rng(42).standard_normal()
@@ -408,9 +433,41 @@ g.sample(1000)                   // or g.rvs(1000, rng)
 stats.poisson(4).pmf([0, 1, 2])  // arrays (and nested arrays) are mapped element-wise
 </code></pre>
 <p>Mixtures: <code>stats.mixture([stats.normal(0, 1), stats.normal(5, 2)], [0.7, 0.3])</code> has the same methods (continuous or discrete components).</p>
-<p>Continuous: <code>normal</code> (<code>norm</code>), <code>uniform</code>, <code>exponential</code>, <code>gamma</code>, <code>chisquare</code> (<code>chi2</code>), <code>beta</code>, <code>studentT</code> (<code>t</code>), <code>f</code>, <code>lognormal</code>, <code>cauchy</code>, <code>laplace</code>, <code>logistic</code>, <code>gumbel</code>, <code>weibull</code>, <code>pareto</code>, <code>triangular</code>, <code>rayleigh</code>, <code>truncatedNormal</code>.
-Discrete: <code>binomial</code>, <code>poisson</code>, <code>geometric</code>, <code>negativeBinomial</code>, <code>hypergeometric</code>, <code>bernoulli</code>, <code>randint</code>.</p>
-<p>The <code>special</code> namespace exports the special functions behind them: <code>gammaFn</code>, <code>logGamma</code>, <code>logBeta</code>, <code>digamma</code>, <code>erf</code>, <code>erfc</code>, <code>gammaP</code>, <code>gammaQ</code>, <code>gammaPInv</code>, <code>betaInc</code>, <code>betaIncInv</code>, <code>normalCDF</code>, <code>inverseNormalCDF</code>.</p>
+<h3 id="fitting-distributions-to-data">Fitting distributions to data</h3>
+<p><code>fit(data)</code> returns the distribution with maximum likelihood parameters, like scipy's <code>dist.fit</code>:</p>
+<pre class="prettyprint source lang-js"><code>const d = stats.gamma.fit(waitingTimes)   // Gamma { shape, scale }
+d.ppf(0.95)                               // 95th percentile of the fitted model
+stats.weibull.fit(lifetimes).mean()
+stats.binomial.fit(successes, { n: 20 })  // known number of trials
+</code></pre>
+<p>Closed forms where they exist (normal, uniform, exponential, lognormal, rayleigh, pareto, laplace,
+poisson, geometric, bernoulli, binomial and negativeBinomial with known <code>n</code>), Newton iterations for
+gamma, chisquare, beta and weibull (solved to rounding, slightly more precise than scipy's numerical
+fit for weibull), and Nelder–Mead on the likelihood for logistic, gumbel, cauchy and studentT. Families
+without a location parameter here (gamma, weibull, ...) match scipy's fit with <code>floc=0</code>.
+Results are checked against scipy in the test suite.</p>
+<p>Every univariate family has a distribution object, with the same parameters as the sampler (the exceptions are <code>lomax</code>, <code>rademacher</code> and <code>categorical</code>):</p>
+<p>Continuous: <code>normal</code> (<code>norm</code>), <code>uniform</code>, <code>exponential</code>, <code>gamma</code>, <code>erlang</code>, <code>chisquare</code> (<code>chi2</code>), <code>chi</code>, <code>beta</code>, <code>betaPrime</code>, <code>kumaraswamy</code>, <code>studentT</code> (<code>t</code>), <code>f</code>, <code>noncentralChisquare</code>, <code>noncentralF</code>, <code>lognormal</code>, <code>cauchy</code>, <code>laplace</code>, <code>logistic</code>, <code>gumbel</code>, <code>weibull</code>, <code>frechet</code>, <code>generalizedExtremeValue</code>, <code>generalizedPareto</code>, <code>pareto</code>, <code>burr12</code>, <code>logLogistic</code>, <code>triangular</code>, <code>rayleigh</code>, <code>maxwell</code>, <code>nakagami</code>, <code>halfNormal</code>, <code>truncatedNormal</code>, <code>skewNormal</code>, <code>exGaussian</code>, <code>wald</code>, <code>levy</code>, <code>inverseGamma</code>, <code>loguniform</code>, <code>power</code>, <code>semicircle</code>, <code>vonmises</code>.
+Discrete: <code>binomial</code>, <code>poisson</code>, <code>geometric</code>, <code>negativeBinomial</code>, <code>hypergeometric</code>, <code>bernoulli</code>, <code>randint</code>, <code>betaBinomial</code>, <code>logseries</code>, <code>zipf</code>, <code>skellam</code>.</p>
+<p>All are checked against scipy.stats, including quantiles down to 1e-12; tail probabilities are
+computed on the side that does not cancel. (For the von Mises 1e-12 quantile randlibjs agrees with
+mpmath where scipy is 16% off.)</p>
+<p>The <code>special</code> namespace exports the special functions behind them: <code>gammaFn</code>, <code>logGamma</code>, <code>logBeta</code>, <code>digamma</code>, <code>trigamma</code>, <code>erf</code>, <code>erfc</code>, <code>gammaP</code>, <code>gammaQ</code>, <code>gammaPInv</code>, <code>betaInc</code>, <code>betaIncInv</code>, <code>normalCDF</code>, <code>inverseNormalCDF</code>.</p>
+<h3 id="statistical-tests-and-density-estimation">Statistical tests and density estimation</h3>
+<pre class="prettyprint source lang-js"><code>const data = stats.gamma(2, 1.5).sample(500)
+
+stats.kstest(data, stats.gamma(2, 1.5))         // { statistic, pvalue }, exact p-value
+stats.kstest(data, (x) => 1 - Math.exp(-x), { alternative: 'greater' })
+stats.ks2samp(groupA, groupB)                   // two-sample, exact for n·m &lt;= 1e6
+stats.chisquareTest([16, 18, 16, 14, 12, 12])   // Pearson goodness of fit
+stats.andersonDarling(data)                     // normality: statistic, critical values, p-value
+stats.describe(data)                            // nobs, min, max, mean, variance, skewness, kurtosis
+
+const kde = stats.gaussianKde(data)             // Scott's rule; 'silverman' or a factor
+kde.pdf([1, 2, 3]); kde.cdf(2); kde.sample(100)
+</code></pre>
+<p>Together with <code>fit</code> this gives the whole fit, check and compare workflow. Results match scipy.stats
+(KS p-values exact for small samples, ~1e-7 in the tails and ~1e-5 elsewhere for large ones).</p>
 <h2 id="quasi-monte-carlo-(qmc)">Quasi-Monte Carlo (<code>qmc</code>)</h2>
 <pre class="prettyprint source lang-js"><code>import { qmc, createGenerator } from 'randlibjs'
 
@@ -424,6 +481,22 @@ new qmc.LatinHypercube(4).random(20)
 new qmc.PoissonDisk(2, { radius: 0.05 }).fillSpace()   // blue noise
 </code></pre>
 <p>Unscrambled Sobol and Halton points and the discrepancies are identical to <code>scipy.stats.qmc</code>.</p>
+<h2 id="copulas">Copulas</h2>
+<p>Random vectors with uniform margins and a chosen dependence; map each coordinate through any
+<code>ppf</code> to get dependent variables with arbitrary margins:</p>
+<pre class="prettyprint source lang-js"><code>import { gaussianCopula, tCopula, claytonCopula, gumbelCopula, frankCopula, copulaTheta, stats } from 'randlibjs'
+
+const [u, v] = gaussianCopula([[1, 0.7], [0.7, 1]])
+const loss = stats.lognormal(0, 1).ppf(u)          // dependent margins
+const rate = stats.gamma(2, 0.5).ppf(v)
+
+tCopula(corr, 4, 10000)                            // joint extremes (tail dependence)
+claytonCopula(copulaTheta('clayton', 0.5), 3, 1000) // Kendall's τ = 0.5, 3 dimensions
+gumbelCopula(2, 2, 1000)                            // upper tail dependence
+frankCopula(5, 2, 1000)
+</code></pre>
+<p>The Archimedean families are sampled exactly in any dimension (Marshall–Olkin). <code>copulaTau</code> and
+<code>copulaTheta</code> convert between each family's parameter and Kendall's τ.</p>
 <h2 id="stochastic-processes-and-resampling">Stochastic processes and resampling</h2>
 <pre class="prettyprint source lang-js"><code>import { brownianMotion, geometricBrownianMotion, ornsteinUhlenbeck, poissonProcess,
          markovChain, randomWalk, bootstrap, permutationTest } from 'randlibjs'
@@ -474,6 +547,137 @@ permutationTest(control, treatment).pvalue
 </tr>
 </tbody>
 </table>
+<h2 id="compared-with-other-libraries">Compared with other libraries</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>randlibjs</th>
+<th><a href="https://github.com/stdlib-js/stdlib">stdlib</a></th>
+<th><a href="https://github.com/d3/d3-random">d3-random</a></th>
+<th><a href="https://github.com/jstat/jstat">jStat</a></th>
+<th><a href="https://github.com/davidbau/seedrandom">seedrandom</a></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Seedable</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅ (LCG source)</td>
+<td>✅ (<code>setRandom</code>)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Streams that reproduce numpy</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Densities, CDFs, quantiles</td>
+<td>✅ same package</td>
+<td>✅ separate packages</td>
+<td>❌</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Quasi-Monte Carlo, random matrices, processes</td>
+<td>✅</td>
+<td>partly</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Distributions</td>
+<td>75+</td>
+<td>dozens</td>
+<td>17</td>
+<td>about 20</td>
+<td>uniform only</td>
+</tr>
+</tbody>
+</table>
+<p>Throughput in millions of samples per second, one draw per call (Node 22, <code>cd bench &amp;&amp; npm install &amp;&amp; npm run bench</code>; timings vary by machine, compare within a row):</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>randlibjs</th>
+<th>stdlib</th>
+<th>d3-random</th>
+<th>jStat</th>
+<th>seedrandom</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uniform</td>
+<td>136–139</td>
+<td>79–80</td>
+<td>143–150</td>
+<td>61–64</td>
+<td>30–35</td>
+</tr>
+<tr>
+<td>normal</td>
+<td>25–29</td>
+<td>40–46</td>
+<td>31–37</td>
+<td>20–21</td>
+<td>—</td>
+</tr>
+<tr>
+<td>gamma(2.5)</td>
+<td>18–19</td>
+<td>10–11</td>
+<td>26–28</td>
+<td>6.7–7.2</td>
+<td>—</td>
+</tr>
+<tr>
+<td>beta(2, 5)</td>
+<td>6–10</td>
+<td>3.5–4.9</td>
+<td>6.8–8.4</td>
+<td>2.4</td>
+<td>—</td>
+</tr>
+<tr>
+<td>poisson(4)</td>
+<td>9</td>
+<td>2.3</td>
+<td>6.6</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>binomial(100, 0.3)</td>
+<td>3.6–3.7</td>
+<td>5.7</td>
+<td>2.4</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>binomial(1e9, 0.3)</td>
+<td>16</td>
+<td>7.1</td>
+<td>1.1</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>No library is fastest at everything. In this table randlibjs leads on Poisson and on huge binomials,
+which are O(1) here; d3-random leads on uniform and gamma, and stdlib on normal and on
+binomial(100, 0.3). d3-random is timed with its seedable source, a 32-bit LCG, which is much weaker
+statistically than xoshiro128** or PCG. randlibjs also pays a little
+for drawing every normal from 64 random bits, which is what makes reproducing numpy streams possible.</p>
 <h2 id="examples">Examples</h2>
 <p>The <a href="examples"><code>examples/</code></a> folder has runnable scripts:</p>
 <table>
@@ -519,12 +723,17 @@ permutationTest(control, treatment).pvalue
 </ul>
 <h2 id="development">Development</h2>
 <pre class="prettyprint source lang-bash"><code>npm install
-npm test            # 490+ tests, including goodness-of-fit tests against scipy
+npm test               # 500+ tests, including goodness-of-fit tests against scipy
 npm run lint
-npm run build       # dist/ bundles and types/
+npm run build          # dist/ bundles and types/
+npm run check:package  # publint + Are the Types Wrong on the packed package
+npm run size           # bundle size budgets
 npm run coverage
-npm run docs        # JSDoc API reference into docs/docs
+npm run docs           # JSDoc API reference into docs/docs
 </code></pre>
+<p><code>python scripts/numpy_parity.py &gt; parity.json &amp;&amp; node scripts/check-numpy-parity.mjs parity.json</code>
+checks that randlibjs reproduces the installed numpy (CI runs it weekly against the latest numpy).
+See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for adding distributions.</p>
 <p>The reference data in <code>test/fixtures</code> is generated with numpy/scipy by <code>python scripts/make_reference.py</code> and <code>python scripts/make_stats_reference.py</code>.</p>
 <h2 id="license">License</h2>
 <p>BSD-3-Clause © <a href="https://pereradrian.github.io/">Adrián Muñoz Perera</a></p></article>
@@ -538,13 +747,13 @@ npm run docs        # JSDoc API reference into docs/docs
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats.DiscreteDistribution.html">DiscreteDistribution</a></li><li><a href="module-stats-DiscreteMixture.html">DiscreteMixture</a></li><li><a href="module-stats-Mixture.html">Mixture</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialBtpe">binomialBtpe</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mapShape2">mapShape2</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#randomLoggam">randomLoggam</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-copulas.html">copulas</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-logo.html">logo</a></li><li><a href="module-numpy-bitgens.html">numpy-bitgens</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-bitgens.NumpyBitGenerator64.html">NumpyBitGenerator64</a></li><li><a href="module-numpy-bitgens.PCG64DXSM.html">PCG64DXSM</a></li><li><a href="module-numpy-bitgens.Philox.html">Philox</a></li><li><a href="module-numpy-bitgens.SFC64.html">SFC64</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats-base.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats-base.DiscreteDistribution.html">DiscreteDistribution</a></li><li><a href="module-stats-families.BetaBinomial.html">BetaBinomial</a></li><li><a href="module-stats-families.BetaPrime.html">BetaPrime</a></li><li><a href="module-stats-families.Burr12.html">Burr12</a></li><li><a href="module-stats-families.Chi.html">Chi</a></li><li><a href="module-stats-families.ExGaussian.html">ExGaussian</a></li><li><a href="module-stats-families.Frechet.html">Frechet</a></li><li><a href="module-stats-families.GeneralizedExtremeValue.html">GeneralizedExtremeValue</a></li><li><a href="module-stats-families.GeneralizedPareto.html">GeneralizedPareto</a></li><li><a href="module-stats-families.HalfNormal.html">HalfNormal</a></li><li><a href="module-stats-families.InverseGamma.html">InverseGamma</a></li><li><a href="module-stats-families.Kumaraswamy.html">Kumaraswamy</a></li><li><a href="module-stats-families.Levy.html">Levy</a></li><li><a href="module-stats-families.LogLogistic.html">LogLogistic</a></li><li><a href="module-stats-families.LogSeries.html">LogSeries</a></li><li><a href="module-stats-families.LogUniform.html">LogUniform</a></li><li><a href="module-stats-families.Maxwell.html">Maxwell</a></li><li><a href="module-stats-families.Nakagami.html">Nakagami</a></li><li><a href="module-stats-families.NoncentralChisquare.html">NoncentralChisquare</a></li><li><a href="module-stats-families.NoncentralF.html">NoncentralF</a></li><li><a href="module-stats-families.PowerLaw.html">PowerLaw</a></li><li><a href="module-stats-families.Semicircle.html">Semicircle</a></li><li><a href="module-stats-families.Skellam.html">Skellam</a></li><li><a href="module-stats-families.SkewNormal.html">SkewNormal</a></li><li><a href="module-stats-families.VonMises.html">VonMises</a></li><li><a href="module-stats-families.Wald.html">Wald</a></li><li><a href="module-stats-families.Zipf.html">Zipf</a></li><li><a href="module-stats-tests.GaussianKde.html">GaussianKde</a></li><li><a href="module-stats-DiscreteMixture.html">DiscreteMixture</a></li><li><a href="module-stats-Mixture.html">Mixture</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialBtpe">binomialBtpe</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mapShape2">mapShape2</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#randomLoggam">randomLoggam</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 20 2026 22:46:08 GMT+0100 (hora estándar de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Nov 25 2026 12:22:36 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>

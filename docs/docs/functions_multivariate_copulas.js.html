@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: functions/multivariate/copulas.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: functions/multivariate/copulas.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Copulas: random vectors with uniform margins and a chosen dependence structure. Map each
+ * coordinate through any quantile function (`stats.&lt;family>(...).ppf`) to get dependent
+ * variables with arbitrary margins.
+ *
+ * Elliptical copulas (Gaussian, Student t) take a correlation matrix; the Archimedean ones
+ * (Clayton, Gumbel, Frank) take θ and a dimension and are sampled exactly with the
+ * Marshall–Olkin frailty construction. `copulaTheta` converts a Kendall's τ into the
+ * parameter of each family.
+ *
+ * @module copulas
+ */
+import { standardNormal, standardExponential, standardGamma } from '../../core/samplers.js'
+import { randOpen } from '../../core/state.js'
+import { normalizeSize, fillShape } from '../base-generator.js'
+import { choleskyDecomposition } from '../util/cholesky.js'
+import { normalCDF, betaInc } from '../../stats/special.js'
+import { integrate } from '../../stats/numerics.js'
+import { logseries } from '../univariate/discrete.js'
+import { assertPositive, assertPositiveInteger } from '../util/validate.js'
+
+function sampler(sample, size) {
+    const shape = normalizeSize(size)
+    return shape === null ? sample() : fillShape(shape, sample)
+}
+
+function correlationFactor(corr) {
+    if (!Array.isArray(corr) || corr.length &lt; 2 || corr.some((row) => !Array.isArray(row) || row.length !== corr.length)) {
+        throw new Error('corr must be a square correlation matrix of dimension >= 2.')
+    }
+    corr.forEach((row, i) => {
+        if (Math.abs(row[i] - 1) > 1e-9) throw new Error('corr must have a unit diagonal.')
+        row.forEach((v, j) => {
+            if (!(Math.abs(v - corr[j][i]) &lt;= 1e-12)) throw new Error('corr must be symmetric.')
+        })
+    })
+    return choleskyDecomposition(corr)
+}
+
+function correlatedNormals(L) {
+    const d = L.length
+    const z = Array.from({ length: d }, () => standardNormal())
+    return L.map((row) => {
+        let s = 0
+        for (let j = 0; j &lt; d; j++) s += row[j] * z[j]
+        return s
+    })
+}
+
+/** Student t cdf through the regularised incomplete beta. @private */
+function studentTCdf(t, df) {
+    const x = df / (df + t * t)
+    const tail = 0.5 * betaInc(x, df / 2, 0.5)
+    return t > 0 ? 1 - tail : tail
+}
+
+/**
+ * Gaussian copula: uniforms Φ(Z) with Z ~ N(0, corr).
+ *
+ * @example
+ * // two dependent uniforms with correlation 0.7, then any margins
+ * const [u, v] = gaussianCopula([[1, 0.7], [0.7, 1]])
+ * const x = stats.gamma(2, 1).ppf(u), y = stats.lognormal(0, 0.5).ppf(v)
+ *
+ * @param {number[][]} corr - Correlation matrix (positive semi-definite, unit diagonal).
+ * @param {number|Array|null} [size=null] - Output shape; each element is a vector.
+ * @returns {number[]|Array}
+ */
+export function gaussianCopula(corr, size = null) {
+    const L = correlationFactor(corr)
+    return sampler(() => correlatedNormals(L).map(normalCDF), size)
+}
+
+/**
+ * Student t copula: uniforms T_df(Z / sqrt(W / df)), Z ~ N(0, corr), W ~ χ²(df). Unlike the
+ * Gaussian copula it has tail dependence (joint extremes).
+ *
+ * @param {number[][]} corr - Correlation matrix.
+ * @param {number} df - Degrees of freedom (> 0).
+ * @param {number|Array|null} [size=null]
+ * @returns {number[]|Array}
+ */
+export function tCopula(corr, df, size = null) {
+    assertPositive('df', df)
+    const L = correlationFactor(corr)
+    return sampler(() => {
+        const s = Math.sqrt(2 * standardGamma(df / 2) / df)
+        return correlatedNormals(L).map((z) => studentTCdf(z / s, df))
+    }, size)
+}
+
+function archimedean(dim, size, frailty, generatorInverse) {
+    assertPositiveInteger('dim', dim)
+    if (dim &lt; 2) throw new Error('dim must be >= 2.')
+    return sampler(() => {
+        const v = frailty()
+        return Array.from({ length: dim }, () => generatorInverse(standardExponential() / v))
+    }, size)
+}
+
+/**
+ * Clayton copula (lower tail dependence), θ > 0: Kendall's τ = θ / (θ + 2).
+ *
+ * @param {number} theta - Dependence parameter (> 0).
+ * @param {number} [dim=2] - Dimension.
+ * @param {number|Array|null} [size=null]
+ * @returns {number[]|Array}
+ */
+export function claytonCopula(theta, dim = 2, size = null) {
+    assertPositive('theta', theta)
+    // frailty V ~ Gamma(1/θ), ψ(t) = (1 + t)^(-1/θ)
+    return archimedean(dim, size, () => standardGamma(1 / theta), (t) => Math.exp(-Math.log1p(t) / theta))
+}
+
+/**
+ * Gumbel copula (upper tail dependence), θ >= 1: Kendall's τ = 1 - 1/θ.
+ *
+ * @param {number} theta - Dependence parameter (>= 1; 1 is independence).
+ * @param {number} [dim=2]
+ * @param {number|Array|null} [size=null]
+ * @returns {number[]|Array}
+ */
+export function gumbelCopula(theta, dim = 2, size = null) {
+    if (typeof theta !== 'number' || !(theta >= 1)) throw new Error('theta must be >= 1.')
+    const alpha = 1 / theta
+    // frailty V positive stable with Laplace transform exp(-t^α) (Kanter's representation)
+    const stable = () => {
+        if (alpha === 1) return 1
+        const u = Math.PI * randOpen()
+        const e = standardExponential()
+        return Math.sin(alpha * u) / Math.pow(Math.sin(u), 1 / alpha) * Math.pow(Math.sin((1 - alpha) * u) / e, (1 - alpha) / alpha)
+    }
+    return archimedean(dim, size, stable, (t) => Math.exp(-Math.pow(t, alpha)))
+}
+
+/**
+ * Frank copula (no tail dependence, symmetric), θ > 0.
+ *
+ * @param {number} theta - Dependence parameter (> 0).
+ * @param {number} [dim=2]
+ * @param {number|Array|null} [size=null]
+ * @returns {number[]|Array}
+ */
+export function frankCopula(theta, dim = 2, size = null) {
+    assertPositive('theta', theta)
+    // frailty V ~ logarithmic series with p = 1 - e^-θ, ψ(t) = -log(1 - (1 - e^-θ) e^-t) / θ
+    const p = -Math.expm1(-theta)
+    return archimedean(dim, size, () => logseries(p), (t) => -Math.log1p(-p * Math.exp(-t)) / theta)
+}
+
+/**
+ * Kendall's τ of each copula family as a function of its parameter.
+ * @param {string} family - 'gaussian', 't', 'clayton', 'gumbel' or 'frank'.
+ * @param {number} param - ρ (gaussian, t), or θ.
+ * @returns {number}
+ */
+export function copulaTau(family, param) {
+    switch (family) {
+        case 'gaussian':
+        case 't':
+            return 2 / Math.PI * Math.asin(param)
+        case 'clayton':
+            return param / (param + 2)
+        case 'gumbel':
+            return 1 - 1 / param
+        case 'frank': {
+            if (param === 0) return 0
+            // 1 - 4/θ (1 - D1(θ)), D1 the Debye function
+            const d1 = integrate((t) => (t === 0 ? 1 : t / Math.expm1(t)), 0, param) / param
+            return 1 - 4 / param * (1 - d1)
+        }
+        default:
+            throw new Error('family must be "gaussian", "t", "clayton", "gumbel" or "frank".')
+    }
+}
+
+/**
+ * The parameter of a copula family with the given Kendall's τ: ρ = sin(πτ/2) for the
+ * elliptical families, θ for the Archimedean ones (Frank by numerical inversion).
+ *
+ * @example
+ * claytonCopula(copulaTheta('clayton', 0.5), 2, 1000)   // τ = 0.5
+ *
+ * @param {string} family - 'gaussian', 't', 'clayton', 'gumbel' or 'frank'.
+ * @param {number} tau - Kendall's τ in (0, 1) (or (-1, 1) for gaussian / t).
+ * @returns {number}
+ */
+export function copulaTheta(family, tau) {
+    if (typeof tau !== 'number' || !(tau > -1 &amp;&amp; tau &lt; 1)) throw new Error('tau must be in (-1, 1).')
+    switch (family) {
+        case 'gaussian':
+        case 't':
+            return Math.sin(Math.PI * tau / 2)
+        case 'clayton':
+            if (!(tau > 0)) throw new Error('clayton needs tau > 0.')
+            return 2 * tau / (1 - tau)
+        case 'gumbel':
+            if (!(tau >= 0)) throw new Error('gumbel needs tau >= 0.')
+            return 1 / (1 - tau)
+        case 'frank': {
+            if (!(tau > 0)) throw new Error('frank needs tau > 0 (positive dependence).')
+            // copulaTau is increasing in θ: bisection on a bracket
+            let lo = 1e-9
+            let hi = 1
+            while (copulaTau('frank', hi) &lt; tau) hi *= 2
+            for (let i = 0; i &lt; 200; i++) {
+                const mid = (lo + hi) / 2
+                if (mid === lo || mid === hi) break
+                if (copulaTau('frank', mid) &lt; tau) lo = mid
+                else hi = mid
+            }
+            return (lo + hi) / 2
+        }
+        default:
+            throw new Error('family must be "gaussian", "t", "clayton", "gumbel" or "frank".')
+    }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-bit-generators.html">bit-generators</a></li><li><a href="module-bootstrap.html">bootstrap</a></li><li><a href="module-copulas.html">copulas</a></li><li><a href="module-extra-distributions.html">extra-distributions</a></li><li><a href="module-linalg.html">linalg</a></li><li><a href="module-logo.html">logo</a></li><li><a href="module-numpy-bitgens.html">numpy-bitgens</a></li><li><a href="module-numpy-compat.html">numpy-compat</a></li><li><a href="module-processes.html">processes</a></li><li><a href="module-qmc.html">qmc</a></li><li><a href="module-random-matrices.html">random-matrices</a></li><li><a href="module-special.html">special</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-qmc-qmc.html">qmc</a></li><li><a href="module-stats-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="Generator.html">Generator</a></li><li><a href="module-bit-generators.BitGenerator.html">BitGenerator</a></li><li><a href="module-bit-generators.FunctionBitGenerator.html">FunctionBitGenerator</a></li><li><a href="module-bit-generators.MT19937.html">MT19937</a></li><li><a href="module-bit-generators.PCG32.html">PCG32</a></li><li><a href="module-bit-generators.Xoshiro128StarStar.html">Xoshiro128StarStar</a></li><li><a href="module-extra-distributions.AliasTable.html">AliasTable</a></li><li><a href="module-numpy-bitgens.NumpyBitGenerator64.html">NumpyBitGenerator64</a></li><li><a href="module-numpy-bitgens.PCG64DXSM.html">PCG64DXSM</a></li><li><a href="module-numpy-bitgens.Philox.html">Philox</a></li><li><a href="module-numpy-bitgens.SFC64.html">SFC64</a></li><li><a href="module-numpy-compat.PCG64.html">PCG64</a></li><li><a href="module-numpy-compat.SeedSequence.html">SeedSequence</a></li><li><a href="module-qmc.Halton.html">Halton</a></li><li><a href="module-qmc.LatinHypercube.html">LatinHypercube</a></li><li><a href="module-qmc.PoissonDisk.html">PoissonDisk</a></li><li><a href="module-qmc.Sobol.html">Sobol</a></li><li><a href="module-qmc-QMCEngine.html">QMCEngine</a></li><li><a href="module-stats-base.ContinuousDistribution.html">ContinuousDistribution</a></li><li><a href="module-stats-base.DiscreteDistribution.html">DiscreteDistribution</a></li><li><a href="module-stats-families.BetaBinomial.html">BetaBinomial</a></li><li><a href="module-stats-families.BetaPrime.html">BetaPrime</a></li><li><a href="module-stats-families.Burr12.html">Burr12</a></li><li><a href="module-stats-families.Chi.html">Chi</a></li><li><a href="module-stats-families.ExGaussian.html">ExGaussian</a></li><li><a href="module-stats-families.Frechet.html">Frechet</a></li><li><a href="module-stats-families.GeneralizedExtremeValue.html">GeneralizedExtremeValue</a></li><li><a href="module-stats-families.GeneralizedPareto.html">GeneralizedPareto</a></li><li><a href="module-stats-families.HalfNormal.html">HalfNormal</a></li><li><a href="module-stats-families.InverseGamma.html">InverseGamma</a></li><li><a href="module-stats-families.Kumaraswamy.html">Kumaraswamy</a></li><li><a href="module-stats-families.Levy.html">Levy</a></li><li><a href="module-stats-families.LogLogistic.html">LogLogistic</a></li><li><a href="module-stats-families.LogSeries.html">LogSeries</a></li><li><a href="module-stats-families.LogUniform.html">LogUniform</a></li><li><a href="module-stats-families.Maxwell.html">Maxwell</a></li><li><a href="module-stats-families.Nakagami.html">Nakagami</a></li><li><a href="module-stats-families.NoncentralChisquare.html">NoncentralChisquare</a></li><li><a href="module-stats-families.NoncentralF.html">NoncentralF</a></li><li><a href="module-stats-families.PowerLaw.html">PowerLaw</a></li><li><a href="module-stats-families.Semicircle.html">Semicircle</a></li><li><a href="module-stats-families.Skellam.html">Skellam</a></li><li><a href="module-stats-families.SkewNormal.html">SkewNormal</a></li><li><a href="module-stats-families.VonMises.html">VonMises</a></li><li><a href="module-stats-families.Wald.html">Wald</a></li><li><a href="module-stats-families.Zipf.html">Zipf</a></li><li><a href="module-stats-tests.GaussianKde.html">GaussianKde</a></li><li><a href="module-stats-DiscreteMixture.html">DiscreteMixture</a></li><li><a href="module-stats-Mixture.html">Mixture</a></li></ul><h3>Global</h3><ul><li><a href="global.html#baseGenerator">baseGenerator</a></li><li><a href="global.html#bernoulli">bernoulli</a></li><li><a href="global.html#beta">beta</a></li><li><a href="global.html#betaPair">betaPair</a></li><li><a href="global.html#betaSample">betaSample</a></li><li><a href="global.html#binomial">binomial</a></li><li><a href="global.html#binomialBtpe">binomialBtpe</a></li><li><a href="global.html#binomialSample">binomialSample</a></li><li><a href="global.html#bytes">bytes</a></li><li><a href="global.html#cauchy">cauchy</a></li><li><a href="global.html#chisquare">chisquare</a></li><li><a href="global.html#choice">choice</a></li><li><a href="global.html#choleskyDecomposition">choleskyDecomposition</a></li><li><a href="global.html#createGenerator">createGenerator</a></li><li><a href="global.html#defaultRng">defaultRng</a></li><li><a href="global.html#dirichlet">dirichlet</a></li><li><a href="global.html#erfc">erfc</a></li><li><a href="global.html#exponential">exponential</a></li><li><a href="global.html#f">f</a></li><li><a href="global.html#gamma">gamma</a></li><li><a href="global.html#geometric">geometric</a></li><li><a href="global.html#getRandomGenerator">getRandomGenerator</a></li><li><a href="global.html#getState">getState</a></li><li><a href="global.html#gumbel">gumbel</a></li><li><a href="global.html#hypergeometric">hypergeometric</a></li><li><a href="global.html#hypergeometricSample">hypergeometricSample</a></li><li><a href="global.html#integers">integers</a></li><li><a href="global.html#inverseNormalCDF">inverseNormalCDF</a></li><li><a href="global.html#laplace">laplace</a></li><li><a href="global.html#logFactorial">logFactorial</a></li><li><a href="global.html#logGamma">logGamma</a></li><li><a href="global.html#logistic">logistic</a></li><li><a href="global.html#lognormal">lognormal</a></li><li><a href="global.html#logseries">logseries</a></li><li><a href="global.html#lomax">lomax</a></li><li><a href="global.html#mapShape2">mapShape2</a></li><li><a href="global.html#mixture">mixture</a></li><li><a href="global.html#multinomial">multinomial</a></li><li><a href="global.html#multivariate">multivariate</a></li><li><a href="global.html#multivariateHypergeometric">multivariateHypergeometric</a></li><li><a href="global.html#multivariateNormal">multivariateNormal</a></li><li><a href="global.html#multivariateTriangular">multivariateTriangular</a></li><li><a href="global.html#multivariateUniform">multivariateUniform</a></li><li><a href="global.html#negativeBinomial">negativeBinomial</a></li><li><a href="global.html#noncentralChisquare">noncentralChisquare</a></li><li><a href="global.html#noncentralF">noncentralF</a></li><li><a href="global.html#normal">normal</a></li><li><a href="global.html#normalCDF">normalCDF</a></li><li><a href="global.html#pareto">pareto</a></li><li><a href="global.html#permutation">permutation</a></li><li><a href="global.html#permuted">permuted</a></li><li><a href="global.html#poisson">poisson</a></li><li><a href="global.html#poissonSample">poissonSample</a></li><li><a href="global.html#power">power</a></li><li><a href="global.html#randString">randString</a></li><li><a href="global.html#randint">randint</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#randomLoggam">randomLoggam</a></li><li><a href="global.html#rayleigh">rayleigh</a></li><li><a href="global.html#seed">seed</a></li><li><a href="global.html#setRandomSource">setRandomSource</a></li><li><a href="global.html#setState">setState</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#standardCauchy">standardCauchy</a></li><li><a href="global.html#standardExponential">standardExponential</a></li><li><a href="global.html#standardGamma">standardGamma</a></li><li><a href="global.html#standardNormal">standardNormal</a></li><li><a href="global.html#standardT">standardT</a></li><li><a href="global.html#studentT">studentT</a></li><li><a href="global.html#triangular">triangular</a></li><li><a href="global.html#uniform">uniform</a></li><li><a href="global.html#vonmises">vonmises</a></li><li><a href="global.html#wald">wald</a></li><li><a href="global.html#weibull">weibull</a></li><li><a href="global.html#zipf">zipf</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Nov 25 2026 12:22:36 GMT+0100 (hora estándar de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
