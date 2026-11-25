@@ -91,3 +91,18 @@ jobs:
 
       - name: README claims
         run: npm run check:claims
+
+      # the oldest Node in "engines": the test tools need a newer one, so only the packed package runs on it
+      - name: Unpack the package for the smoke test
+        run: |
+          mkdir -p "$RUNNER_TEMP/smoke/node_modules/randlibjs"
+          tarball=$(npm pack --silent --pack-destination "$RUNNER_TEMP" | tail -n 1)
+          tar -xzf "$RUNNER_TEMP/$tarball" --strip-components=1 -C "$RUNNER_TEMP/smoke/node_modules/randlibjs"
+          cp scripts/smoke.mjs "$RUNNER_TEMP/smoke/"
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 18.x
+
+      - name: Smoke test on Node 18
+        run: cd "$RUNNER_TEMP/smoke" && node smoke.mjs
