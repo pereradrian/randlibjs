@@ -46,6 +46,8 @@ claim('f(5, 10).isf(1e-12)', Math.abs(isf / 819.5395711513377 - 1) < 1e-14, Stri
 // the npm description says the same, and there are no dependencies
 const { dependencies = {}, description } = JSON.parse(read('package.json').toString())
 claim('npm description', description.includes(`${atLeast}+ probability distributions`), `${atLeast}+ distributions`)
+// npm cuts it there
+claim('npm description length', description.length <= 255, `${description.length} of 255 characters`)
 claim('zero dependencies', Object.keys(dependencies).length === 0, `${Object.keys(dependencies).length} dependencies`)
 
 if (failures.length) {
