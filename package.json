@@ -1,7 +1,7 @@
 {
   "name": "randlibjs",
   "version": "2.2.2",
-  "description": "Seedable random numbers and statistics for JavaScript: exact samplers for 75+ probability distributions, scipy-style pdf, cdf, quantiles and fitting, statistical tests, copulas, quasi-Monte Carlo and numpy-compatible streams. Zero dependencies, browser and Node.",
+  "description": "Seedable random numbers and statistics for JavaScript: exact samplers for 75+ probability distributions, scipy-style pdf, cdf, quantiles and fitting, statistical tests, copulas, quasi-Monte Carlo, numpy-compatible streams. Zero dependencies.",
   "type": "module",
   "main": "./dist/randlib.cjs",
   "module": "./index.js",
