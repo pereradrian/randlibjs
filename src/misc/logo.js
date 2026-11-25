@@ -10,6 +10,10 @@ import { createGenerator } from '../core/generator.js'
 
 const round = (v) => Math.round(v * 100) / 100
 
+const ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }
+/** Escapes a value for a double-quoted SVG attribute. @private */
+const attribute = (v) => String(v).replace(/[&<>"]/g, (c) => ENTITIES[c])
+
 /**
  * Generates the randlibjs logo as an SVG string.
  *
@@ -98,14 +102,15 @@ export function logo(size = 512, options = {}) {
     }
     circles.push(...rain)
 
+    if (!Number.isFinite(size) || size <= 0) throw new Error('size must be a positive number.')
     const s = size
     const corner = rounded ? round(s * 0.22) : 0
-    const back = background === 'none' ? '' : `<rect width="${s}" height="${s}" rx="${corner}" fill="${background}"/>`
+    const back = background === 'none' ? '' : `<rect width="${s}" height="${s}" rx="${corner}" fill="${attribute(background)}"/>`
     const dots = circles
         .map(([x, y, r]) => `<circle cx="${round(x * s)}" cy="${round(y * s)}" r="${round(r * s)}"/>`)
         .join('')
     return (
         `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" role="img" aria-label="randlibjs">` +
-        `${back}<g fill="${foreground}">${dots}</g></svg>`
+        `${back}<g fill="${attribute(foreground)}">${dots}</g></svg>`
     )
 }
