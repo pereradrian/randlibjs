@@ -45,7 +45,7 @@
     <section>
         <article><p align="center"><img src="https://raw.githubusercontent.com/randlibjs/randlibjs/master/.github/assets/logo.svg" alt="randlibjs logo: a bell curve packed with random circles" width="128" height="128"></p>
 <h1 id="randlibjs">randlibjs</h1>
-<p>Seedable, reproducible random number generation for JavaScript. Exact samplers for 75+ probability distributions, distribution objects with densities, CDFs and quantiles, quasi-Monte Carlo, random matrices, stochastic processes and resampling. Zero dependencies, ~50 kB gzipped in full (~5 kB tree-shaken to <code>seed</code> + <code>normal</code>), runs in browsers and Node.js, ships TypeScript types.</p>
+<p>Seedable, reproducible random numbers and statistics for JavaScript. Exact samplers for 75+ probability distributions, distribution objects with densities, CDFs, quantiles and maximum likelihood fitting, statistical tests, copulas, quasi-Monte Carlo, random matrices, stochastic processes and resampling. Zero dependencies, ~50 kB gzipped in full (~5 kB tree-shaken to <code>seed</code> + <code>normal</code>), runs in browsers and Node.js, ships TypeScript types.</p>
 <p><a href="https://www.npmjs.com/package/randlibjs"><img src="https://img.shields.io/npm/v/randlibjs.svg" alt="npm"></a>
 <a href="https://www.npmjs.com/package/randlibjs"><img src="https://img.shields.io/npm/dm/randlibjs.svg" alt="Downloads"></a>
 <a href="https://www.jsdelivr.com/package/npm/randlibjs"><img src="https://data.jsdelivr.com/v1/package/npm/randlibjs/badge" alt="jsDelivr"></a>
@@ -65,7 +65,7 @@
 <li><strong>Distribution objects</strong> with <code>pdf</code>, <code>cdf</code>, <code>ppf</code>, <code>sf</code>, <code>isf</code>, moments and intervals, including finite mixtures. Tails are computed on the accurate side: <code>stats.f(5, 10).isf(1e-12)</code> is exact to 16 digits.</li>
 <li><strong>Serious bit generators:</strong> xoshiro128** (default), PCG32, PCG64, PCG64DXSM, SFC64, Philox and MT19937, with state save/restore, cloning, independent child streams (<code>spawn</code>) and jumps.</li>
 <li><strong>Reproducible across languages.</strong> With the <code>'pcg64'</code> bit generator the streams follow numpy's <code>default_rng(seed)</code>, and with <code>'mt19937'</code> <code>RandomState(seed)</code>: the random bits, uniforms, integers and ordinary normals are identical, and values that go through <code>Math.log</code>, <code>exp</code> or <code>pow</code> (exponential, gamma, beta, the ziggurat tail) agree to 1e-13, so a simulation can be prototyped in Python and replayed in the browser, or the other way round.</li>
-<li><strong>Beyond sampling:</strong> quasi-Monte Carlo (Sobol, Halton, Latin hypercube, Poisson disk), random matrices (Haar orthogonal, LKJ, Wishart, …), stochastic processes (Brownian motion, GBM, Ornstein–Uhlenbeck, Poisson processes, Markov chains) and resampling (bootstrap BCa, permutation tests).</li>
+<li><strong>Beyond sampling:</strong> copulas, statistical tests (Kolmogorov–Smirnov, chi-square, Anderson–Darling) and kernel densities, quasi-Monte Carlo (Sobol, Halton, Latin hypercube, Poisson disk), random matrices (Haar orthogonal, LKJ, Wishart, …), stochastic processes (Brownian motion, GBM, Ornstein–Uhlenbeck, Poisson processes, Markov chains) and resampling (bootstrap BCa, permutation tests).</li>
 </ul>
 <p>If you know numpy and scipy you will feel at home: the reference tables below list the equivalent of every function.</p>
 <h2 id="installation">Installation</h2>
@@ -510,7 +510,7 @@ bootstrap(data, median, { nResamples: 9999 }).confidenceInterval   // BCa by def
 permutationTest(control, treatment).pvalue
 </code></pre>
 <h2 id="performance">Performance</h2>
-<p>Rough throughput on Node 22 (<code>node scripts/benchmark.mjs</code>), in millions of samples per second:</p>
+<p>Rough throughput on Node 22 (<code>node scripts/benchmark.mjs</code>), in millions of samples per second (range of three runs on one laptop):</p>
 <table>
 <thead>
 <tr>
@@ -527,23 +527,23 @@ permutationTest(control, treatment).pvalue
 <tbody>
 <tr>
 <td>xoshiro128** (default)</td>
-<td>~70</td>
-<td>~44</td>
-<td>~25–30</td>
-<td>~20</td>
-<td>~15–20</td>
-<td>~12</td>
-<td>~15</td>
+<td>61–79</td>
+<td>24–52</td>
+<td>18–28</td>
+<td>21–32</td>
+<td>13–21</td>
+<td>9–15</td>
+<td>12–17</td>
 </tr>
 <tr>
 <td>pcg64 (numpy parity)</td>
-<td>~9</td>
-<td>~12</td>
-<td>~4.5</td>
-<td>~6</td>
-<td>~3</td>
-<td>~3</td>
-<td>~3</td>
+<td>5–10</td>
+<td>8–10</td>
+<td>5–6</td>
+<td>5–7</td>
+<td>2.6–3.6</td>
+<td>2.2–3.2</td>
+<td>2.4–3.4</td>
 </tr>
 </tbody>
 </table>
@@ -602,7 +602,7 @@ permutationTest(control, treatment).pvalue
 </tr>
 </tbody>
 </table>
-<p>Throughput in millions of samples per second, one draw per call (Node 22, <code>cd bench &amp;&amp; npm install &amp;&amp; npm run bench</code>; timings vary by machine, compare within a row):</p>
+<p>Throughput in millions of samples per second, one draw per call (Node 22, <code>cd bench &amp;&amp; npm install &amp;&amp; npm run bench</code>; range of three runs on one machine, compare within a row):</p>
 <table>
 <thead>
 <tr>
@@ -617,57 +617,57 @@ permutationTest(control, treatment).pvalue
 <tbody>
 <tr>
 <td>uniform</td>
-<td>136–139</td>
-<td>79–80</td>
-<td>143–150</td>
-<td>61–64</td>
-<td>30–35</td>
+<td>124–136</td>
+<td>78–79</td>
+<td>143–145</td>
+<td>51–60</td>
+<td>35–37</td>
 </tr>
 <tr>
 <td>normal</td>
-<td>25–29</td>
-<td>40–46</td>
-<td>31–37</td>
-<td>20–21</td>
+<td>27–31</td>
+<td>37–46</td>
+<td>24–37</td>
+<td>13–22</td>
 <td>—</td>
 </tr>
 <tr>
 <td>gamma(2.5)</td>
-<td>18–19</td>
-<td>10–11</td>
-<td>26–28</td>
-<td>6.7–7.2</td>
+<td>13–20</td>
+<td>11–13</td>
+<td>27–28</td>
+<td>6.7–7.4</td>
 <td>—</td>
 </tr>
 <tr>
 <td>beta(2, 5)</td>
-<td>6–10</td>
-<td>3.5–4.9</td>
-<td>6.8–8.4</td>
-<td>2.4</td>
+<td>8–11</td>
+<td>4.1–5</td>
+<td>7.3–14</td>
+<td>2.2–3.7</td>
 <td>—</td>
 </tr>
 <tr>
 <td>poisson(4)</td>
-<td>9</td>
-<td>2.3</td>
-<td>6.6</td>
+<td>7.5–13</td>
+<td>2.2–5.4</td>
+<td>5–9.2</td>
 <td>—</td>
 <td>—</td>
 </tr>
 <tr>
 <td>binomial(100, 0.3)</td>
-<td>3.6–3.7</td>
-<td>5.7</td>
-<td>2.4</td>
+<td>3.5–4.5</td>
+<td>5.5–8.6</td>
+<td>2.2–3.5</td>
 <td>—</td>
 <td>—</td>
 </tr>
 <tr>
 <td>binomial(1e9, 0.3)</td>
-<td>16</td>
-<td>7.1</td>
-<td>1.1</td>
+<td>15–24</td>
+<td>6.9–11</td>
+<td>1–1.5</td>
 <td>—</td>
 <td>—</td>
 </tr>
@@ -723,17 +723,18 @@ for drawing every normal from 64 random bits, which is what makes reproducing nu
 </ul>
 <h2 id="development">Development</h2>
 <pre class="prettyprint source lang-bash"><code>npm install
-npm test               # 500+ tests, including goodness-of-fit tests against scipy
+npm test               # 800+ tests, including goodness-of-fit tests against scipy
 npm run lint
 npm run build          # dist/ bundles and types/
 npm run check:package  # publint + Are the Types Wrong on the packed package
 npm run size           # bundle size budgets
+npm run check:claims   # the claims of this README against the build
 npm run coverage
 npm run docs           # JSDoc API reference into docs/docs
 </code></pre>
 <p><code>python scripts/numpy_parity.py &gt; parity.json &amp;&amp; node scripts/check-numpy-parity.mjs parity.json</code>
-checks that randlibjs reproduces the installed numpy (CI runs it weekly against the latest numpy).
-See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for adding distributions.</p>
+checks that randlibjs reproduces the installed numpy (CI runs it on every change and weekly; Dependabot bumps the pinned numpy).
+See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for adding distributions and using AI tools.</p>
 <p>The reference data in <code>test/fixtures</code> is generated with numpy/scipy by <code>python scripts/make_reference.py</code> and <code>python scripts/make_stats_reference.py</code>.</p>
 <h2 id="license">License</h2>
 <p>BSD-3-Clause © <a href="https://pereradrian.github.io/">Adrián Muñoz Perera</a></p></article>
@@ -753,7 +754,7 @@ See <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for adding distributions.</p>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Nov 25 2026 12:22:36 GMT+0100 (hora estándar de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Nov 25 2026 13:09:36 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>
