@@ -85,6 +85,14 @@ describe('Logo module tests', () => {
     expect(logo(64, { seed: 7, background: 'none' })).not.toContain('<rect')
   })
 
+  test('Escapes the colours and rejects a bad size', () => {
+    const svg = logo(32, { seed: 1, background: '"><script>x</script>', foreground: '"/><b>' })
+    expect(svg).not.toContain('<script')
+    expect(svg).not.toContain('<b>')
+    expect(() => logo('1"><script>')).toThrow()
+    expect(() => logo(0)).toThrow()
+  })
+
   test('Keeps every circle inside the canvas and apart from the others', () => {
     const svg = logo(1000, { seed: 1 })
     const cs = [...svg.matchAll(/cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/g)].map((m) => m.slice(1).map(Number))
