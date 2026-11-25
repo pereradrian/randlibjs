@@ -88,3 +88,6 @@ jobs:
 
       - name: Bundle size budget (size-limit)
         run: npx size-limit
+
+      - name: README claims
+        run: npm run check:claims

@@ -2,7 +2,7 @@
 
 # randlibjs
 
-Seedable, reproducible random number generation for JavaScript. Exact samplers for 75+ probability distributions, distribution objects with densities, CDFs and quantiles, quasi-Monte Carlo, random matrices, stochastic processes and resampling. Zero dependencies, ~29 kB gzipped, runs in browsers and Node.js, ships TypeScript types.
+Seedable, reproducible random number generation for JavaScript. Exact samplers for 75+ probability distributions, distribution objects with densities, CDFs and quantiles, quasi-Monte Carlo, random matrices, stochastic processes and resampling. Zero dependencies, ~50 kB gzipped in full (~5 kB tree-shaken to `seed` + `normal`), runs in browsers and Node.js, ships TypeScript types.
 
 [![npm](https://img.shields.io/npm/v/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
 [![Downloads](https://img.shields.io/npm/dm/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
@@ -20,10 +20,10 @@ Seedable, reproducible random number generation for JavaScript. Exact samplers f
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/randlibjs/randlibjs/badge)](https://scorecard.dev/viewer/?uri=github.com/randlibjs/randlibjs)
 [![npm provenance](https://img.shields.io/badge/npm-provenance-blue?logo=npm)](https://www.npmjs.com/package/randlibjs#provenance)
 
-- **Exact samplers.** No approximations or lookup tables: ziggurat normals, PTRS Poisson, BTPE binomial (O(1) for any n), hypergeometric for populations of billions, truncated normals deep in the tails, and more. Every sampler passes goodness-of-fit tests against reference implementations.
+- **Exact samplers.** Exact algorithms rather than approximations: ziggurat normals, PTRS Poisson, BTPE binomial (O(1) for any n), hypergeometric for populations of billions, truncated normals deep in the tails, and more. Every univariate sampler passes goodness-of-fit tests against reference distributions.
 - **Distribution objects** with `pdf`, `cdf`, `ppf`, `sf`, `isf`, moments and intervals, including finite mixtures. Tails are computed on the accurate side: `stats.f(5, 10).isf(1e-12)` is exact to 16 digits.
 - **Serious bit generators:** xoshiro128** (default), PCG32, PCG64, PCG64DXSM, SFC64, Philox and MT19937, with state save/restore, cloning, independent child streams (`spawn`) and jumps.
-- **Reproducible across languages.** With the `'pcg64'` bit generator the streams are identical to numpy's `default_rng(seed)`, and with `'mt19937'` to `RandomState(seed)`, so a simulation can be prototyped in Python and replayed in the browser, or the other way round.
+- **Reproducible across languages.** With the `'pcg64'` bit generator the streams follow numpy's `default_rng(seed)`, and with `'mt19937'` `RandomState(seed)`: the random bits, uniforms, integers and ordinary normals are identical, and values that go through `Math.log`, `exp` or `pow` (exponential, gamma, beta, the ziggurat tail) agree to 1e-13, so a simulation can be prototyped in Python and replayed in the browser, or the other way round.
 - **Beyond sampling:** quasi-Monte Carlo (Sobol, Halton, Latin hypercube, Poisson disk), random matrices (Haar orthogonal, LKJ, Wishart, …), stochastic processes (Brownian motion, GBM, Ornstein–Uhlenbeck, Poisson processes, Markov chains) and resampling (bootstrap BCa, permutation tests).
 
 If you know numpy and scipy you will feel at home: the reference tables below list the equivalent of every function.
@@ -242,7 +242,7 @@ fit for weibull), and Nelder–Mead on the likelihood for logistic, gumbel, cauc
 without a location parameter here (gamma, weibull, ...) match scipy's fit with `floc=0`.
 Results are checked against scipy in the test suite.
 
-Every univariate sampler has a distribution object, with the same parameters as the sampler:
+Every univariate family has a distribution object, with the same parameters as the sampler (the exceptions are `lomax`, `rademacher` and `categorical`):
 
 Continuous: `normal` (`norm`), `uniform`, `exponential`, `gamma`, `erlang`, `chisquare` (`chi2`), `chi`, `beta`, `betaPrime`, `kumaraswamy`, `studentT` (`t`), `f`, `noncentralChisquare`, `noncentralF`, `lognormal`, `cauchy`, `laplace`, `logistic`, `gumbel`, `weibull`, `frechet`, `generalizedExtremeValue`, `generalizedPareto`, `pareto`, `burr12`, `logLogistic`, `triangular`, `rayleigh`, `maxwell`, `nakagami`, `halfNormal`, `truncatedNormal`, `skewNormal`, `exGaussian`, `wald`, `levy`, `inverseGamma`, `loguniform`, `power`, `semicircle`, `vonmises`.
 Discrete: `binomial`, `poisson`, `geometric`, `negativeBinomial`, `hypergeometric`, `bernoulli`, `randint`, `betaBinomial`, `logseries`, `zipf`, `skellam`.
@@ -338,8 +338,8 @@ Rough throughput on Node 22 (`node scripts/benchmark.mjs`), in millions of sampl
 
 | | randlibjs | [stdlib](https://github.com/stdlib-js/stdlib) | [d3-random](https://github.com/d3/d3-random) | [jStat](https://github.com/jstat/jstat) | [seedrandom](https://github.com/davidbau/seedrandom) |
 |---|---|---|---|---|---|
-| Seedable | ✅ | ✅ | ✅ (LCG source) | ❌ (`Math.random`) | ✅ |
-| Streams identical to numpy | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Seedable | ✅ | ✅ | ✅ (LCG source) | ✅ (`setRandom`) | ✅ |
+| Streams that reproduce numpy | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Densities, CDFs, quantiles | ✅ same package | ✅ separate packages | ❌ | ✅ | ❌ |
 | Quasi-Monte Carlo, random matrices, processes | ✅ | partly | ❌ | ❌ | ❌ |
 | Distributions | 75+ | dozens | 17 | about 20 | uniform only |
@@ -356,10 +356,11 @@ Throughput in millions of samples per second, one draw per call (Node 22, `cd be
 | binomial(100, 0.3) | 3.6–3.7 | 5.7 | 2.4 | — | — |
 | binomial(1e9, 0.3) | 16 | 7.1 | 1.1 | — | — |
 
-randlibjs is in the same range as the fastest libraries and well ahead where the algorithm matters
-(gamma, Poisson, huge binomials, which are O(1) here). d3-random's speed comes from a 32-bit LCG
-source, which is much weaker statistically than xoshiro128\*\* or PCG. randlibjs also pays a little
-for drawing every normal from 64 random bits, which is what makes numpy-identical streams possible.
+No library is fastest at everything. In this table randlibjs leads on Poisson and on huge binomials,
+which are O(1) here; d3-random leads on uniform and gamma, and stdlib on normal and on
+binomial(100, 0.3). d3-random is timed with its seedable source, a 32-bit LCG, which is much weaker
+statistically than xoshiro128\*\* or PCG. randlibjs also pays a little
+for drawing every normal from 64 random bits, which is what makes reproducing numpy streams possible.
 
 ## Examples
 
