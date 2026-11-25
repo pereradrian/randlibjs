@@ -5,7 +5,8 @@
     "excludePattern": "(node_modules/|docs)"
   },
   "plugins": [
-    "plugins/markdown"
+    "plugins/markdown",
+    "./docs/input/jsdoc-plugin.cjs"
   ],
   "opts": {
     "template": "templates/default",
