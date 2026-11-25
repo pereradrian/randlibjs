@@ -10,6 +10,12 @@ All notable changes to this project are documented here. The format follows
 
 - The npm description fits in the 255 characters npm shows (2.2.2 is cut off).
 
+### Added
+
+- Code of conduct, governance and roadmap, how releases and reports are handled in the security policy, and
+  a note in the README on how AI is used.
+- CI runs the packed package on Node 18, the oldest version in `engines`.
+
 ## [2.2.2] - 2026-11-25
 
 ### Fixed

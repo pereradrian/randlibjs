@@ -392,7 +392,7 @@ npm run lint
 npm run build          # dist/ bundles and types/
 npm run check:package  # publint + Are the Types Wrong on the packed package
 npm run size           # bundle size budgets
-npm run check:claims   # the claims of this README against the build
+npm run check:claims   # claims of this README against the build
 npm run coverage
 npm run docs           # JSDoc API reference into docs/docs
 ```
@@ -402,6 +402,16 @@ checks that randlibjs reproduces the installed numpy (CI runs it on every change
 See [CONTRIBUTING.md](CONTRIBUTING.md) for adding distributions and using AI tools.
 
 The reference data in `test/fixtures` is generated with numpy/scipy by `python scripts/make_reference.py` and `python scripts/make_stats_reference.py`.
+
+### How it is built
+
+Parts of the code, tests and documentation are written with AI assistance (Claude Code). What backs the
+results is the verification: goodness-of-fit tests, reference values from scipy, numpy and mpmath, the numpy
+parity check and the checks above. A maintainer approves every release. See
+[AGENTS.md](AGENTS.md) and [CONTRIBUTING.md](CONTRIBUTING.md#using-ai).
+
+Also: [code of conduct](CODE_OF_CONDUCT.md), [governance](GOVERNANCE.md), [roadmap](ROADMAP.md) and
+[security policy](SECURITY.md).
 
 ## License
 

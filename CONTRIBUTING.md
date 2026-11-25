@@ -23,7 +23,11 @@ npm run check:package  # publint + Are the Types Wrong on the packed package
 npm run size           # bundle size budgets
 ```
 
-CI runs all of these on Node 20, 22 and 24.
+CI runs the tests on Node 20, 22 and 24, and a smoke test of the packed package on Node 18, the oldest
+version the library supports.
+
+By contributing you agree that your work is released under the BSD-3-Clause license of the project. See also
+the [code of conduct](CODE_OF_CONDUCT.md), the [governance](GOVERNANCE.md) and the [roadmap](ROADMAP.md).
 
 ## Adding a distribution
 

@@ -11,7 +11,8 @@
 
 Please **do not open a public issue**. Use GitHub's private vulnerability reporting:
 [Report a vulnerability](https://github.com/randlibjs/randlibjs/security/advisories/new).
-You will get an answer within a week.
+You will get an answer within a week. A confirmed vulnerability is fixed in a private advisory, released as
+a patch version and then published with credit to the reporter, unless they prefer otherwise.
 
 ## Scope
 
@@ -32,4 +33,12 @@ verify which commit and workflow produced each version:
 
 ```bash
 npm audit signatures
+```
+
+The files attached to the GitHub releases have a signed attestation too. From 2.2.1 on, the releases are
+also immutable:
+
+```bash
+gh release download v2.2.2 --repo randlibjs/randlibjs --pattern randlib.min.js
+gh attestation verify randlib.min.js --repo randlibjs/randlibjs
 ```
