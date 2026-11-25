@@ -43,8 +43,9 @@ claim('stats families', listed.length > 0 && !missing.length && !unlisted.length
 const isf = lib.stats.f(5, 10).isf(1e-12)
 claim('f(5, 10).isf(1e-12)', Math.abs(isf / 819.5395711513377 - 1) < 1e-14, String(isf))
 
-// zero dependencies
-const { dependencies = {} } = JSON.parse(read('package.json').toString())
+// the npm description says the same, and there are no dependencies
+const { dependencies = {}, description } = JSON.parse(read('package.json').toString())
+claim('npm description', description.includes(`${atLeast}+ probability distributions`), `${atLeast}+ distributions`)
 claim('zero dependencies', Object.keys(dependencies).length === 0, `${Object.keys(dependencies).length} dependencies`)
 
 if (failures.length) {

@@ -1,7 +1,7 @@
 {
   "name": "randlibjs",
   "version": "2.2.1",
-  "description": "Seedable, reproducible random number generation: exact samplers for 75+ probability distributions, distribution objects (pdf, cdf, quantiles), quasi-Monte Carlo, random matrices and stochastic processes. Zero dependencies, browser and Node.",
+  "description": "Seedable random numbers and statistics for JavaScript: exact samplers for 75+ probability distributions, scipy-style pdf, cdf, quantiles and fitting, statistical tests, copulas, quasi-Monte Carlo and numpy-compatible streams. Zero dependencies, browser and Node.",
   "type": "module",
   "main": "./dist/randlib.cjs",
   "module": "./index.js",
@@ -70,7 +70,12 @@
     "xoshiro",
     "pcg",
     "mersenne-twister",
-    "stochastic"
+    "stochastic",
+    "copula",
+    "hypothesis-testing",
+    "maximum-likelihood",
+    "quasi-monte-carlo",
+    "typescript"
   ],
   "author": "Adrián Muñoz Perera, https://pereradrian.github.io",
   "license": "BSD-3-Clause",
