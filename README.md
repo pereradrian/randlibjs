@@ -2,7 +2,7 @@
 
 # randlibjs
 
-Seedable, reproducible random number generation for JavaScript. Exact samplers for 75+ probability distributions, distribution objects with densities, CDFs and quantiles, quasi-Monte Carlo, random matrices, stochastic processes and resampling. Zero dependencies, ~50 kB gzipped in full (~5 kB tree-shaken to `seed` + `normal`), runs in browsers and Node.js, ships TypeScript types.
+Seedable, reproducible random numbers and statistics for JavaScript. Exact samplers for 75+ probability distributions, distribution objects with densities, CDFs, quantiles and maximum likelihood fitting, statistical tests, copulas, quasi-Monte Carlo, random matrices, stochastic processes and resampling. Zero dependencies, ~50 kB gzipped in full (~5 kB tree-shaken to `seed` + `normal`), runs in browsers and Node.js, ships TypeScript types.
 
 [![npm](https://img.shields.io/npm/v/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
 [![Downloads](https://img.shields.io/npm/dm/randlibjs.svg)](https://www.npmjs.com/package/randlibjs)
@@ -24,7 +24,7 @@ Seedable, reproducible random number generation for JavaScript. Exact samplers f
 - **Distribution objects** with `pdf`, `cdf`, `ppf`, `sf`, `isf`, moments and intervals, including finite mixtures. Tails are computed on the accurate side: `stats.f(5, 10).isf(1e-12)` is exact to 16 digits.
 - **Serious bit generators:** xoshiro128** (default), PCG32, PCG64, PCG64DXSM, SFC64, Philox and MT19937, with state save/restore, cloning, independent child streams (`spawn`) and jumps.
 - **Reproducible across languages.** With the `'pcg64'` bit generator the streams follow numpy's `default_rng(seed)`, and with `'mt19937'` `RandomState(seed)`: the random bits, uniforms, integers and ordinary normals are identical, and values that go through `Math.log`, `exp` or `pow` (exponential, gamma, beta, the ziggurat tail) agree to 1e-13, so a simulation can be prototyped in Python and replayed in the browser, or the other way round.
-- **Beyond sampling:** quasi-Monte Carlo (Sobol, Halton, Latin hypercube, Poisson disk), random matrices (Haar orthogonal, LKJ, Wishart, …), stochastic processes (Brownian motion, GBM, Ornstein–Uhlenbeck, Poisson processes, Markov chains) and resampling (bootstrap BCa, permutation tests).
+- **Beyond sampling:** copulas, statistical tests (Kolmogorov–Smirnov, chi-square, Anderson–Darling) and kernel densities, quasi-Monte Carlo (Sobol, Halton, Latin hypercube, Poisson disk), random matrices (Haar orthogonal, LKJ, Wishart, …), stochastic processes (Brownian motion, GBM, Ornstein–Uhlenbeck, Poisson processes, Markov chains) and resampling (bootstrap BCa, permutation tests).
 
 If you know numpy and scipy you will feel at home: the reference tables below list the equivalent of every function.
 
@@ -327,12 +327,12 @@ permutationTest(control, treatment).pvalue
 
 ## Performance
 
-Rough throughput on Node 22 (`node scripts/benchmark.mjs`), in millions of samples per second:
+Rough throughput on Node 22 (`node scripts/benchmark.mjs`), in millions of samples per second (range of three runs on one laptop):
 
 | | random | integers | normal | exponential | gamma | poisson | binomial |
 |---|---|---|---|---|---|---|---|
-| xoshiro128** (default) | ~70 | ~44 | ~25–30 | ~20 | ~15–20 | ~12 | ~15 |
-| pcg64 (numpy parity) | ~9 | ~12 | ~4.5 | ~6 | ~3 | ~3 | ~3 |
+| xoshiro128** (default) | 61–79 | 24–52 | 18–28 | 21–32 | 13–21 | 9–15 | 12–17 |
+| pcg64 (numpy parity) | 5–10 | 8–10 | 5–6 | 5–7 | 2.6–3.6 | 2.2–3.2 | 2.4–3.4 |
 
 ## Compared with other libraries
 
@@ -344,17 +344,17 @@ Rough throughput on Node 22 (`node scripts/benchmark.mjs`), in millions of sampl
 | Quasi-Monte Carlo, random matrices, processes | ✅ | partly | ❌ | ❌ | ❌ |
 | Distributions | 75+ | dozens | 17 | about 20 | uniform only |
 
-Throughput in millions of samples per second, one draw per call (Node 22, `cd bench && npm install && npm run bench`; timings vary by machine, compare within a row):
+Throughput in millions of samples per second, one draw per call (Node 22, `cd bench && npm install && npm run bench`; range of three runs on one machine, compare within a row):
 
 | | randlibjs | stdlib | d3-random | jStat | seedrandom |
 |---|---|---|---|---|---|
-| uniform | 136–139 | 79–80 | 143–150 | 61–64 | 30–35 |
-| normal | 25–29 | 40–46 | 31–37 | 20–21 | — |
-| gamma(2.5) | 18–19 | 10–11 | 26–28 | 6.7–7.2 | — |
-| beta(2, 5) | 6–10 | 3.5–4.9 | 6.8–8.4 | 2.4 | — |
-| poisson(4) | 9 | 2.3 | 6.6 | — | — |
-| binomial(100, 0.3) | 3.6–3.7 | 5.7 | 2.4 | — | — |
-| binomial(1e9, 0.3) | 16 | 7.1 | 1.1 | — | — |
+| uniform | 124–136 | 78–79 | 143–145 | 51–60 | 35–37 |
+| normal | 27–31 | 37–46 | 24–37 | 13–22 | — |
+| gamma(2.5) | 13–20 | 11–13 | 27–28 | 6.7–7.4 | — |
+| beta(2, 5) | 8–11 | 4.1–5 | 7.3–14 | 2.2–3.7 | — |
+| poisson(4) | 7.5–13 | 2.2–5.4 | 5–9.2 | — | — |
+| binomial(100, 0.3) | 3.5–4.5 | 5.5–8.6 | 2.2–3.5 | — | — |
+| binomial(1e9, 0.3) | 15–24 | 6.9–11 | 1–1.5 | — | — |
 
 No library is fastest at everything. In this table randlibjs leads on Poisson and on huge binomials,
 which are O(1) here; d3-random leads on uniform and gamma, and stdlib on normal and on
@@ -387,18 +387,19 @@ Run them with `node examples/<name>.mjs`.
 
 ```bash
 npm install
-npm test               # 500+ tests, including goodness-of-fit tests against scipy
+npm test               # 800+ tests, including goodness-of-fit tests against scipy
 npm run lint
 npm run build          # dist/ bundles and types/
 npm run check:package  # publint + Are the Types Wrong on the packed package
 npm run size           # bundle size budgets
+npm run check:claims   # the claims of this README against the build
 npm run coverage
 npm run docs           # JSDoc API reference into docs/docs
 ```
 
 `python scripts/numpy_parity.py > parity.json && node scripts/check-numpy-parity.mjs parity.json`
-checks that randlibjs reproduces the installed numpy (CI runs it weekly against the latest numpy).
-See [CONTRIBUTING.md](CONTRIBUTING.md) for adding distributions.
+checks that randlibjs reproduces the installed numpy (CI runs it on every change and weekly; Dependabot bumps the pinned numpy).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for adding distributions and using AI tools.
 
 The reference data in `test/fixtures` is generated with numpy/scipy by `python scripts/make_reference.py` and `python scripts/make_stats_reference.py`.
 
