@@ -52,6 +52,24 @@ the reference values from Python on every change to make sure the fixtures are r
 numpy from `scripts/parity/requirements.txt` (pinned with hashes, bumped by Dependabot to every new
 numpy release).
 
+## Using AI
+
+AI tools are welcome. You are the author of what you submit, whatever wrote it. These rules follow the
+4Ds of the [AI Fluency framework](https://academy.claude.com/collections/ai-fluency), by Rick Dakan and
+Joseph Feller with Anthropic; [AGENTS.md](AGENTS.md) has the version for the tools themselves.
+
+- **Delegation.** Decide what to hand over. Drafts, tests, refactors and reference scripts are good
+  candidates. Choosing an algorithm, changing a seeded stream and anything about releases or security
+  settings need a person to decide.
+- **Description.** Point the tool to `AGENTS.md` and say what the goal is, who it is for and what must
+  not change.
+- **Discernment.** Polished output deserves more checking, not less. Validate numbers against an
+  independent source (scipy, numpy, mpmath or a paper you have opened), open every citation, and rerun
+  any benchmark or size before quoting it.
+- **Diligence.** Say in the pull request when AI wrote a substantial part and how you checked it.
+  Never paste secrets, private data or an undisclosed vulnerability into a tool, and make sure the code
+  is compatible with the BSD-3-Clause license.
+
 ## Commits
 
 Small, atomic commits with [Conventional Commit](https://www.conventionalcommits.org/)
