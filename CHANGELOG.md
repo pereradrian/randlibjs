@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.2.2] - 2026-11-25
 
 ### Fixed
 
@@ -14,6 +14,7 @@ All notable changes to this project are documented here. The format follows
 - README claims that measurement did not support: the bundle is ~50 kB gzipped (it said ~29 kB), numpy
   parity is exact for some samplers and within 1e-13 for others, jStat can be seeded, ziggurat does use
   lookup tables, and randlibjs is not ahead of every library on gamma.
+- The throughput tables were measured again, as ranges of three runs.
 - Correction to the 2.2.0 notes: `lomax`, `rademacher` and `categorical` have no `stats` family, and that
   release made the npm tarball larger (279 kB to 338 kB).
 
@@ -21,6 +22,10 @@ All notable changes to this project are documented here. The format follows
 
 - `AGENTS.md` and rules for AI-assisted contributions, after the 4D AI Fluency framework, and
   `npm run check:claims`, which checks the README against the built library in CI.
+
+### Changed
+
+- The npm description, keywords and README introduction cover fitting, statistical tests and copulas.
 
 ## [2.2.1] - 2026-11-24
 
